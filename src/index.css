@@ -543,3 +543,38 @@
  .admin-app,.admin-app.sidebar-collapsed{display:block!important;padding:0 20px 30px!important}
  .admin-sidebar{display:none!important}
 }
+
+
+/* ADMIN SIDEBAR — compact and collapsible */
+.admin-app{grid-template-columns:196px minmax(0,1fr)!important;gap:32px!important}
+.admin-sidebar{padding-right:16px!important}
+.admin-sidebar-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:34px}
+.admin-sidebar-top .admin-brand{min-width:0;gap:8px;font-size:9px;letter-spacing:.06em}
+.admin-sidebar-top .admin-brand-symbol{width:31px;height:31px;flex:none}
+.admin-sidebar-top .admin-brand-name{overflow:hidden;text-overflow:ellipsis}
+.admin-collapse{width:30px;height:30px;flex:none;display:grid;place-items:center;border:1px solid var(--admin-line,rgba(255,255,255,.15));border-radius:8px;background:rgba(255,255,255,.045);color:rgba(255,255,255,.72);cursor:pointer}
+.admin-collapse svg{transition:transform 180ms ease}
+.admin-sidebar>button{padding:0 10px!important;gap:10px!important;font-size:12px!important}
+.admin-sidebar>button>svg{flex:none}
+.admin-user-meta{flex:1;min-width:0}
+.admin-app.sidebar-collapsed{grid-template-columns:72px minmax(0,1fr)!important;gap:28px!important}
+.admin-app.sidebar-collapsed .admin-sidebar{padding-right:12px!important;align-items:center}
+.admin-app.sidebar-collapsed .admin-sidebar-top{width:100%;flex-direction:column;gap:12px}
+.admin-app.sidebar-collapsed .admin-sidebar-top .admin-brand{justify-content:center}
+.admin-app.sidebar-collapsed .admin-brand-name,
+.admin-app.sidebar-collapsed .admin-sidebar-label,
+.admin-app.sidebar-collapsed .admin-sidebar>button>span:not(.admin-nav-count),
+.admin-app.sidebar-collapsed .admin-user-meta{display:none!important}
+.admin-app.sidebar-collapsed .admin-sidebar>button{width:44px;height:44px;justify-content:center;padding:0!important;position:relative}
+.admin-app.sidebar-collapsed .admin-sidebar>button .admin-nav-count{position:absolute;top:2px;right:2px;margin:0;font-size:9px}
+.admin-app.sidebar-collapsed .admin-sidebar-bottom{width:100%;justify-content:center;flex-wrap:wrap;gap:7px}
+.admin-app.sidebar-collapsed .admin-sidebar-bottom>button{width:34px;height:34px}
+.admin-app.sidebar-collapsed .admin-collapse svg{transform:rotate(180deg)}
+@media(max-width:900px){
+ .admin-app{grid-template-columns:176px minmax(0,1fr)!important;gap:22px!important}
+ .admin-app.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)!important;gap:20px!important}
+}
+@media(max-width:680px){
+ .admin-app,.admin-app.sidebar-collapsed{display:block!important}
+ .admin-sidebar{display:none!important}
+}
