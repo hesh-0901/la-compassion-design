@@ -43,7 +43,9 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [showMemberNotice, setShowMemberNotice] = useState(false);
   const [showRamNotice, setShowRamNotice] = useState(false);
-  const [showUnavailable, setShowUnavailable] = useState(false);\n  const [portfolioFile, setPortfolioFile] = useState<File | null>(null);\n  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [showUnavailable, setShowUnavailable] = useState(false);
+  const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
   const go = (next: Step) => {
     setStep(next);
@@ -75,7 +77,8 @@ export default function App() {
       return typeof value === "string" ? !value.trim() : typeof value === "boolean" ? !value : false;
     }).map(String);
     if (part === 0 && phoneDigits.length !== 9) missing.push("phone");
-    if (part === 2 && !profilePhoto) missing.push("profilePhoto");\n    setErrors(missing);
+    if (part === 2 && !profilePhoto) missing.push("profilePhoto");
+    setErrors(missing);
     return missing.length === 0;
   };
   const nextPart = () => {
@@ -169,7 +172,8 @@ export default function App() {
           <Field label="Seras-tu disponible du 15 au 19 décembre, de 19h à 22h ?" error={errors.includes("availability") ? "Indique ta disponibilité." : ""}><Choice value={form.availability} onChange={v => update("availability", v)} options={["Oui", "Partiellement"]} /></Field>
           <Field label="Pourquoi veux-tu suivre cette Masterclass ?" error={errors.includes("motivation") ? "Choisis une motivation." : ""}><Choice value={form.motivation} onChange={v => update("motivation", v)} options={["Me cultiver", "Rejoindre le département Design", "Contribuer aux créations visuelles de mon département", "Autres"]} /></Field>
           <label className={errors.includes("commitment") ? "commitment-check invalid" : "commitment-check"}><input type="checkbox" checked={form.commitment} onChange={e => update("commitment", e.target.checked)} /><span>Je m’engage à rejoindre le département Design après la formation.</span></label>
-          {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}\n          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/*" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
+          {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
+          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/*" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
         </div>}
 
         {errors.length > 0 && <p className="form-error" role="alert">Certains champs nécessitent ton attention. Vérifie les indications ci-dessus.</p>}
