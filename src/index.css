@@ -690,3 +690,30 @@
 .admin-sidebar .admin-collapse{color:#eaf1ff!important;border-color:rgba(255,255,255,.2)!important}
 .admin-sidebar .admin-collapse svg{color:#dbe8ff!important}
 .admin-sidebar .admin-sidebar-bottom>button{color:#eaf1ff!important;border-color:rgba(255,255,255,.2)!important}
+
+
+
+/* Lightweight in-app attachment viewer */
+.admin-asset{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid #e5eaf2;border-radius:10px;background:#fff;color:#243653;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+.admin-asset:hover{background:#f7f9fd;border-color:#b9c9e6}
+.admin-asset>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.admin-asset b{font-size:12px;color:#203252}
+.admin-asset small{font-size:11px;color:#71809a}
+.admin-asset strong{font-size:11px;color:#087ea8;font-weight:650;white-space:nowrap}
+.admin-file-link{display:inline-flex;align-items:center;justify-content:center;margin:0 0 16px;padding:9px 0;border:0;background:transparent;color:#087ea8;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.admin-preview-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:16px;background:rgba(13,25,48,.62);backdrop-filter:blur(2px)}
+.admin-preview{width:min( min(94vw, 1100px), 1100px);height:min(88vh,820px);display:flex;flex-direction:column;overflow:hidden;border:1px solid #dfe5ee;border-radius:12px;background:#fff;box-shadow:0 18px 60px rgba(0,0,0,.24)}
+.admin-preview-head{min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 14px 8px 18px;border-bottom:1px solid #e8edf4;background:#fff}
+.admin-preview-head>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.admin-preview-head b{overflow:hidden;color:#203252;font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.admin-preview-head small{color:#78869b;font-size:10px}
+.admin-preview-head button{width:34px;height:34px;flex:none;display:grid;place-items:center;border:1px solid #e0e6ef;border-radius:8px;background:#fff;color:#40516d;cursor:pointer}
+.admin-preview-head button:hover{background:#f1f5fb;color:#15294d}
+.admin-preview-content{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;background:#f1f3f7}
+.admin-preview-content img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.admin-preview-content iframe{width:100%;height:100%;border:0;background:#fff}
+@media(max-width:680px){
+ .admin-preview-overlay{padding:8px}
+ .admin-preview{width:100%;height:92vh;border-radius:9px}
+ .admin-preview-head{min-height:48px;padding:7px 10px}
+}
