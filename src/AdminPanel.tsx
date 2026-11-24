@@ -78,6 +78,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [adminModalOpen,setAdminModalOpen] = useState(false);
   const [adminForm,setAdminForm] = useState({firstName:"",lastName:"",email:"",password:""});
   const [adminSaving,setAdminSaving] = useState(false);
+  const [showAdminPassword,setShowAdminPassword] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -143,8 +144,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const createAdmin = async (event:React.FormEvent) => {
     event.preventDefault();
     if(role!=="superAdmin" || !user) return;
-    const firstName=adminForm.firstName.trim(), lastName=adminForm.lastName.trim(), adminEmail=adminForm.email.trim().toLowerCase();
-    if(!firstName || !lastName || !adminEmail || adminForm.password.length<8){setError("Renseigne tous les champs. Le mot de passe doit contenir au moins 8 caractères.");return;}
+    const firstName=adminForm.firstName.trim(), lastName=adminForm.lastName.trim();
+    const emailPart=(firstName+lastName).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const adminEmail=emailPart+"@design.cmps";
+    if(!firstName || !lastName || !emailPart || adminForm.password.length<8){setError("Renseigne le prénom, le nom et un mot de passe de 8 caractères minimum.");return;}
     setAdminSaving(true);setError("");
     let secondaryUser:User|null=null;
     let secondaryApp:ReturnType<typeof initializeApp>|null=null;
@@ -155,6 +158,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       secondaryUser=credential.user;
       await setDoc(doc(db,"admins",credential.user.uid),{firstName,lastName,email:adminEmail,role:"admin",active:true,createdAt:serverTimestamp(),createdBy:user.uid});
       setAdminForm({firstName:"",lastName:"",email:"",password:""});
+      setShowAdminPassword(false);
       setAdminModalOpen(false);
       await loadAdmins();
     } catch (err:any) {
@@ -258,8 +262,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-drawer-head"><div><span className="admin-kicker">ACCÈS ET AUTORISATIONS</span><h2>Créer un administrateur</h2></div><button type="button" onClick={()=>setAdminModalOpen(false)} disabled={adminSaving} aria-label="Fermer"><Icon name="close"/></button></div>
         <p className="admin-modal-description">Ce compte aura accès aux candidatures et aux téléchargements, sans les droits du super administrateur.</p>
         <div className="admin-form-grid"><label>Prénom<input autoFocus value={adminForm.firstName} onChange={e=>setAdminForm(v=>({...v,firstName:e.target.value}))} required maxLength={60}/></label><label>Nom<input value={adminForm.lastName} onChange={e=>setAdminForm(v=>({...v,lastName:e.target.value}))} required maxLength={60}/></label></div>
-        <label>Adresse e-mail<input type="email" autoComplete="off" value={adminForm.email} onChange={e=>setAdminForm(v=>({...v,email:e.target.value}))} required/></label>
-        <label>Mot de passe temporaire<input type="password" autoComplete="new-password" minLength={8} value={adminForm.password} onChange={e=>setAdminForm(v=>({...v,password:e.target.value}))} required/><small>8 caractères minimum. Communique-le de manière sécurisée à la personne.</small></label>
+        <label>Adresse e-mail de connexion<div className="admin-generated-email">{((adminForm.firstName+adminForm.lastName).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,""))||"prenomnom"}<span>@design.cmps</span></div><small>Générée automatiquement à partir du prénom et du nom.</small></label>
+        <label>Mot de passe temporaire<div className="admin-password-field"><input type={showAdminPassword?"text":"password"} autoComplete="new-password" minLength={8} value={adminForm.password} onChange={e=>setAdminForm(v=>({...v,password:e.target.value}))} required/><button type="button" onClick={()=>setShowAdminPassword(value=>!value)} aria-label={showAdminPassword?"Masquer le mot de passe":"Afficher le mot de passe"} title={showAdminPassword?"Masquer":"Afficher"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>{showAdminPassword&&<path d="m3 3 18 18"/>}</svg></button></div><small>8 caractères minimum. Firebase sécurise et hache le mot de passe lors de la création du compte.</small></label>
         {error&&<p className="admin-error" role="alert">{error}</p>}
         <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={adminSaving} onClick={()=>setAdminModalOpen(false)}>Annuler</button><button className="admin-primary" type="submit" disabled={adminSaving}>{adminSaving?"Création…":"Créer le compte"}</button></div>
       </form>
