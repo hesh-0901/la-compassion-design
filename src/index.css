@@ -912,3 +912,35 @@
 }
 .admin-password-field button:hover{background:#e7eefb;color:#1555c9}
 .admin-password-field svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* DOWNLOADS — grouped candidate folders */
+.admin-assets-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:26px}
+.admin-assets-count{padding:6px 10px;border-radius:20px;background:#edf3ff;color:#2454a5;font-size:11px;font-weight:750;white-space:nowrap}
+.admin-download-groups{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.admin-download-candidate{overflow:hidden;border:1px solid #e5eaf2;border-radius:13px;background:#fff}
+.admin-download-candidate-head{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#f8faff;border-bottom:1px solid #edf0f5}
+.admin-download-avatar{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:12px;background:#e5edff;color:#1f5bff;font-size:15px;font-weight:800}
+.admin-download-candidate-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.admin-download-candidate-info b{color:#1b2d4d;font-size:13px}
+.admin-download-candidate-info span{overflow:hidden;color:#52627c;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.admin-download-candidate-info small{color:#8995a8;font-size:10px}
+.admin-download-files{padding:4px 16px}
+.admin-download-file{display:flex;align-items:center;gap:10px;min-height:62px;padding:9px 0;border-bottom:1px solid #eff2f6}
+.admin-download-file:last-child{border-bottom:0}
+.admin-download-file-icon{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:9px;background:#eef3ff;color:#2454a5}
+.admin-download-file-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.admin-download-file-info b{color:#263957;font-size:11px}
+.admin-download-file-info small{color:#8a96a9;font-size:10px}
+.admin-download-file .admin-secondary{min-height:32px;padding:0 10px;font-size:10px}
+.admin-download-link{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid #dce5f4;border-radius:8px;color:#1f5bff;font-size:10px;font-weight:750;text-decoration:none;white-space:nowrap}
+.admin-download-link svg{width:14px;height:14px}
+.admin-download-link:hover{background:#eff5ff;border-color:#b9cdf5}
+@media(max-width:680px){
+ .admin-download-candidate-head{align-items:flex-start;flex-wrap:wrap;padding:12px}
+ .admin-download-candidate-head .admin-status{margin-left:52px}
+ .admin-download-files{padding:4px 12px}
+ .admin-download-file{flex-wrap:wrap;gap:8px}
+ .admin-download-file-info{min-width:calc(100% - 54px)}
+ .admin-download-file .admin-secondary,.admin-download-link{margin-left:42px}
+}
