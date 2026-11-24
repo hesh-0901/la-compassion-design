@@ -235,3 +235,89 @@
 .admin-placeholder-content{margin:auto 0;max-width:560px;padding:48px 0}
 .admin-placeholder-content h1{font-family:"Plus Jakarta Sans",Inter,sans-serif;font-size:clamp(30px,5vw,46px);line-height:1.12;letter-spacing:-.05em;margin:12px 0}
 .admin-placeholder-content p{max-width:480px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7}
+
+
+/* Admin workspace */
+.admin-screen{width:min(100%,1120px);margin:0 auto;padding-bottom:50px;color:#fff}
+.admin-login-card{width:min(100%,440px);margin:clamp(44px,12vh,110px) auto 40px;padding:30px;border:1px solid rgba(255,255,255,.16);border-radius:20px;background:rgba(7,22,77,.48);box-shadow:0 20px 60px rgba(0,0,0,.16)}
+.admin-login-card h1,.admin-heading h1{font-family:"Plus Jakarta Sans",Inter,sans-serif;font-size:clamp(30px,5vw,44px);letter-spacing:-.05em;margin:8px 0}
+.admin-login-card p,.admin-heading p{color:rgba(255,255,255,.68);font-size:14px;line-height:1.55}
+.admin-login-card label,.admin-edit-modal label{display:block;margin:18px 0;color:rgba(255,255,255,.84);font-size:13px;font-weight:650}
+.admin-login-card input,.admin-edit-modal input{display:block;width:100%;height:48px;margin-top:7px;padding:0 13px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:#fff;color:#14234f;font:inherit}
+.admin-login-card .button{width:100%;margin-top:12px}
+.admin-login-card .button:disabled{opacity:.6}
+.admin-error,.admin-notice{padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5;background:rgba(255,95,115,.13);color:#ffc3cb}
+.admin-notice{background:rgba(35,210,170,.12);color:#a9f5df}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:10px 0 25px;border-bottom:1px solid rgba(255,255,255,.13)}
+.admin-account{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;font-size:12px;color:rgba(255,255,255,.7)}
+.admin-account b{font-size:10px;letter-spacing:.08em;padding:6px 9px;border-radius:20px;background:rgba(255,255,255,.1);color:#fff}
+.admin-account .role-super{background:rgba(255,201,60,.17);color:#ffdf8a}
+.admin-account button,.admin-refresh{border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.06);color:#fff;padding:9px 12px;font-size:12px}
+.admin-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:32px 0 22px}
+.admin-heading h1{margin:5px 0}
+.admin-tabs{display:flex;gap:8px;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.16);margin-bottom:22px}
+.admin-tabs button{white-space:nowrap;border:0;border-bottom:2px solid transparent;padding:13px 15px;background:none;color:rgba(255,255,255,.62);font:600 13px Inter,system-ui}
+.admin-tabs button.active{border-color:#8FE3FA;color:#fff}
+.admin-tabs button span{margin-left:5px;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,.13)}
+.admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.admin-stats article,.admin-panel{border:1px solid rgba(255,255,255,.13);border-radius:15px;background:rgba(8,24,83,.45)}
+.admin-stats article{padding:18px}
+.admin-stats small{display:block;color:rgba(255,255,255,.62);font-size:12px}
+.admin-stats strong{display:block;margin-top:9px;font-size:30px;font-weight:750}
+.admin-panel{padding:20px;margin:18px 0}
+.admin-panel-title{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.admin-panel-title h2{margin:0;font-size:18px}
+.admin-panel-title span,.admin-panel-title button{color:rgba(255,255,255,.62);font-size:12px}
+.admin-panel-title button{border:0;background:none;color:#9be9ff}
+.admin-row,.asset-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-top:1px solid rgba(255,255,255,.1)}
+.admin-row b,.asset-row b{display:block;font-size:13px}
+.admin-row small,.asset-row small{display:block;margin-top:4px;color:rgba(255,255,255,.56);font-size:11px}
+.admin-empty{padding:26px 8px;text-align:center;color:rgba(255,255,255,.58);font-size:13px}
+.candidate-card{padding:16px 0;border-top:1px solid rgba(255,255,255,.1)}
+.candidate-main{display:flex;align-items:center;gap:12px}
+.candidate-main img{width:44px;height:44px;object-fit:cover;border-radius:50%;background:rgba(255,255,255,.1)}
+.candidate-main>div{flex:1;min-width:0}
+.candidate-main b{display:block;font-size:14px}
+.candidate-main small{display:block;margin-top:4px;color:rgba(255,255,255,.58);font-size:11px;overflow-wrap:anywhere}
+.candidate-status{flex:none;padding:6px 9px;border-radius:30px;background:rgba(255,201,60,.13);color:#ffdf8a;font-size:10px;font-weight:700}
+.candidate-status.approved{background:rgba(35,210,170,.13);color:#a9f5df}
+.candidate-status.rejected{background:rgba(255,95,115,.13);color:#ffc3cb}
+.candidate-actions{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0 0 56px}
+.candidate-actions button,.download-grid button{padding:9px 12px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.07);color:#fff;font-size:11px;font-weight:650}
+.candidate-actions button:nth-child(2),.download-grid button{background:#fff;color:#1233A8;border-color:#fff}
+.candidate-actions button.danger{color:#ffc3cb;border-color:rgba(255,95,115,.35)}
+.download-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.download-grid article{padding:18px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.04)}
+.download-grid b{font-size:14px}
+.download-grid p{min-height:40px;color:rgba(255,255,255,.6);font-size:12px;line-height:1.5}
+.download-grid button:disabled{opacity:.45;cursor:not-allowed}
+.download-subtitle{margin:28px 0 10px;font-size:14px}
+.asset-row{color:#fff;text-decoration:none}
+.asset-row strong{color:#9be9ff;font-size:11px}
+.admin-modal-backdrop{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:18px;background:rgba(1,8,35,.76)}
+.admin-edit-modal{width:min(100%,480px);max-height:90dvh;overflow:auto;padding:24px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:#10256f;box-shadow:0 24px 80px rgba(0,0,0,.35)}
+.admin-edit-modal h2{margin:0 0 18px;font-size:20px}
+.admin-edit-modal label{margin:13px 0}
+.admin-edit-modal>div{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.admin-edit-modal button{padding:10px 14px;border:1px solid rgba(255,255,255,.25);border-radius:9px;background:transparent;color:#fff}
+.admin-edit-modal button.primary{background:#fff;color:#1233A8}
+@media(max-width:680px){
+ .admin-screen{padding-top:18px}
+ .admin-topbar{align-items:flex-start;flex-direction:column}
+ .admin-account{justify-content:flex-start}
+ .admin-heading{align-items:flex-start}
+ .admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .download-grid{grid-template-columns:1fr}
+ .candidate-actions{margin-left:0}
+ .candidate-main{align-items:flex-start;flex-wrap:wrap}
+}
+@media print{
+ body{background:#fff!important;color:#111!important}
+ .admin-screen{width:100%;max-width:none;color:#111;padding:0}
+ .admin-topbar,.admin-tabs,.admin-heading .admin-refresh,.candidate-actions,.admin-error,.admin-notice{display:none!important}
+ .admin-panel,.admin-stats article{background:#fff!important;border:1px solid #ddd!important;color:#111!important;break-inside:avoid}
+ .admin-row,.candidate-card{border-color:#ddd!important}
+ .admin-row b,.candidate-main b,.admin-panel-title h2{color:#111!important}
+ .admin-row small,.candidate-main small,.admin-stats small{color:#555!important}
+ .candidate-status{border:1px solid #aaa;color:#111!important;background:#fff!important}
+}
