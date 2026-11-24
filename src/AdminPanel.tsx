@@ -87,7 +87,15 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       else { setError("Ce compte n’est pas autorisé à accéder à cet espace."); await signOut(auth); }
     } catch { setError("Vérification des droits impossible. Contrôle les règles Firestore."); await signOut(auth); }
   }),[]);
-  const loadAdmins = async () => {\n    if(role!=="superAdmin") return;\n    try { const snapshot=await getDocs(collection(db,"admins")); setAdmins(snapshot.docs.map(item=>({id:item.id,...item.data()})) as AdminRecord[]); }\n    catch { setError("Impossible de charger les administrateurs. Vérifie les règles Firestore."); }\n  };\n  const loadCandidates = async () => {
+  const loadAdmins = async () => {
+    if (role !== "superAdmin") return;
+    try {
+      const snapshot = await getDocs(collection(db, "admins"));
+      setAdmins(snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as AdminRecord[]);
+    } catch {
+      setError("Impossible de charger les administrateurs. Vérifie les règles Firestore.");
+    }
+  };\n  const loadCandidates = async () => {
     setBusy(true); setError("");
     try {
       const snapshot = await getDocs(collection(db,"candidatures"));
