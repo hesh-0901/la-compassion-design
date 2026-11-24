@@ -252,21 +252,25 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Rapport imprimable</b><p>Ouvre la boîte d’impression pour enregistrer la liste filtrée en PDF.</p></div><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer / PDF</button></div>
         <div className="admin-section-head admin-assets-head"><div><h2>Documents des candidats</h2><p>Chaque dossier regroupe les pièces jointes sous le nom du candidat.</p></div><span className="admin-assets-count">{assetsByCandidate.length} dossier(s)</span></div>
         <div className="admin-download-groups">
-          {assetsByCandidate.map(({candidate,files})=><article className="admin-download-candidate" key={candidate.id}>
-            <div className="admin-download-candidate-head">
-              <div className="admin-download-avatar">{personName(candidate).trim().charAt(0).toUpperCase()}</div>
-              <div className="admin-download-candidate-info"><b>{personName(candidate)}</b><span>{valueOf(candidate,"phone")} · {valueOf(candidate,"email")}</span><small>Inscription du {dateLabel(candidate.createdAt)} · {files.length} pièce(s)</small></div>
-              <StatusPill value={candidate.status}/>
-            </div>
-            <div className="admin-download-files">
-              {files.map(file=><div className="admin-download-file" key={file.url}>
-                <span className="admin-download-file-icon"><Icon name="file"/></span>
-                <div className="admin-download-file-info"><b>{file.name}</b><small>{file.url.toLowerCase().includes(".pdf")?"Document PDF":"Fichier image ou document"}</small></div>
-                <button type="button" className="admin-secondary" onClick={()=>setPreviewAsset({name:personName(candidate),label:file.name,url:file.url})}>Aperçu</button>
-                <a className="admin-download-link" href={file.url} target="_blank" rel="noreferrer" download>Télécharger <Icon name="download"/></a>
-              </div>)}
-            </div>
-          </article>)}
+          {assetsByCandidate.map(({candidate,files})=>{
+            const photo=files.find(file=>file.name==="Photo de profil");
+            const portfolio=files.find(file=>file.name==="Création / portfolio");
+            const renderFile=(file: {name:string;url:string}|undefined,kind:"photo"|"portfolio")=><div className={`admin-download-file-cell ${kind}`}>
+              <span className="admin-download-file-bubble">{kind==="photo"?"PHOTO DE PROFIL":"PORTFOLIO"}</span>
+              {file?<><button type="button" className="admin-download-preview" onClick={()=>setPreviewAsset({name:personName(candidate),label:file.name,url:file.url})}>Aperçu</button><a className="admin-download-link" href={file.url} target="_blank" rel="noreferrer" download>Télécharger <Icon name="download"/></a></>:<span className="admin-download-missing">Non fourni</span>}
+            </div>;
+            return <article className="admin-download-candidate" key={candidate.id}>
+              <div className="admin-download-candidate-head">
+                <div className="admin-download-avatar">{personName(candidate).trim().charAt(0).toUpperCase()}</div>
+                <div className="admin-download-candidate-info"><b>{personName(candidate)}</b><span>{valueOf(candidate,"phone")} · {valueOf(candidate,"email")}</span><small>{dateLabel(candidate.createdAt)}</small></div>
+                <StatusPill value={candidate.status}/>
+              </div>
+              <div className="admin-download-files-grid">
+                {renderFile(photo,"photo")}
+                {renderFile(portfolio,"portfolio")}
+              </div>
+            </article>;
+          })}
         </div>
         {!assetsByCandidate.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
