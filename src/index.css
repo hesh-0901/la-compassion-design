@@ -482,3 +482,29 @@
  .admin-table th,.admin-table td,.admin-table td:first-child b{color:#0B1533!important;border-color:#D5E0F7}
  .admin-status{border:1px solid #D5E0F7;background:#fff!important;color:#0B1533!important}
 }
+
+
+/* ADMIN LOGIN — layout correction */
+.app-shell:has(.admin-login-page){padding:0!important;min-height:100dvh!important;background:radial-gradient(ellipse at 85% 12%,rgba(34,199,242,.22),transparent 34%),linear-gradient(145deg,#08164f 0%,#1233a8 58%,#0c49c8 100%)!important}
+.app-shell:has(.admin-login-page) .site-foot{display:none!important}
+.admin-login-page{box-sizing:border-box!important;width:100%!important;max-width:none!important;min-height:100dvh!important;margin:0!important;padding:28px clamp(20px,5vw,64px)!important;display:grid!important;grid-template-rows:auto 1fr!important;align-items:stretch!important}
+.admin-back-home{justify-self:start!important;align-self:start!important;min-height:42px!important;padding:0 12px!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:10px!important;background:rgba(255,255,255,.07)!important;color:rgba(255,255,255,.86)!important;font-size:12px!important;font-weight:600!important}
+.admin-login{box-sizing:border-box!important;width:min(100%,440px)!important;max-width:440px!important;align-self:center!important;justify-self:center!important;margin:0 auto!important;padding:34px!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:20px!important;background:rgba(7,20,75,.48)!important;box-shadow:0 24px 70px rgba(2,8,42,.25)!important;backdrop-filter:blur(14px)!important}
+.admin-login .admin-brand{display:flex!important;align-items:center!important;gap:11px!important;margin:0 0 38px!important;color:#fff!important;font-size:12px!important;font-weight:700!important;letter-spacing:.1em!important}
+.admin-login .admin-brand b{color:#8FE3FA!important}
+.admin-login .admin-brand-symbol{width:38px!important;height:38px!important;display:grid!important;place-items:center!important;border:1px solid rgba(143,227,250,.7)!important;border-radius:12px!important;color:#8FE3FA!important;font:800 20px "Plus Jakarta Sans",sans-serif!important}
+.admin-login .admin-kicker{display:block!important;margin:0 0 10px!important;color:#8FE3FA!important;font-size:10px!important;font-weight:800!important;letter-spacing:.14em!important}
+.admin-login h1{margin:0!important;color:#fff!important;font:800 clamp(27px,5vw,34px)/1.15 "Plus Jakarta Sans",Inter,sans-serif!important;letter-spacing:-.045em!important}
+.admin-login>p{margin:12px 0 26px!important;color:rgba(255,255,255,.7)!important;font-size:13px!important;line-height:1.6!important}
+.admin-login label{display:block!important;margin:18px 0!important;color:rgba(255,255,255,.86)!important;font-size:12px!important;font-weight:600!important}
+.admin-login input{display:block!important;box-sizing:border-box!important;width:100%!important;height:50px!important;margin-top:8px!important;padding:0 14px!important;border:1px solid rgba(213,224,247,.9)!important;border-radius:10px!important;background:#F3F7FF!important;color:#0B1533!important;font-size:15px!important;box-shadow:none!important}
+.admin-login input:focus{outline:3px solid rgba(34,199,242,.28)!important;border-color:#22C7F2!important}
+.admin-login .admin-primary{width:100%!important;min-height:50px!important;margin-top:10px!important;border:0!important;border-radius:11px!important;background:#FF8A1F!important;color:#0A1A5C!important;font-size:13px!important;font-weight:800!important}
+.admin-login .admin-primary:disabled{opacity:.6!important}
+.admin-login .admin-error{margin:14px 0!important;padding:11px 13px!important;border-radius:9px!important;background:rgba(214,49,79,.16)!important;color:#FFB5C0!important;font-size:12px!important}
+@media(max-width:600px){
+ .admin-login-page{padding:18px 18px 28px!important}
+ .admin-login{width:100%!important;padding:26px 22px!important;border-radius:17px!important}
+ .admin-login .admin-brand{margin-bottom:32px!important}
+ .admin-login h1{font-size:28px!important}
+}
