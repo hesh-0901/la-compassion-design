@@ -129,3 +129,62 @@
   .poster-frame{height:35svh;width:min(100%,260px)}
   .home-question{font-size:17px}
 }
+
+/* Poster uses a transparent PNG: never crop it or add a panel behind it */
+.app-shell:has(.home-screen){height:100svh;min-height:100svh;overflow:hidden;padding:0}
+.app-shell:has(.home-screen) .home-screen{
+  height:100svh;min-height:0;overflow:hidden;
+  padding-top:max(10px,env(safe-area-inset-top));
+  padding-bottom:max(54px,env(safe-area-inset-bottom));
+}
+.app-shell:has(.home-screen) .poster-frame{
+  width:100%;height:auto;min-height:0;max-height:100%;
+  aspect-ratio:auto;overflow:visible;background:transparent;
+}
+.app-shell:has(.home-screen) .poster{
+  display:block;width:auto;height:auto;max-width:100%;
+  max-height:calc(100svh - 190px);object-fit:contain;
+  filter:none;background:transparent;
+}
+.app-shell:has(.home-screen) .site-foot{
+  position:fixed;left:16px;right:16px;bottom:max(8px,env(safe-area-inset-bottom));
+  z-index:5;margin:0 auto;padding:0;text-align:center;pointer-events:none;
+}
+@media(max-width:899px){
+  html:has(.home-screen),body:has(.home-screen){height:100svh;min-height:100svh;overflow:hidden}
+  .app-shell:has(.home-screen) .home-screen{
+    grid-template-rows:minmax(0,1fr) auto auto;
+    gap:clamp(8px,1.5vh,14px);
+    padding-left:0;padding-right:0;
+  }
+  .app-shell:has(.home-screen) .poster{
+    width:auto;height:auto;
+    max-width:min(62vw,250px);
+    max-height:calc(100svh - 190px);
+  }
+  .app-shell:has(.home-screen) .home-question{align-self:end}
+  .app-shell:has(.home-screen) .home-button{align-self:end}
+}
+@media(min-width:900px){
+  .app-shell:has(.home-screen) .home-screen{
+    grid-template-columns:minmax(0,1fr) minmax(360px,.9fr);
+    grid-template-rows:minmax(0,1fr) auto;
+    padding:36px 34px 62px;
+    column-gap:clamp(54px,8vw,120px);
+  }
+  .app-shell:has(.home-screen) .poster-frame{
+    grid-column:1;grid-row:1 / span 2;
+    width:100%;height:100%;
+    display:grid;place-items:center;
+  }
+  .app-shell:has(.home-screen) .poster{
+    width:auto;height:auto;
+    max-width:min(100%,430px);
+    max-height:calc(100svh - 150px);
+  }
+  .app-shell:has(.home-screen) .home-question{grid-column:2;grid-row:1}
+  .app-shell:has(.home-screen) .home-button{grid-column:2;grid-row:2}
+}
+@media(max-height:650px) and (max-width:899px){
+  .app-shell:has(.home-screen) .poster{max-width:min(52vw,210px);max-height:calc(100svh - 165px)}
+}
