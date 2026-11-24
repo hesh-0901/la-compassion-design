@@ -1079,3 +1079,21 @@
  .admin-app.mobile-sidebar-open .admin-sidebar-backdrop{opacity:1;pointer-events:auto}
  .admin-main{width:100%!important;max-width:none!important;padding:0 12px 24px!important}
 }
+
+
+/* FIX: the legacy mobile rule hid the sidebar with display:none!important.
+   Explicitly restore it as a flex drawer on phone screens. */
+@media(max-width:680px){
+ .admin-app .admin-sidebar{
+   display:flex!important;
+   flex-direction:column!important;
+   visibility:visible!important;
+ }
+ .admin-app .admin-mobile-head .admin-mobile-menu{
+   display:flex!important;
+   visibility:visible!important;
+   opacity:1!important;
+   position:relative!important;
+   z-index:31!important;
+ }
+}
