@@ -269,7 +269,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </form>
   </section>;
 
-  return <section className={"admin-app" + (sidebarCollapsed ? " sidebar-collapsed" : "")}>
+  return <section className={"admin-app" + (sidebarCollapsed ? " sidebar-collapsed" : "") + (mobileSidebarOpen ? " mobile-sidebar-open" : "")}>
+    <div className="admin-sidebar-backdrop" onClick={()=>setMobileSidebarOpen(false)} aria-hidden="true"></div>
     <aside className="admin-sidebar">
       <div className="admin-sidebar-top"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span className="admin-brand-name">LA COMPASSION <b>DESIGN</b></span></div><button className="admin-collapse" type="button" onClick={()=>setSidebarCollapsed(value=>!value)} aria-label={sidebarCollapsed?"Déplier le menu":"Replier le menu"} title={sidebarCollapsed?"Déplier le menu":"Replier le menu"}><Icon name="chevron"/></button></div>
       <div className="admin-sidebar-label">ESPACE DE TRAVAIL</div>
@@ -280,7 +281,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
-      <header className="admin-mobile-head"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
+      <header className="admin-mobile-head"><button className="admin-mobile-menu" type="button" onClick={()=>setMobileSidebarOpen(value=>!value)} aria-label={mobileSidebarOpen?"Fermer le menu":"Ouvrir le menu"} aria-expanded={mobileSidebarOpen}><span></span><span></span><span></span></button><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
       <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
