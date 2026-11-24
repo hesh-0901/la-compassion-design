@@ -18,29 +18,79 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isActiveAdmin()
-        && myAdminRecord().data.role == 'superAdmin';
+      return isActiveAdmin() && myAdminRecord().data.role == 'superAdmin';
+    }
+
+    function validCloudinaryUrl(value) {
+      return value is string
+        && (value == ''
+          || value.matches('https://res\\.cloudinary\\.com/occgef9bk/(image|raw)/upload/.*'));
+    }
+
+    function validPublicApplication() {
+      return request.resource.data.keys().hasOnly([
+        'fullName', 'gender', 'phone', 'email', 'area', 'age',
+        'member', 'extension', 'attendance', 'department', 'maturity',
+        'level', 'tools', 'portfolio', 'portfolioFileUrl', 'portfolioPublicId',
+        'profilePhotoUrl', 'profilePhotoPublicId', 'ram', 'availability',
+        'motivation', 'commitment', 'status', 'createdAt'
+      ])
+      && request.resource.data.keys().hasAll([
+        'fullName', 'gender', 'phone', 'email', 'area', 'age',
+        'member', 'extension', 'attendance', 'department', 'maturity',
+        'level', 'tools', 'portfolio', 'portfolioFileUrl', 'portfolioPublicId',
+        'profilePhotoUrl', 'profilePhotoPublicId', 'ram', 'availability',
+        'motivation', 'commitment', 'status', 'createdAt'
+      ])
+      && request.resource.data.fullName is string
+      && request.resource.data.fullName.size() >= 2
+      && request.resource.data.fullName.size() <= 100
+      && request.resource.data.gender in ['Homme', 'Femme']
+      && request.resource.data.phone is string
+      && request.resource.data.phone.matches('^\\+243[0-9]{9}$')
+      && request.resource.data.email is string
+      && request.resource.data.email.size() <= 160
+      && request.resource.data.area is string
+      && request.resource.data.area.size() <= 120
+      && request.resource.data.age is string
+      && request.resource.data.member == 'Oui'
+      && request.resource.data.extension is string
+      && request.resource.data.attendance is string
+      && request.resource.data.department is string
+      && request.resource.data.maturity is string
+      && request.resource.data.level in ['Débutant', 'Intermédiaire', 'Avancé']
+      && request.resource.data.tools is list
+      && request.resource.data.tools.size() <= 5
+      && request.resource.data.portfolio is string
+      && request.resource.data.portfolio.size() <= 2048
+      && validCloudinaryUrl(request.resource.data.portfolioFileUrl)
+      && request.resource.data.portfolioPublicId is string
+      && request.resource.data.profilePhotoUrl is string
+      && request.resource.data.profilePhotoUrl.matches('https://res\\.cloudinary\\.com/occgef9bk/image/upload/.*')
+      && request.resource.data.profilePhotoPublicId is string
+      && request.resource.data.ram in ['Oui', 'Non', 'Je ne sais pas']
+      && request.resource.data.availability in ['Oui', 'Partiellement']
+      && request.resource.data.motivation is string
+      && request.resource.data.motivation.size() <= 160
+      && request.resource.data.commitment == true
+      && request.resource.data.status == 'received'
+      && request.resource.data.createdAt == request.time;
     }
 
     match /admins/{uid} {
-      // Un administrateur peut lire son propre profil pour vérifier ses droits.
       allow get: if signedIn() && request.auth.uid == uid;
-
-      // Seul le superAdmin peut consulter la liste et gérer les comptes admin.
       allow list: if isSuperAdmin();
       allow create, update, delete: if isSuperAdmin();
     }
 
     match /candidatures/{candidateId} {
-      // Les administrateurs actifs peuvent consulter les candidatures.
+      allow create: if validPublicApplication();
       allow get, list: if isActiveAdmin();
 
-      // Admin : peut uniquement changer le statut et les métadonnées de revue.
       allow update: if isActiveAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['status', 'reviewedAt', 'reviewedBy']);
 
-      // SuperAdmin : peut aussi corriger les champs personnels autorisés.
       allow update: if isSuperAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly([
@@ -49,12 +99,9 @@ service cloud.firestore {
             'assembly', 'extension', 'level', 'ram'
           ]);
 
-      // L'inscription publique sera autorisée avec validation dédiée
-      // lorsque le formulaire sera connecté à Firestore.
-      allow create, delete: if false;
+      allow delete: if isSuperAdmin();
     }
 
-    // Tout autre document reste privé par défaut.
     match /{document=**} {
       allow read, write: if false;
     }
