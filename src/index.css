@@ -188,3 +188,16 @@
 @media(max-height:650px) and (max-width:899px){
   .app-shell:has(.home-screen) .poster{max-width:min(52vw,210px);max-height:calc(100svh - 165px)}
 }
+
+/* Keep the primary action compact on mobile and desktop */
+.app-shell:has(.home-screen) .home-button{
+  width: min(230px, 72vw);
+  justify-self: center;
+  min-height:56px;
+}
+@media(min-width:900px){
+  .app-shell:has(.home-screen) .home-button{
+    width:230px;
+    justify-self:start;
+  }
+}
