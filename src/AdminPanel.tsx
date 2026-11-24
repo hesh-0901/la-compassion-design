@@ -250,7 +250,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-form-grid"><label>Prénom<input autoFocus value={adminForm.firstName} onChange={e=>setAdminForm(v=>({...v,firstName:e.target.value}))} required maxLength={60}/></label><label>Nom<input value={adminForm.lastName} onChange={e=>setAdminForm(v=>({...v,lastName:e.target.value}))} required maxLength={60}/></label></div>
         <label>Adresse e-mail<input type="email" autoComplete="off" value={adminForm.email} onChange={e=>setAdminForm(v=>({...v,email:e.target.value}))} required/></label>
         <label>Mot de passe temporaire<input type="password" autoComplete="new-password" minLength={8} value={adminForm.password} onChange={e=>setAdminForm(v=>({...v,password:e.target.value}))} required/><small>8 caractères minimum. Communique-le de manière sécurisée à la personne.</small></label>
-        <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={adminSaving} onClick={()=>setAdminModalOpen(false)}>Annuler</button><button className="admin-primary" type="submit" disabled={adminSaving}>{adminSaving?"Création…":"Créer le compte"}</button></div>
+        {error&&<p className="admin-error" role="alert">{error}</p>}\n        <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={adminSaving} onClick={()=>setAdminModalOpen(false)}>Annuler</button><button className="admin-primary" type="submit" disabled={adminSaving}>{adminSaving?"Création…":"Créer le compte"}</button></div>
       </form>
     </div>}
     {previewAsset&&<div className="admin-preview-overlay" onClick={()=>setPreviewAsset(null)}>
