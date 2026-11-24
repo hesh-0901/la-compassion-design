@@ -62,6 +62,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [error,setError] = useState(""), [notice,setNotice] = useState(""), [busy,setBusy] = useState(false);
   const [tab,setTab] = useState<Tab>("overview");
   const [sidebarCollapsed,setSidebarCollapsed] = useState(false);
+  const [currentPage,setCurrentPage] = useState(1);
+  const pageSize = 15;
   const [rows,setRows] = useState<Candidate[]>([]);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
@@ -105,6 +107,9 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       && (filterAssembly==="all" || valueOf(row,"assembly","extension")===filterAssembly)
       && (filterRam==="all" || valueOf(row,"ram")===filterRam);
   }),[rows,query,filterStatus,filterLevel,filterAssembly,filterRam]);
+  useEffect(() => { setCurrentPage(1); }, [query,filterStatus,filterLevel,filterAssembly,filterRam]);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const login = async (event:React.FormEvent) => {
     event.preventDefault(); setBusy(true); setError("");
     try { await signInWithEmailAndPassword(auth,email.trim(),password); setPassword(""); }
@@ -172,7 +177,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           <article><span>Liste d’attente</span><strong>{counts.waiting}</strong><small>Dossiers en attente</small></article>
         </div>
         <section className="admin-section"><div className="admin-section-head"><div><h2>Dossiers récents</h2><p>Les dernières candidatures enregistrées.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
-          <CandidateTable rows={rows.slice(0,6)} onOpen={openDetails}/>
+          <CandidateTable rows={rows.slice(0,6)} onOpen={openDetails} startNumber={0}/>
           {!rows.length&&<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucune candidature enregistrée pour le moment."}</p>}
         </section>
       </>}
@@ -186,7 +191,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           </div>
         </section>
         <section className="admin-section"><div className="admin-section-head"><div><h2>Liste des inscrits</h2><p>{filtered.length} dossier(s) correspondant aux filtres.</p></div></div>
-          <CandidateTable rows={filtered} onOpen={openDetails}/>
+          <CandidateTable rows={pageRows} onOpen={openDetails} startNumber={(currentPage - 1) * pageSize}/>
+          {filtered.length > pageSize && <nav className="admin-pagination" aria-label="Pagination des candidatures"><span>Page {currentPage} sur {pageCount} · {filtered.length} dossiers</span><div><button type="button" disabled={currentPage===1} onClick={()=>setCurrentPage(p=>Math.max(1,p-1))}>Précédent</button>{Array.from({length:pageCount},(_,i)=>i+1).map(page=><button type="button" key={page} className={page===currentPage?"active":""} onClick={()=>setCurrentPage(page)}>{page}</button>)}<button type="button" disabled={currentPage===pageCount} onClick={()=>setCurrentPage(p=>Math.min(pageCount,p+1))}>Suivant</button></div></nav>}
           {!filtered.length&&<p className="admin-empty">{busy?"Chargement…":"Aucun dossier ne correspond à cette recherche."}</p>}
         </section>
       </>}
@@ -201,7 +207,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </main>
     {selected&&<div className="admin-drawer-backdrop" onClick={()=>setSelected(null)}>
       <aside className="admin-drawer" onClick={e=>e.stopPropagation()}>
-        <div className="admin-drawer-head"><div><span className="admin-kicker">FICHE CANDIDAT</span><h2>{personName(selected)}</h2></div><button onClick={()=>setSelected(null)} aria-label="Fermer"><Icon name="close"/></button></div>
+        <div className="admin-drawer-head"><div className="admin-profile-heading">{(selected.profilePhotoUrl||selected.photoUrl) ? <img className="admin-profile-photo" src={selected.profilePhotoUrl||selected.photoUrl} alt={"Photo de "+personName(selected)}/> : <div className="admin-profile-placeholder">{personName(selected).slice(0,1).toUpperCase()}</div>}<div><span className="admin-kicker">FICHE CANDIDAT</span><h2>{personName(selected)}</h2><small>{valueOf(selected,"phone")}</small></div></div><button onClick={()=>setSelected(null)} aria-label="Fermer"><Icon name="close"/></button></div>
         <StatusPill value={selected.status}/>
         <div className="admin-detail-list">
           {[
@@ -224,8 +230,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </form></div>}
   </section>;
 }
-function CandidateTable({rows,onOpen}:{rows:Candidate[];onOpen:(row:Candidate)=>void}) {
-  return <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Candidat</th><th>Assemblée</th><th>Niveau</th><th>RAM</th><th>Statut</th><th>Date</th><th></th></tr></thead><tbody>{rows.map(row=><tr key={row.id} onClick={()=>onOpen(row)}><td><b>{personName(row)}</b><small>{row.phone||row.email||"—"}</small></td><td>{valueOf(row,"assembly","extension")}</td><td>{valueOf(row,"level")}</td><td>{valueOf(row,"ram")}</td><td><StatusPill value={row.status}/></td><td>{dateLabel(row.createdAt)}</td><td><button aria-label={"Ouvrir le dossier de "+personName(row)}><Icon name="chevron"/></button></td></tr>)}</tbody></table>
-    <div className="admin-mobile-list">{rows.map(row=><button className="admin-mobile-candidate" key={row.id} onClick={()=>onOpen(row)}><span><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")} · {valueOf(row,"level")}</small><small>{row.phone||row.email||"—"}</small></span><span><StatusPill value={row.status}/><Icon name="chevron"/></span></button>)}</div>
+function CandidateTable({rows,onOpen,startNumber=0}:{rows:Candidate[];onOpen:(row:Candidate)=>void;startNumber?:number}) {
+  return <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>N°</th><th>Candidat</th><th>Assemblée</th><th>Niveau</th><th>RAM</th><th>Statut</th><th>Date</th><th></th></tr></thead><tbody>{rows.map((row,index)=><tr key={row.id} onClick={()=>onOpen(row)}><td className="admin-row-number">{startNumber + index + 1}</td><td><b>{personName(row)}</b><small>{row.phone||row.email||"—"}</small></td><td>{valueOf(row,"assembly","extension")}</td><td>{valueOf(row,"level")}</td><td>{valueOf(row,"ram")}</td><td><StatusPill value={row.status}/></td><td>{dateLabel(row.createdAt)}</td><td><button aria-label={"Ouvrir le dossier de "+personName(row)}><Icon name="chevron"/></button></td></tr>)}</tbody></table>
+    <div className="admin-mobile-list">{rows.map((row,index)=><button className="admin-mobile-candidate" key={row.id} onClick={()=>onOpen(row)}><span className="admin-mobile-number">{startNumber + index + 1}</span><span><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")} · {valueOf(row,"level")}</small><small>{row.phone||row.email||"—"}</small></span><span><StatusPill value={row.status}/><Icon name="chevron"/></span></button>)}</div>
   </div>;
 }
