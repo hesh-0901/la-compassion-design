@@ -218,3 +218,20 @@
 /* A selected single-choice answer stays vivid; the remaining choices recede */
 .choice-group:has(.choice.selected) .choice:not(.selected){opacity:.42;background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.18);color:rgba(255,255,255,.62)}
 .choice{transition:opacity 150ms ease,background 150ms ease,border-color 150ms ease,color 150ms ease}
+
+
+/* Discreet administrator shortcut on the landing page */
+.app-shell:has(.home-screen) .admin-login-icon{
+  position:absolute;top:max(18px,env(safe-area-inset-top));right:22px;z-index:8;
+  width:38px;height:38px;display:grid;place-items:center;
+  padding:0;border:1px solid rgba(255,255,255,.16);border-radius:50%;
+  background:rgba(255,255,255,.035);color:rgba(255,255,255,.38);
+  opacity:.58;transition:opacity 160ms ease,background 160ms ease,color 160ms ease,border-color 160ms ease;
+}
+.app-shell:has(.home-screen) .admin-login-icon:hover,
+.app-shell:has(.home-screen) .admin-login-icon:focus-visible{
+  opacity:1;background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);border-color:rgba(255,255,255,.38);
+}
+.admin-placeholder-content{margin:auto 0;max-width:560px;padding:48px 0}
+.admin-placeholder-content h1{font-family:"Plus Jakarta Sans",Inter,sans-serif;font-size:clamp(30px,5vw,46px);line-height:1.12;letter-spacing:-.05em;margin:12px 0}
+.admin-placeholder-content p{max-width:480px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7}
