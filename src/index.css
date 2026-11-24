@@ -578,3 +578,92 @@
  .admin-app,.admin-app.sidebar-collapsed{display:block!important}
  .admin-sidebar{display:none!important}
 }
+
+
+
+/* ADMIN WORKSPACE — light canvas, compact left alignment */
+.admin-app{
+  width:100%!important;max-width:none!important;margin:0!important;padding:0 24px 40px 18px!important;
+  grid-template-columns:196px minmax(0,1fr)!important;gap:24px!important;
+  background:#f4f6fb!important;color:#17233f!important;
+}
+.admin-sidebar{
+  margin-left:-18px!important;padding:28px 14px 22px 18px!important;
+  background:linear-gradient(180deg,#0b1d63 0%,#102d91 100%)!important;
+  border-right:1px solid rgba(255,255,255,.12)!important;
+}
+.admin-main{min-width:0;padding:34px 18px 30px!important;color:#17233f!important}
+.admin-page-head h1{color:#17233f!important}
+.admin-page-head p,.admin-section-head p{color:#68758d!important}
+.admin-page-head .admin-kicker{color:#168bb8!important}
+.admin-refresh{border-color:#dce3ef!important;background:#fff!important;color:#263653!important;box-shadow:0 2px 8px rgba(25,42,75,.05)}
+.admin-summary article{border:1px solid #e2e8f2!important;background:#fff!important;box-shadow:0 3px 12px rgba(25,42,75,.035)}
+.admin-summary article span{color:#65738c!important}
+.admin-summary strong{color:#15254a!important}
+.admin-summary small{color:#7b879b!important}
+.admin-section{border:1px solid #e2e8f2!important;background:#fff!important;color:#17233f!important;box-shadow:0 3px 14px rgba(25,42,75,.035)}
+.admin-section-head h2{color:#17233f!important}
+.admin-text-action{color:#087ea8!important}
+.admin-table th{border-color:#e7ebf2!important;color:#7a879d!important}
+.admin-table td{border-color:#edf0f5!important;color:#34415b!important}
+.admin-table td:first-child b{color:#17233f!important}
+.admin-table td:first-child small{color:#7b879b!important}
+.admin-table tbody tr:hover{background:#f5f8fd!important}
+.admin-row-number{width:44px;color:#74819a!important;font-weight:700;font-variant-numeric:tabular-nums}
+.admin-empty{color:#77839a!important}
+.admin-toolbar{color:#263653}
+.admin-search{border-color:#dce3ef!important;background:#fff!important;color:#167fa8!important}
+.admin-search input{color:#17233f!important}
+.admin-search input::placeholder{color:#8a95a8!important}
+.admin-filters select,.admin-status-select select{border-color:#dce3ef!important;background:#fff!important;color:#263653!important}
+.admin-pagination{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 2px 8px;color:#77839a;font-size:11px}
+.admin-pagination>div{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.admin-pagination button{min-width:32px;height:32px;padding:0 9px;border:1px solid #dce3ef;border-radius:8px;background:#fff;color:#40506d;font-size:11px}
+.admin-pagination button.active{border-color:#1555c9;background:#1555c9;color:#fff}
+.admin-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.admin-mobile-candidate{color:#17233f!important;border-color:#edf0f5!important}
+.admin-mobile-candidate small{color:#77839a!important}
+.admin-mobile-number{width:25px;height:25px;flex:none;display:grid;place-items:center;border-radius:7px;background:#edf3ff;color:#3158a8;font-size:10px;font-weight:800}
+.admin-drawer-backdrop{background:rgba(17,29,52,.38)!important;backdrop-filter:blur(3px)}
+.admin-drawer{width:min( min(92vw, 820px), 820px)!important;padding:34px 42px!important;background:#fff!important;color:#17233f!important;border-left:1px solid #e5eaf2!important;box-shadow:-18px 0 60px rgba(23,35,63,.16)!important}
+.admin-drawer-head{align-items:center!important;margin-bottom:22px!important}
+.admin-drawer-head h2{color:#17233f!important;font-size:25px!important}
+.admin-drawer-head .admin-kicker{margin:0 0 6px!important;color:#168bb8!important}
+.admin-drawer-head>button{border-color:#e1e7f0!important;color:#4b5a73!important}
+.admin-profile-heading{display:flex;align-items:center;gap:18px;min-width:0}
+.admin-profile-photo,.admin-profile-placeholder{width:88px;height:88px;flex:none;border-radius:18px;object-fit:cover;background:#eaf0fb}
+.admin-profile-placeholder{display:grid;place-items:center;color:#3158a8;font-size:30px;font-weight:800}
+.admin-profile-heading small{display:block;margin-top:7px;color:#6c7890;font-size:12px}
+.admin-drawer>.admin-status{margin:2px 0 8px}
+.admin-detail-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:18px 0 24px!important}
+.admin-detail-list>div{padding:15px 0!important;border-bottom:1px solid #edf0f5!important}
+.admin-detail-list small{color:#7b879b!important}
+.admin-detail-list b{color:#263653!important;font-size:13px!important}
+.admin-file-link{color:#087ea8!important}
+.admin-status-select{color:#65738c!important}
+.admin-status-select select{height:46px!important}
+.admin-permission-note{color:#77839a!important}
+.admin-edit-card{background:#fff!important;color:#17233f!important;border-color:#e2e8f2!important}
+.admin-edit-card .admin-drawer-head h2{color:#17233f!important}
+.admin-edit-card label{color:#52617a!important}
+@media(max-width:900px){
+ .admin-app{grid-template-columns:176px minmax(0,1fr)!important;gap:18px!important;padding:0 14px 32px 0!important}
+ .admin-sidebar{margin-left:0!important;padding-left:14px!important}
+ .admin-main{padding:28px 8px 24px!important}
+ .admin-drawer{width:min(94vw,760px)!important;padding:28px!important}
+}
+@media(max-width:680px){
+ .admin-app,.admin-app.sidebar-collapsed{padding:0 16px 28px!important;background:#f4f6fb!important}
+ .admin-main{padding:0!important;color:#17233f!important}
+ .admin-mobile-head{border-color:#e2e8f2!important}
+ .admin-mobile-head .admin-brand{color:#17233f!important}
+ .admin-mobile-head .admin-brand b{color:#168bb8!important}
+ .admin-mobile-head>button{border-color:#dce3ef!important;color:#34415b!important}
+ .admin-page-head h1{color:#17233f!important}
+ .admin-drawer{width:100%!important;padding:22px 18px!important}
+ .admin-profile-photo,.admin-profile-placeholder{width:68px;height:68px;border-radius:14px}
+ .admin-profile-heading{gap:12px}
+ .admin-profile-heading h2{font-size:19px!important}
+ .admin-detail-list{grid-template-columns:1fr!important}
+ .admin-pagination{align-items:flex-start;flex-direction:column}
+}
