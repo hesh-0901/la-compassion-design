@@ -34,3 +34,98 @@
   .home-screen{gap:10px}
   .poster-frame{height:45dvh}
 }
+
+/* Final welcome composition: compact artwork + fixed bottom action area */
+.home-screen{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr) auto auto;
+  align-content:stretch;
+  justify-items:center;
+  gap:clamp(10px,1.8vh,16px);
+  width:100%;
+  max-width:520px;
+  height:100vh;
+  height:100svh;
+  min-height:0;
+  margin:0 auto;
+  overflow:hidden;
+  padding: max(14px,env(safe-area-inset-top)) 0 max(16px,env(safe-area-inset-bottom));
+}
+.poster-frame{
+  grid-row:1;
+  align-self:center;
+  width:min(100%,310px);
+  height:min(43svh,390px);
+  min-height:0;
+  aspect-ratio:auto;
+}
+.poster{max-height:100%;max-width:100%}
+.home-question{
+  grid-row:2;
+  align-self:end;
+  max-width:350px;
+  margin:0;
+  font-size:clamp(17px,4.5vw,21px);
+  line-height:1.22;
+}
+.home-button{
+  grid-row:3;
+  align-self:end;
+  width:min(100%,360px);
+  min-height:56px;
+  border-radius:14px;
+  background:#fff;
+  color:#1233A8;
+  border-color:rgba(255,255,255,.92);
+  box-shadow:0 8px 24px rgba(2,10,50,.16);
+}
+.home-button:hover{background:#EAF4FF;color:#0A1A5C;box-shadow:0 10px 26px rgba(2,10,50,.22)}
+@media(min-width:900px){
+  .home-screen{
+    max-width:1160px;
+    grid-template-columns:minmax(0,1fr) minmax(360px,.9fr);
+    grid-template-rows:minmax(0,1fr) auto;
+    align-content:center;
+    justify-items:start;
+    column-gap:clamp(54px,8vw,120px);
+    row-gap:22px;
+    padding:40px 28px;
+  }
+  .poster-frame{
+    grid-column:1;
+    grid-row:1 / span 2;
+    justify-self:center;
+    align-self:center;
+    width:min(100%,480px);
+    height:min(66svh,690px);
+  }
+  .home-question{
+    grid-column:2;
+    grid-row:1;
+    align-self:end;
+    max-width:540px;
+    font-size:clamp(34px,4vw,56px);
+    line-height:1.1;
+  }
+  .home-button{
+    grid-column:2;
+    grid-row:2;
+    align-self:start;
+    justify-self:start;
+    width:290px;
+    min-height:60px;
+  }
+}
+@media(max-width:480px){
+  .home-screen{gap:clamp(9px,1.5vh,13px);padding-left:0;padding-right:0}
+  .poster-frame{width:min(100%,280px);height:min(40svh,350px)}
+  .home-question{font-size:clamp(17px,4.4vw,20px);max-width:330px}
+  .home-button{width:100%;min-height:56px}
+}
+@media(max-height:650px) and (max-width:899px){
+  .home-screen{gap:8px}
+  .poster-frame{height:35svh;width:min(100%,260px)}
+  .home-question{font-size:17px}
+}
