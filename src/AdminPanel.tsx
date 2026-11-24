@@ -70,6 +70,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
   const [newStatus,setNewStatus] = useState<Status>("received");
   const [editOpen,setEditOpen] = useState(false);
+  const [previewAsset,setPreviewAsset] = useState<{name:string;label:string;url:string}|null>(null);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -200,10 +201,16 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Fichier CSV / Excel</b><p>Nom, téléphone, assemblée, niveau, RAM, statut et réponses du formulaire.</p></div><button className="admin-primary" disabled={!filtered.length} onClick={()=>downloadCsv(filtered)}><Icon name="download"/>Télécharger CSV</button></div>
         <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Rapport imprimable</b><p>Ouvre la boîte d’impression pour enregistrer la liste filtrée en PDF.</p></div><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer / PDF</button></div>
         <div className="admin-section-head admin-assets-head"><div><h2>Pièces jointes</h2><p>Photos de profil et créations transmises par les candidats.</p></div></div>
-        {assets.map((asset,i)=><a className="admin-asset" href={asset.url} target="_blank" rel="noreferrer" key={asset.url+i}><span><b>{asset.name}</b><small>{asset.label}</small></span><strong>Ouvrir le fichier ↗</strong></a>)}
+        {assets.map((asset,i)=><button type="button" className="admin-asset" onClick={()=>setPreviewAsset(asset)} key={asset.url+i}><span><b>{asset.name}</b><small>{asset.label}</small></span><strong>Afficher la pièce</strong></button>)}
         {!assets.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
     </main>
+    {previewAsset&&<div className="admin-preview-overlay" onClick={()=>setPreviewAsset(null)}>
+      <section className="admin-preview" role="dialog" aria-modal="true" aria-label="Aperçu de la pièce jointe" onClick={e=>e.stopPropagation()}>
+        <header className="admin-preview-head"><div><b>{previewAsset.name}</b><small>{previewAsset.label}</small></div><button type="button" onClick={()=>setPreviewAsset(null)} aria-label="Fermer l’aperçu" title="Fermer"><Icon name="close"/></button></header>
+        <div className="admin-preview-content">{/\\.(png|jpe?g|webp|gif)(\\?|$)/i.test(previewAsset.url) ? <img src={previewAsset.url} alt={previewAsset.label}/> : <iframe src={previewAsset.url} title={previewAsset.label}/>}</div>
+      </section>
+    </div>}
     {selected&&<div className="admin-drawer-backdrop" onClick={()=>setSelected(null)}>
       <aside className="admin-drawer" onClick={e=>e.stopPropagation()}>
         <div className="admin-drawer-head"><div className="admin-profile-heading">{(selected.profilePhotoUrl||selected.photoUrl) ? <img className="admin-profile-photo" src={selected.profilePhotoUrl||selected.photoUrl} alt={"Photo de "+personName(selected)}/> : <div className="admin-profile-placeholder">{personName(selected).slice(0,1).toUpperCase()}</div>}<div><span className="admin-kicker">FICHE CANDIDAT</span><h2>{personName(selected)}</h2><small>{valueOf(selected,"phone")}</small></div></div><button onClick={()=>setSelected(null)} aria-label="Fermer"><Icon name="close"/></button></div>
@@ -216,7 +223,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             ["Date de candidature",dateLabel(selected.createdAt)]
           ].map(([label,value])=><div key={label}><small>{label}</small><b>{Array.isArray(value)?value.join(", "):String(value)}</b></div>)}
         </div>
-        {selected.portfolioFileUrl||selected.portfolioUrl?<a className="admin-file-link" href={selected.portfolioFileUrl||selected.portfolioUrl} target="_blank" rel="noreferrer">Consulter la création jointe ↗</a>:null}
+        {selected.portfolioFileUrl||selected.portfolioUrl?<button type="button" className="admin-file-link" onClick={()=>setPreviewAsset({name:personName(selected),label:"Création jointe",url:selected.portfolioFileUrl||selected.portfolioUrl||""})}>Consulter la création jointe</button>:null}
         <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
         <button className="admin-primary admin-full" onClick={()=>void changeStatus(selected,newStatus)}>Enregistrer le statut</button>
         {role==="superAdmin"&&<button className="admin-secondary admin-full" onClick={()=>openEdit(selected)}><Icon name="edit"/> Modifier les informations</button>}
