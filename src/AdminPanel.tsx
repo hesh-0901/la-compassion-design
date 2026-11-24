@@ -151,14 +151,14 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </form>
   </section>;
 
-  return <section className="admin-app">
+  return <section className={"admin-app" + (sidebarCollapsed ? " sidebar-collapsed" : "")}>
     <aside className="admin-sidebar">
-      <div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div>
+      <div className="admin-sidebar-top"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span className="admin-brand-name">LA COMPASSION <b>DESIGN</b></span></div><button className="admin-collapse" type="button" onClick={()=>setSidebarCollapsed(value=>!value)} aria-label={sidebarCollapsed?"Déplier le menu":"Replier le menu"} title={sidebarCollapsed?"Déplier le menu":"Replier le menu"}><Icon name="chevron"/></button></div>
       <div className="admin-sidebar-label">ESPACE DE TRAVAIL</div>
-      <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")}><Icon name="grid"/>Vue générale</button>
-      <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")}><Icon name="people"/>Candidatures <span className="admin-nav-count">{rows.length}</span></button>
-      <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")}><Icon name="download"/>Téléchargements</button>
-      <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
+      <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
+      <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
+      <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
+      <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
