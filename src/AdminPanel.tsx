@@ -78,6 +78,9 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [adminModalOpen,setAdminModalOpen] = useState(false);
   const [adminForm,setAdminForm] = useState({firstName:"",lastName:"",email:"",password:""});
   const [adminSaving,setAdminSaving] = useState(false);
+  const [selectedAdmin,setSelectedAdmin] = useState<AdminRecord|null>(null);
+  const [adminEditForm,setAdminEditForm] = useState({firstName:"",lastName:"",active:true});
+  const [adminEditSaving,setAdminEditSaving] = useState(false);
   const [showAdminPassword,setShowAdminPassword] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
@@ -141,6 +144,27 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setSelected(prev=>prev?.id===candidate.id?{...prev,status}:prev);
     } catch { setError("Modification refusée. Les règles Firestore doivent autoriser cette action."); }
   };
+  const openAdminDetails = (item:AdminRecord) => {
+    setSelectedAdmin(item);
+    setAdminEditForm({firstName:item.firstName??"",lastName:item.lastName??"",active:item.active===true});
+    setError("");
+  };
+  const saveAdminDetails = async (event:React.FormEvent) => {
+    event.preventDefault();
+    if(role!=="superAdmin" || !selectedAdmin) return;
+    const firstName=adminEditForm.firstName.trim(), lastName=adminEditForm.lastName.trim();
+    if(!firstName || !lastName){setError("Le prénom et le nom sont obligatoires.");return;}
+    setAdminEditSaving(true);setError("");
+    try{
+      const patch={firstName,lastName,active:adminEditForm.active};
+      await updateDoc(doc(db,"admins",selectedAdmin.id),patch);
+      setAdmins(prev=>prev.map(item=>item.id===selectedAdmin.id?{...item,...patch}:item));
+      setSelectedAdmin({...selectedAdmin,...patch});
+    }catch{
+      setError("Modification impossible. Vérifie les règles Firestore de la collection admins.");
+    }finally{setAdminEditSaving(false);}
+  };
+
   const createAdmin = async (event:React.FormEvent) => {
     event.preventDefault();
     if(role!=="superAdmin" || !user) return;
@@ -276,10 +300,25 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       </section>}
       {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
         <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>Seul le super administrateur peut créer de nouveaux comptes.</p></div><button className="admin-primary" onClick={()=>{setError("");setAdminModalOpen(true)}}>＋ Créer un administrateur</button></div>
-        <div className="admin-admin-list">{admins.map(item=><article className="admin-admin-row" key={item.id}><span className="admin-admin-avatar">{(item.firstName||item.email||"A").slice(0,1).toUpperCase()}</span><div className="admin-admin-info"><b>{[item.firstName,item.lastName].filter(Boolean).join(" ")||"Administrateur"}</b><small>{item.email||"—"}</small></div><span className={"admin-role-pill "+(item.role==="superAdmin"?"super":"")}>{item.role==="superAdmin"?"Super administrateur":"Administrateur"}</span><span className={"admin-active-pill "+(item.active?"active":"")}>{item.active?"Actif":"Désactivé"}</span></article>)}</div>
+        <div className="admin-admin-list">{admins.map(item=><article className="admin-admin-row" key={item.id}><span className="admin-admin-avatar">{(item.firstName||item.email||"A").slice(0,1).toUpperCase()}</span><div className="admin-admin-info"><b>{[item.firstName,item.lastName].filter(Boolean).join(" ")||"Administrateur"}</b><small>{item.email||"—"}</small></div><span className={"admin-role-pill "+(item.role==="superAdmin"?"super":"")}>{item.role==="superAdmin"?"Super administrateur":"Administrateur"}</span><span className={"admin-active-pill "+(item.active?"active":"")}>{item.active?"Actif":"Désactivé"}</span><button type="button" className="admin-admin-open" onClick={()=>openAdminDetails(item)}>Voir / Modifier</button></article>)}</div>
         {!admins.length&&<p className="admin-empty">Aucun administrateur trouvé.</p>}
       </section>}
     </main>
+    {selectedAdmin&&role==="superAdmin"&&<div className="admin-edit-overlay" onClick={()=>!adminEditSaving&&setSelectedAdmin(null)}>
+      <form className="admin-edit-card admin-create-admin-modal" onSubmit={saveAdminDetails} onClick={e=>e.stopPropagation()}>
+        <div className="admin-drawer-head"><div><span className="admin-kicker">FICHE ADMINISTRATEUR</span><h2>{[selectedAdmin.firstName,selectedAdmin.lastName].filter(Boolean).join(" ")||"Administrateur"}</h2></div><button type="button" onClick={()=>setSelectedAdmin(null)} disabled={adminEditSaving} aria-label="Fermer"><Icon name="close"/></button></div>
+        <p className="admin-modal-description">Consulte et modifie les informations du compte administrateur.</p>
+        <div className="admin-form-grid">
+          <label>Prénom<input value={adminEditForm.firstName} onChange={e=>setAdminEditForm(v=>({...v,firstName:e.target.value}))} required maxLength={60}/></label>
+          <label>Nom<input value={adminEditForm.lastName} onChange={e=>setAdminEditForm(v=>({...v,lastName:e.target.value}))} required maxLength={60}/></label>
+        </div>
+        <label>Adresse e-mail de connexion<input value={selectedAdmin.email??""} readOnly/><small>L’adresse de connexion est gérée par Firebase Authentication et ne peut pas être modifiée ici.</small></label>
+        <label>Rôle<input value={selectedAdmin.role==="superAdmin"?"Super administrateur":"Administrateur"} readOnly/></label>
+        <label className="admin-admin-active-toggle"><input type="checkbox" checked={adminEditForm.active} onChange={e=>setAdminEditForm(v=>({...v,active:e.target.checked}))}/> Compte actif — autoriser l’accès à l’espace admin</label>
+        {error&&<p className="admin-error" role="alert">{error}</p>}
+        <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={adminEditSaving} onClick={()=>setSelectedAdmin(null)}>Fermer</button><button className="admin-primary" type="submit" disabled={adminEditSaving}>{adminEditSaving?"Enregistrement…":"Enregistrer les modifications"}</button></div>
+      </form>
+    </div>}
     {adminModalOpen&&role==="superAdmin"&&<div className="admin-edit-overlay" onClick={()=>!adminSaving&&setAdminModalOpen(false)}>
       <form className="admin-edit-card admin-create-admin-modal" onSubmit={createAdmin} onClick={e=>e.stopPropagation()}>
         <div className="admin-drawer-head"><div><span className="admin-kicker">ACCÈS ET AUTORISATIONS</span><h2>Créer un administrateur</h2></div><button type="button" onClick={()=>setAdminModalOpen(false)} disabled={adminSaving} aria-label="Fermer"><Icon name="close"/></button></div>
