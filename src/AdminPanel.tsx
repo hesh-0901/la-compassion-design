@@ -6,7 +6,8 @@ import { auth, db } from "./firebase";
 type Role = "superAdmin" | "admin";
 type Status = "received" | "review" | "accepted" | "waiting" | "refused";
 type Candidate = Record<string, any> & { id: string; fullName?: string; name?: string; email?: string; phone?: string; status?: string };
-type Tab = "overview" | "candidates" | "downloads";
+type Tab = "overview" | "candidates" | "downloads" | "admins";
+type AdminRecord = {id:string;firstName?:string;lastName?:string;email?:string;role?:Role;active?:boolean;createdAt?:any};
 const statusOptions: { value: Status; label: string }[] = [
   { value: "received", label: "Reçue" }, { value: "review", label: "En étude" },
   { value: "accepted", label: "Acceptée" }, { value: "waiting", label: "Liste d’attente" },
@@ -72,6 +73,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [editOpen,setEditOpen] = useState(false);
   const [previewAsset,setPreviewAsset] = useState<{name:string;label:string;url:string}|null>(null);
   const [previewZoom,setPreviewZoom] = useState(1);
+  const [admins,setAdmins] = useState<AdminRecord[]>([]);
+  const [adminModalOpen,setAdminModalOpen] = useState(false);
+  const [adminForm,setAdminForm] = useState({firstName:"",lastName:"",email:"",password:""});
+  const [adminSaving,setAdminSaving] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -82,7 +87,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       else { setError("Ce compte n’est pas autorisé à accéder à cet espace."); await signOut(auth); }
     } catch { setError("Vérification des droits impossible. Contrôle les règles Firestore."); await signOut(auth); }
   }),[]);
-  const loadCandidates = async () => {
+  const loadAdmins = async () => {\n    if(role!=="superAdmin") return;\n    try { const snapshot=await getDocs(collection(db,"admins")); setAdmins(snapshot.docs.map(item=>({id:item.id,...item.data()})) as AdminRecord[]); }\n    catch { setError("Impossible de charger les administrateurs. Vérifie les règles Firestore."); }\n  };\n  const loadCandidates = async () => {
     setBusy(true); setError("");
     try {
       const snapshot = await getDocs(collection(db,"candidatures"));
@@ -95,7 +100,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Impossible de lire les candidatures. Vérifie la collection « candidatures » et ses règles d’accès."); }
     finally { setBusy(false); }
   };
-  useEffect(() => { if(user && role) void loadCandidates(); },[user,role]);
+  useEffect(() => { if(user && role) void loadCandidates(); if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
   const counts = useMemo(() => ({
     total:rows.length, accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
@@ -124,6 +129,32 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,status}:row));
       setSelected(prev=>prev?.id===candidate.id?{...prev,status}:prev);
     } catch { setError("Modification refusée. Les règles Firestore doivent autoriser cette action."); }
+  };
+  const createAdmin = async (event:React.FormEvent) => {
+    event.preventDefault();
+    if(role!=="superAdmin" || !user) return;
+    const firstName=adminForm.firstName.trim(), lastName=adminForm.lastName.trim(), adminEmail=adminForm.email.trim().toLowerCase();
+    if(!firstName || !lastName || !adminEmail || adminForm.password.length<8){setError("Renseigne tous les champs. Le mot de passe doit contenir au moins 8 caractères.");return;}
+    setAdminSaving(true);setError("");
+    let secondaryUser:User|null=null;
+    let secondaryApp:ReturnType<typeof initializeApp>|null=null;
+    try {
+      secondaryApp=initializeApp(firebaseApp.options,"compassion-admin-creator");
+      const secondaryAuth=getAuth(secondaryApp);
+      const credential=await createUserWithEmailAndPassword(secondaryAuth,adminEmail,adminForm.password);
+      secondaryUser=credential.user;
+      await setDoc(doc(db,"admins",credential.user.uid),{firstName,lastName,email:adminEmail,role:"admin",active:true,createdAt:serverTimestamp(),createdBy:user.uid});
+      setAdminForm({firstName:"",lastName:"",email:"",password:""});
+      setAdminModalOpen(false);
+      await loadAdmins();
+    } catch (err:any) {
+      if(secondaryUser){try{await deleteUser(secondaryUser);}catch{/* Le compte peut nécessiter un nettoyage manuel dans Firebase Auth. */}}
+      const code=err?.code;
+      setError(code==="auth/email-already-in-use"?"Cette adresse e-mail possède déjà un compte.":code==="auth/weak-password"?"Le mot de passe doit contenir au moins 8 caractères.":code==="auth/invalid-email"?"L'adresse e-mail est invalide.":"Création impossible. Vérifie Authentication et les règles Firestore de la collection admins.");
+    } finally {
+      if(secondaryApp){try{await deleteApp(secondaryApp);}catch{/* Nettoyage de l'application secondaire. */}}
+      setAdminSaving(false);
+    }
   };
   const openDetails = (row:Candidate) => { setSelected(row); setNewStatus(statusOf(row.status)); };
   const openEdit = (row:Candidate) => {
@@ -164,11 +195,12 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
       <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
       <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
+      {role==="superAdmin"&&<button className={tab==="admins"?"selected":""} onClick={()=>setTab("admins")} title="Gestion des administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>}
       <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
-      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":"Téléchargements"}</h1><p>Suivi et gestion des dossiers de candidature.</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
+      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary">
@@ -205,7 +237,22 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         {assets.map((asset,i)=><button type="button" className="admin-asset" onClick={()=>setPreviewAsset(asset)} key={asset.url+i}><span><b>{asset.name}</b><small>{asset.label}</small></span><strong>Afficher la pièce</strong></button>)}
         {!assets.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
+      {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
+        <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>Seul le super administrateur peut créer de nouveaux comptes.</p></div><button className="admin-primary" onClick={()=>{setError("");setAdminModalOpen(true)}}>＋ Créer un administrateur</button></div>
+        <div className="admin-admin-list">{admins.map(item=><article className="admin-admin-row" key={item.id}><span className="admin-admin-avatar">{(item.firstName||item.email||"A").slice(0,1).toUpperCase()}</span><div className="admin-admin-info"><b>{[item.firstName,item.lastName].filter(Boolean).join(" ")||"Administrateur"}</b><small>{item.email||"—"}</small></div><span className={"admin-role-pill "+(item.role==="superAdmin"?"super":"")}>{item.role==="superAdmin"?"Super administrateur":"Administrateur"}</span><span className={"admin-active-pill "+(item.active?"active":"")}>{item.active?"Actif":"Désactivé"}</span></article>)}</div>
+        {!admins.length&&<p className="admin-empty">Aucun administrateur trouvé.</p>}
+      </section>}
     </main>
+    {adminModalOpen&&role==="superAdmin"&&<div className="admin-edit-overlay" onClick={()=>!adminSaving&&setAdminModalOpen(false)}>
+      <form className="admin-edit-card admin-create-admin-modal" onSubmit={createAdmin} onClick={e=>e.stopPropagation()}>
+        <div className="admin-drawer-head"><div><span className="admin-kicker">ACCÈS ET AUTORISATIONS</span><h2>Créer un administrateur</h2></div><button type="button" onClick={()=>setAdminModalOpen(false)} disabled={adminSaving} aria-label="Fermer"><Icon name="close"/></button></div>
+        <p className="admin-modal-description">Ce compte aura accès aux candidatures et aux téléchargements, sans les droits du super administrateur.</p>
+        <div className="admin-form-grid"><label>Prénom<input autoFocus value={adminForm.firstName} onChange={e=>setAdminForm(v=>({...v,firstName:e.target.value}))} required maxLength={60}/></label><label>Nom<input value={adminForm.lastName} onChange={e=>setAdminForm(v=>({...v,lastName:e.target.value}))} required maxLength={60}/></label></div>
+        <label>Adresse e-mail<input type="email" autoComplete="off" value={adminForm.email} onChange={e=>setAdminForm(v=>({...v,email:e.target.value}))} required/></label>
+        <label>Mot de passe temporaire<input type="password" autoComplete="new-password" minLength={8} value={adminForm.password} onChange={e=>setAdminForm(v=>({...v,password:e.target.value}))} required/><small>8 caractères minimum. Communique-le de manière sécurisée à la personne.</small></label>
+        <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={adminSaving} onClick={()=>setAdminModalOpen(false)}>Annuler</button><button className="admin-primary" type="submit" disabled={adminSaving}>{adminSaving?"Création…":"Créer le compte"}</button></div>
+      </form>
+    </div>}
     {previewAsset&&<div className="admin-preview-overlay" onClick={()=>setPreviewAsset(null)}>
       <section className="admin-preview" role="dialog" aria-modal="true" aria-label="Aperçu de la pièce jointe" onClick={e=>e.stopPropagation()}>
         <header className="admin-preview-head"><div><b>{previewAsset.name}</b><small>{previewAsset.label}</small></div><div className="admin-preview-actions">{(previewAsset.label.toLowerCase().includes("photo") || previewAsset.url.includes("/image/upload/") || [".jpg",".jpeg",".png",".webp",".gif"].some(ext=>previewAsset.url.toLowerCase().includes(ext))) && <><button type="button" onClick={()=>setPreviewZoom(z=>Math.max(.25,Number((z-.25).toFixed(2))))} disabled={previewZoom<=.25} aria-label="Dézoomer" title="Dézoomer">−</button><span>{Math.round(previewZoom*100)}%</span><button type="button" onClick={()=>setPreviewZoom(z=>Math.min(4,Number((z+.25).toFixed(2))))} disabled={previewZoom>=4} aria-label="Zoomer" title="Zoomer">+</button><button type="button" onClick={()=>setPreviewZoom(1)} title="Taille réelle">100 %</button></>}<button type="button" onClick={()=>setPreviewAsset(null)} aria-label="Fermer l’aperçu" title="Fermer"><Icon name="close"/></button></div></header>
