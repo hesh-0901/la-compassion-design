@@ -25,17 +25,57 @@ const personName = (row: Candidate) => row.fullName || row.name || "Sans nom";
 const dateLabel = (value: any) => value?.toDate ? value.toDate().toLocaleDateString("fr-FR") : value ? new Date(value).toLocaleDateString("fr-FR") : "—";
 const valueOf = (row: Candidate, ...keys: string[]) => keys.map(key => row[key]).find(value => value !== undefined && value !== null && value !== "") ?? "—";
 
-function csvCell(value: unknown) {
-  const text = Array.isArray(value) ? value.join(", ") : value == null ? "" : String(value);
-  return '"' + text.replace(/"/g, '""') + '"';
+function xmlEscape(value: unknown) {
+  return String(value ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
 }
-function downloadCsv(rows: Candidate[]) {
-  const fields = ["fullName","name","phone","email","area","age","attendance","extension","assembly","department","level","tools","portfolio","ram","availability","motivation","commitment","status"];
-  const csv = [fields.join(","), ...rows.map(row => fields.map(field => csvCell(row[field])).join(","))].join("\r\n");
-  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a"); anchor.href = url; anchor.download = "la-compassion-design-candidatures.csv"; anchor.click();
-  URL.revokeObjectURL(url);
+function excelColumn(index:number){
+  let n=index+1, name="";
+  while(n){const rem=(n-1)%26;name=String.fromCharCode(65+rem)+name;n=Math.floor((n-1)/26);}
+  return name;
+}
+function crc32(bytes:Uint8Array){
+  let crc=0xffffffff;
+  for(const byte of bytes){crc^=byte;for(let k=0;k<8;k++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);}
+  return (crc^0xffffffff)>>>0;
+}
+function zipStore(files:{name:string;content:string}[]){
+  const encoder=new TextEncoder(), local:Uint8Array[]=[], central:Uint8Array[]=[];
+  let offset=0;
+  const u16=(v:number)=>[v&255,(v>>>8)&255],u32=(v:number)=>[v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
+  for(const file of files){
+    const name=encoder.encode(file.name),data=encoder.encode(file.content),crc=crc32(data);
+    const header=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...name]);
+    local.push(header,data);
+    const entry=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0),...u32(crc),...u32(data.length),...u32(data.length),...u16(name.length),...u16(0),...u16(0),...u16(0),...u32(0),...u32(offset),...name]);
+    central.push(entry);offset+=header.length+data.length;
+  }
+  const centralSize=central.reduce((sum,item)=>sum+item.length,0);
+  const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(centralSize),...u32(offset),...u16(0)]);
+  return new Blob([...local,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+function downloadXlsx(rows:Candidate[]){
+  const columns:[string,(row:Candidate)=>unknown][]=[
+    ["Nom complet",r=>valueOf(r,"fullName","name")],["Genre",r=>valueOf(r,"gender")],["Téléphone",r=>valueOf(r,"phone")],["E-mail",r=>valueOf(r,"email")],
+    ["Commune / quartier",r=>valueOf(r,"area","commune")],["Tranche d’âge",r=>valueOf(r,"age")],["Membre de l’Église",r=>valueOf(r,"member")],
+    ["Ancienneté / présence",r=>valueOf(r,"attendance")],["Assemblée / extension",r=>valueOf(r,"assembly","extension")],["Département",r=>valueOf(r,"department")],
+    ["Maturité spirituelle",r=>valueOf(r,"maturity")],["Niveau design",r=>valueOf(r,"level")],["Outils",r=>valueOf(r,"tools")],
+    ["Lien portfolio",r=>valueOf(r,"portfolio")],["Fichier portfolio",r=>valueOf(r,"portfolioFileUrl","portfolioUrl")],["Photo de profil",r=>valueOf(r,"profilePhotoUrl","photoUrl")],
+    ["Ordinateur / RAM",r=>valueOf(r,"ram")],["Disponibilité",r=>valueOf(r,"availability")],["Motivation",r=>valueOf(r,"motivation")],
+    ["Engagement département Design",r=>valueOf(r,"commitment")],["Statut",r=>statusOptions.find(s=>s.value===statusOf(r.status))?.label??"Reçue"],
+    ["Date de candidature",r=>dateLabel(r.createdAt)]
+  ];
+  const all=[columns.map(c=>c[0]),...rows.map(row=>columns.map(([,get])=>{const v=get(row);return Array.isArray(v)?v.join(", "):v instanceof Date?v.toLocaleString("fr-FR"):String(v??"");}))];
+  const sheetRows=all.map((line,ri)=>'<row r="'+(ri+1)+'">'+line.map((value,ci)=>'<c r="'+excelColumn(ci)+(ri+1)+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEscape(value)+'</t></is></c>').join("")+'</row>').join("");
+  const last=excelColumn(columns.length-1);
+  const files=[
+    {name:"[Content_Types].xml",content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'},
+    {name:"_rels/.rels",content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+    {name:"xl/workbook.xml",content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Candidatures" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+    {name:"xl/_rels/workbook.xml.rels",content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'},
+    {name:"xl/worksheets/sheet1.xml",content:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:'+last+all.length+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/><sheetData>'+sheetRows+'</sheetData><autoFilter ref="A1:'+last+all.length+'"/></worksheet>'}
+  ];
+  const blob=zipStore(files),url=URL.createObjectURL(blob),anchor=document.createElement("a");
+  anchor.href=url;anchor.download="la-compassion-design-candidatures.xlsx";anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "filter" | "refresh" | "logout" | "chevron" | "close" | "edit" | "check" | "clock" | "file" }) {
   const paths: Record<string,string> = {
@@ -271,9 +311,16 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </section>
       </>}
       {tab==="downloads"&&<section className="admin-section admin-downloads">
-        <div className="admin-section-head"><div><h2>Exporter les candidatures</h2><p>Les filtres actifs de la liste sont appliqués à l’export.</p></div></div>
-        <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Fichier CSV / Excel</b><p>Nom, téléphone, assemblée, niveau, RAM, statut et réponses du formulaire.</p></div><button className="admin-primary" disabled={!filtered.length} onClick={()=>downloadCsv(filtered)}><Icon name="download"/>Télécharger CSV</button></div>
-        <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Rapport imprimable</b><p>Ouvre la boîte d’impression pour enregistrer la liste filtrée en PDF.</p></div><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer / PDF</button></div>
+        <div className="admin-export-header">
+          <div><span className="admin-export-eyebrow">EXPORT DES DONNÉES</span><h2>Liste des candidats</h2><p>Export complet des informations soumises dans le formulaire d’inscription.</p></div>
+          <div className="admin-export-total"><b>{filtered.length}</b><span>candidat(s) à exporter</span></div>
+        </div>
+        <div className="admin-export-main">
+          <div className="admin-export-file-icon"><Icon name="file"/></div>
+          <div className="admin-export-copy"><b>Classeur Excel (.xlsx)</b><p>Un candidat par ligne, toutes les réponses, les coordonnées et les liens vers les pièces jointes.</p><small>{filtered.length} dossier(s) · {Object.keys(filtered[0]??{}).length||0} champs enregistrés au maximum</small></div>
+          <button className="admin-primary admin-xlsx-button" disabled={!filtered.length} onClick={()=>downloadXlsx(filtered)}><Icon name="download"/> Télécharger Excel</button>
+        </div>
+        <div className="admin-export-footer"><span>Les filtres appliqués aux candidatures sont pris en compte dans l’export.</span><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer la liste / PDF</button></div>
         <div className="admin-section-head admin-assets-head"><div><h2>Documents des candidats</h2><p>Chaque dossier regroupe les pièces jointes sous le nom du candidat.</p></div><span className="admin-assets-count">{assetsByCandidate.length} dossier(s)</span></div>
         <div className="admin-download-groups">
           {assetsByCandidate.map(({candidate,files})=>{
