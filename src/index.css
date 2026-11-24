@@ -827,3 +827,37 @@
 .admin-profile-photo-trigger .admin-profile-photo{display:block;width:100%;height:100%;object-fit:cover;transition:transform .16s ease}
 .admin-profile-photo-trigger:hover .admin-profile-photo{transform:scale(1.06)}
 @media(max-width:680px){.admin-profile-photo-trigger{width:68px;height:68px;border-radius:14px}}
+
+
+
+/* Super administrator — user management workspace */
+.admin-manage-admins .admin-section-head{align-items:center}
+.admin-admin-list{display:flex;flex-direction:column}
+.admin-admin-row{display:flex;align-items:center;gap:14px;min-height:72px;padding:12px 2px;border-bottom:1px solid #edf0f5}
+.admin-admin-avatar{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:#eaf1ff;color:#2454a5;font-size:14px;font-weight:800}
+.admin-admin-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.admin-admin-info b{color:#203252;font-size:12px}
+.admin-admin-info small{color:#78869b;font-size:11px}
+.admin-role-pill,.admin-active-pill{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;background:#eef3fb;color:#536783;font-size:10px;font-weight:700;white-space:nowrap}
+.admin-role-pill.super{background:#fff4d8;color:#986a08}
+.admin-active-pill.active{background:#e7f8ef;color:#16804b}
+.admin-edit-overlay{z-index:1300}
+.admin-create-admin-modal{width:min(92vw,520px)!important;max-height:min(90dvh,760px);overflow:auto;padding:28px!important;border:1px solid #e4eaf3!important;border-radius:16px!important;background:#fff!important;box-shadow:0 24px 80px rgba(13,29,59,.24)!important}
+.admin-create-admin-modal .admin-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.admin-create-admin-modal .admin-drawer-head h2{margin:4px 0 0;color:#172b50;font-size:22px}
+.admin-create-admin-modal .admin-drawer-head>button{width:34px;height:34px;display:grid;place-items:center;border:1px solid #e0e6ef;border-radius:9px;background:#fff;color:#40516d}
+.admin-modal-description{margin:0 0 20px;color:#71809a;font-size:12px;line-height:1.6}
+.admin-create-admin-modal>label,.admin-form-grid label{display:flex;flex-direction:column;gap:7px;margin:0 0 15px;color:#40516d;font-size:11px;font-weight:700}
+.admin-create-admin-modal input{width:100%;height:43px;padding:0 12px;border:1px solid #dce3ef;border-radius:9px;background:#fff;color:#203252;font:inherit;font-size:13px;outline:none}
+.admin-create-admin-modal input:focus{border-color:#2878d7;box-shadow:0 0 0 3px rgba(40,120,215,.1)}
+.admin-create-admin-modal label small{color:#8793a6;font-size:10px;font-weight:400}
+.admin-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.admin-create-modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.admin-create-modal-actions button{min-height:40px;padding:0 16px}
+@media(max-width:680px){
+ .admin-admin-row{gap:8px;flex-wrap:wrap}
+ .admin-admin-info{min-width:calc(100% - 60px)}
+ .admin-role-pill,.admin-active-pill{margin-left:46px}
+ .admin-form-grid{grid-template-columns:1fr;gap:0}
+ .admin-create-admin-modal{padding:20px!important}
+}
