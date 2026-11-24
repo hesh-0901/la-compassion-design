@@ -65,7 +65,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
-  const [newStatus,setNewStatus] = useState<Status>("received");\n  const [editOpen,setEditOpen] = useState(false);
+  const [newStatus,setNewStatus] = useState<Status>("received");
+  const [editOpen,setEditOpen] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
