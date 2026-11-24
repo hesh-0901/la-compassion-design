@@ -48,7 +48,6 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [showMemberNotice, setShowMemberNotice] = useState(false);
   const [showRamNotice, setShowRamNotice] = useState(false);
-  const [showUnavailable, setShowUnavailable] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
@@ -84,6 +83,7 @@ export default function App() {
       return typeof value === "string" ? !value.trim() : typeof value === "boolean" ? !value : false;
     }).map(String);
     if (part === 0 && phoneDigits.length !== 9) missing.push("phone");
+    if (part === 1 && form.member !== "Oui") missing.push("member");
     if (part === 2 && !profilePhoto) missing.push("profilePhoto");
     setErrors(missing);
     return missing.length === 0;
@@ -142,8 +142,7 @@ export default function App() {
         status: "received",
         createdAt: serverTimestamp(),
       });
-      setShowUnavailable(false);
-      go("confirmation");
+        go("confirmation");
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Une erreur est survenue pendant l’envoi.");
     } finally {
@@ -231,8 +230,8 @@ export default function App() {
         </div>}
 
         {part === 1 && <div className="fields">
-          <Field label="Es-tu membre de l’Église de la Compassion ?" error={errors.includes("member") ? "Choisis une réponse." : ""}><Choice value={form.member} onChange={v => { update("member", v); setShowMemberNotice(v === "Non"); }} options={["Oui", "Non"]} /></Field>
-          {showMemberNotice && <Notice>Cette masterclass est réservée aux membres de l’Église de la Compassion. Tu peux contacter le département Design pour plus d’informations.</Notice>}
+          <Field label="Es-tu membre de l’Église de la Compassion ?" error={errors.includes("member") ? "Cette masterclass est réservée aux membres de l’Église de la Compassion." : ""}><Choice value={form.member} onChange={v => { update("member", v); setShowMemberNotice(v === "Non"); }} options={["Oui", "Non"]} /></Field>
+          {showMemberNotice && <Notice>Cette masterclass est réservée aux membres de l’Église de la Compassion. Tu ne peux pas poursuivre ta candidature si tu n’es pas membre.</Notice>}
           <Field label="Depuis quand fréquentes-tu l’église ?" error={errors.includes("attendance") ? "Précise depuis quand." : ""}><select value={form.attendance} onChange={e => update("attendance", e.target.value)}><option value="">Sélectionner</option><option>Moins d’un an</option><option>1 à 3 ans</option><option>3 à 5 ans</option><option>Plus de 5 ans</option></select></Field>
           <Field label="Dans quelle extension es-tu ?" error={errors.includes("extension") ? "Choisis ton extension." : ""}><select value={form.extension} onChange={e => update("extension", e.target.value)}><option value="">Sélectionner une extension</option>{["Ville (centrale)", "Golf plateau 1", "Kimbeimbe", "Tabac Congo", "Golf Faustin"].map(x => <option key={x}>{x}</option>)}</select></Field>
           <Field label="Dans quel département sers-tu ?" error={errors.includes("department") ? "Choisis ton département." : ""}><select value={form.department} onChange={e => update("department", e.target.value)}><option value="">Sélectionner un département</option>{["Presse", "Chorale", "Accueil", "Intercession", "Ecodim", "Aucun", "Autres"].map(x => <option key={x}>{x}</option>)}</select></Field>
@@ -249,7 +248,7 @@ export default function App() {
           <Field label="Pourquoi veux-tu suivre cette Masterclass ?" error={errors.includes("motivation") ? "Choisis une motivation." : ""}><select value={form.motivation} onChange={e => update("motivation", e.target.value)}><option value="">Sélectionner une raison</option>{["Me cultiver", "Rejoindre le département Design", "Contribuer aux créations visuelles de mon département", "Autres"].map(x => <option key={x}>{x}</option>)}</select></Field>
           <label className={errors.includes("commitment") ? "commitment-check invalid" : "commitment-check"}><input type="checkbox" checked={form.commitment} onChange={e => update("commitment", e.target.checked)} /><span>Je m’engage à rejoindre le département Design après la formation.</span></label>
           {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
-          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/*" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
+          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
         </div>}
 
         {errors.length > 0 && <p className="form-error" role="alert">Certains champs nécessitent ton attention. Vérifie les indications ci-dessus.</p>}
