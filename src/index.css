@@ -1097,3 +1097,55 @@
    z-index:31!important;
  }
 }
+
+
+/* FORCE VISIBLE MOBILE MENU CONTROL */
+@media screen and (max-width:680px){
+ .admin-app .admin-mobile-head{
+   display:flex!important;
+   visibility:visible!important;
+   min-height:60px!important;
+   height:auto!important;
+   width:100%!important;
+   position:relative!important;
+   z-index:50!important;
+   justify-content:flex-start!important;
+ }
+ .admin-app .admin-mobile-head .admin-mobile-menu{
+   display:inline-flex!important;
+   visibility:visible!important;
+   opacity:1!important;
+   align-items:center!important;
+   justify-content:center!important;
+   flex-direction:row!important;
+   gap:7px!important;
+   width:auto!important;
+   min-width:82px!important;
+   height:42px!important;
+   padding:0 11px!important;
+   margin:0!important;
+   border:1px solid #cbd8ed!important;
+   border-radius:10px!important;
+   background:#ffffff!important;
+   color:#173b79!important;
+   box-shadow:0 2px 8px rgba(21,48,91,.10)!important;
+   cursor:pointer!important;
+ }
+ .admin-app .admin-mobile-head .admin-mobile-menu svg{
+   display:block!important;
+   width:20px!important;
+   height:20px!important;
+   fill:none!important;
+   stroke:currentColor!important;
+   stroke-width:2!important;
+   stroke-linecap:round!important;
+ }
+ .admin-app .admin-mobile-head .admin-mobile-menu span{
+   display:inline!important;
+   color:inherit!important;
+   font-size:10px!important;
+   line-height:1!important;
+   font-weight:800!important;
+   letter-spacing:.04em!important;
+ }
+}
