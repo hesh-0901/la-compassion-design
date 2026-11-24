@@ -667,3 +667,26 @@
  .admin-detail-list{grid-template-columns:1fr!important}
  .admin-pagination{align-items:flex-start;flex-direction:column}
 }
+
+
+
+/* SIDEBAR TYPOGRAPHY — accessible contrast on deep blue */
+.admin-sidebar,
+.admin-sidebar *{color:#eaf1ff}
+.admin-sidebar .admin-brand,
+.admin-sidebar .admin-brand-name,
+.admin-sidebar .admin-brand-name b{color:#f4f7ff!important}
+.admin-sidebar .admin-brand-name b{color:#8fe3fa!important}
+.admin-sidebar .admin-sidebar-label{color:#8fe3fa!important}
+.admin-sidebar>button{color:#c4d2f2!important}
+.admin-sidebar>button svg{color:#a9c4f4!important}
+.admin-sidebar>button:hover{color:#fff!important;background:rgba(255,255,255,.08)!important}
+.admin-sidebar>button.selected{color:#fff!important;background:rgba(81,139,255,.25)!important}
+.admin-sidebar>button.selected svg{color:#fff!important}
+.admin-sidebar .admin-nav-count{color:#8fe3fa!important}
+.admin-sidebar .admin-user-meta b{color:#fff!important}
+.admin-sidebar .admin-user-meta small{color:#bdcbed!important}
+.admin-sidebar .admin-role-mark{color:#ffd45c!important}
+.admin-sidebar .admin-collapse{color:#eaf1ff!important;border-color:rgba(255,255,255,.2)!important}
+.admin-sidebar .admin-collapse svg{color:#dbe8ff!important}
+.admin-sidebar .admin-sidebar-bottom>button{color:#eaf1ff!important;border-color:rgba(255,255,255,.2)!important}
