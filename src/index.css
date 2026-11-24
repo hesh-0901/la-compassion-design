@@ -1013,3 +1013,11 @@
  .admin-status-action-row{align-items:stretch;gap:8px}
  .admin-status-action-row .admin-full{min-width:0;flex:0 0 42%;height:46px;padding:0 10px;font-size:11px}
 }
+
+
+/* Candidate details — show every submitted registration field in clear groups */
+.admin-detail-section{margin:22px 0 0}
+.admin-detail-section h3{margin:0 0 10px;color:#1d355b;font-size:12px;font-weight:800;letter-spacing:.025em}
+.admin-detail-section .admin-detail-list{margin-top:0}
+.admin-detail-empty{margin:8px 0 0;color:#8995a8;font-size:11px}
+.admin-detail-section .admin-file-link{display:inline-flex;align-items:center;margin:10px 12px 0 0}
