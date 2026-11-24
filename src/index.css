@@ -861,3 +861,32 @@
  .admin-form-grid{grid-template-columns:1fr;gap:0}
  .admin-create-admin-modal{padding:20px!important}
 }
+
+
+/* BRAND PALETTE — royal blue for primary actions, cyan for interaction */
+:root{--orange:#1F5BFF}
+.button-primary,
+.admin-primary,
+.admin-login .admin-primary{
+  background:#1F5BFF!important;
+  color:#fff!important;
+  border-color:#1F5BFF!important;
+  box-shadow:0 8px 22px rgba(31,91,255,.18)!important;
+}
+.button-primary:hover,
+.admin-primary:hover,
+.admin-login .admin-primary:hover{
+  background:#1646C5!important;
+  border-color:#1646C5!important;
+  color:#fff!important;
+  box-shadow:0 10px 26px rgba(22,70,197,.24)!important;
+}
+.button-primary:focus-visible,
+.admin-primary:focus-visible{
+  outline:3px solid #8FE3FA!important;
+  outline-offset:3px!important;
+}
+.admin-status.status-waiting{
+  background:rgba(255,201,60,.16)!important;
+  color:#9A6500!important;
+}
