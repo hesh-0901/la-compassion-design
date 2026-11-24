@@ -1029,3 +1029,34 @@
 .admin-admin-active-toggle{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;padding:12px;border:1px solid #e2e8f2;border-radius:9px;background:#f7f9fd}
 .admin-admin-active-toggle input{width:17px!important;height:17px!important;margin:0;accent-color:#1f5bff}
 @media(max-width:680px){.admin-admin-open{margin-left:46px}}
+
+
+/* Downloads workspace — polished Excel export panel */
+.admin-downloads{padding:24px!important}
+.admin-export-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:2px 0 20px;border-bottom:1px solid #edf1f7}
+.admin-export-eyebrow{color:#1c83c4;font-size:9px;font-weight:850;letter-spacing:.13em}
+.admin-export-header h2{margin:5px 0;color:#172b50;font-size:20px}
+.admin-export-header p{margin:0;color:#7b89a1;font-size:11px}
+.admin-export-total{display:flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid #e0e9f8;border-radius:12px;background:#f4f7ff;color:#526987}
+.admin-export-total b{color:#1f5bff;font-size:22px;font-variant-numeric:tabular-nums}
+.admin-export-total span{font-size:10px;font-weight:700}
+.admin-export-main{display:flex;align-items:center;gap:15px;margin-top:18px;padding:18px;border:1px solid #e4ebf5;border-radius:13px;background:linear-gradient(105deg,#f7faff,#fff)}
+.admin-export-file-icon{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:12px;background:#e4f7fc;color:#21a5c9}
+.admin-export-file-icon svg{width:22px;height:22px}
+.admin-export-copy{flex:1;min-width:0}
+.admin-export-copy b{color:#203252;font-size:13px}
+.admin-export-copy p{margin:4px 0;color:#687994;font-size:11px;line-height:1.5}
+.admin-export-copy small{color:#98a3b4;font-size:9px}
+.admin-xlsx-button{min-height:42px;padding:0 17px;white-space:nowrap}
+.admin-export-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px 0}
+.admin-export-footer>span{color:#8491a5;font-size:10px}
+.admin-export-footer .admin-secondary{min-height:32px;padding:0 11px;font-size:10px}
+.admin-downloads .admin-assets-head{margin-top:30px;padding-top:20px;border-top:1px solid #edf1f7}
+@media(max-width:680px){
+ .admin-downloads{padding:15px!important}
+ .admin-export-header{align-items:flex-start}
+ .admin-export-main{align-items:flex-start;flex-wrap:wrap;padding:13px}
+ .admin-export-copy{flex:1 1 calc(100% - 65px)}
+ .admin-xlsx-button{width:100%;justify-content:center}
+ .admin-export-footer{align-items:flex-start;flex-direction:column}
+}
