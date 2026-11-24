@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminPanel from "./AdminPanel";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebase";
 
 type Step = "home" | "presentation" | "registration" | "confirmation" | "admin";
 type FormData = {
@@ -47,6 +49,8 @@ export default function App() {
   const [showMemberNotice, setShowMemberNotice] = useState(false);
   const [showRamNotice, setShowRamNotice] = useState(false);
   const [showUnavailable, setShowUnavailable] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
@@ -84,10 +88,73 @@ export default function App() {
     setErrors(missing);
     return missing.length === 0;
   };
+  const uploadToCloudinary = async (file: File, kind: "image" | "raw") => {
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    if (!cloudName || !uploadPreset) throw new Error("La configuration Cloudinary est absente. Vérifie les variables Cloudflare.");
+    if (file.size > 10 * 1024 * 1024) throw new Error("Chaque fichier doit peser 10 Mo maximum.");
+    const payload = new FormData();
+    payload.append("file", file);
+    payload.append("upload_preset", uploadPreset);
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${kind}/upload`, { method: "POST", body: payload });
+    const result = await response.json();
+    if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "Le téléversement Cloudinary a échoué.");
+    return { url: result.secure_url as string, publicId: result.public_id as string };
+  };
+
+  const submitApplication = async () => {
+    if (!validate() || submitting) return;
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      if (!profilePhoto || !profilePhoto.type.startsWith("image/")) throw new Error("Ajoute une photo de profil au format image.");
+      const photo = await uploadToCloudinary(profilePhoto, "image");
+      let portfolioUpload: { url: string; publicId: string } | null = null;
+      if (portfolioFile) {
+        const imageFile = portfolioFile.type.startsWith("image/");
+        const pdfFile = portfolioFile.type === "application/pdf" || portfolioFile.name.toLowerCase().endsWith(".pdf");
+        if (!imageFile && !pdfFile) throw new Error("La création jointe doit être une image ou un PDF.");
+        portfolioUpload = await uploadToCloudinary(portfolioFile, imageFile ? "image" : "raw");
+      }
+      await addDoc(collection(db, "candidatures"), {
+        fullName: form.fullName.trim(),
+        gender: form.gender,
+        phone: "+243" + phoneDigits,
+        email: form.email.trim(),
+        area: form.area.trim(),
+        age: form.age,
+        member: form.member,
+        extension: form.extension,
+        attendance: form.attendance,
+        department: form.department,
+        maturity: form.maturity,
+        level: form.level,
+        tools: form.tools,
+        portfolio: form.portfolio.trim(),
+        portfolioFileUrl: portfolioUpload?.url || "",
+        portfolioPublicId: portfolioUpload?.publicId || "",
+        profilePhotoUrl: photo.url,
+        profilePhotoPublicId: photo.publicId,
+        ram: form.ram,
+        availability: form.availability,
+        motivation: form.motivation,
+        commitment: form.commitment,
+        status: "received",
+        createdAt: serverTimestamp(),
+      });
+      setShowUnavailable(false);
+      go("confirmation");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Une erreur est survenue pendant l’envoi.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const nextPart = () => {
     if (!validate()) return;
     if (part < 2) { setPart(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }
-    else setShowUnavailable(true);
+    else void submitApplication();
   };
   const canContinue = useMemo(() => part < 2, [part]);
 
@@ -172,7 +239,7 @@ export default function App() {
           <Field label="Quel est ton niveau d’affermissement ?" error={errors.includes("maturity") ? "Choisis ton niveau d’affermissement." : ""}><Choice value={form.maturity} onChange={v => update("maturity", v)} options={["Niveau 1", "Niveau 2", "Niveau 3", "Niveau 4", "Non affermi", "Affermi(e)"]} /></Field>
           <Field label="Ton niveau actuel en design" error={errors.includes("level") ? "Choisis ton niveau." : ""}><Choice value={form.level} onChange={v => update("level", v)} options={["Débutant", "Intermédiaire", "Avancé"]} /></Field>
           <Field label="Quels outils as-tu déjà utilisés ?" hint="Plusieurs choix possibles"><div className="chip-list">{["Canva", "Photoshop", "Illustrator", "Figma", "Autre"].map(tool => <button type="button" key={tool} className={form.tools.includes(tool) ? "chip selected" : "chip"} onClick={() => update("tools", form.tools.includes(tool) ? form.tools.filter(x => x !== tool) : [...form.tools, tool])}>{form.tools.includes(tool) && <Icon name="check" size={14} />}{tool}</button>)}</div></Field>
-          <Field label="As-tu un lien ou un fichier d’une création déjà réalisée ?" hint="Facultatif — lien ou fichier"><input type="url" value={form.portfolio} onChange={e => update("portfolio", e.target.value)} placeholder="Colle un lien (facultatif)" /><input className="file-input" type="file" accept="image/*,.pdf,.psd,.ai,.svg" onChange={e => setPortfolioFile(e.target.files?.[0] || null)} /><span className="file-hint">{portfolioFile ? portfolioFile.name : "Ajouter un fichier (image, PDF, PSD, AI ou SVG)"}</span></Field>
+          <Field label="As-tu un lien ou un fichier d’une création déjà réalisée ?" hint="Facultatif — lien ou fichier"><input type="url" value={form.portfolio} onChange={e => update("portfolio", e.target.value)} placeholder="Colle un lien (facultatif)" /><input className="file-input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setPortfolioFile(e.target.files?.[0] || null)} /><span className="file-hint">{portfolioFile ? portfolioFile.name : "Ajouter un fichier (image ou PDF, 10 Mo maximum)"}</span></Field>
         </div>}
 
         {part === 2 && <div className="fields">
@@ -186,10 +253,10 @@ export default function App() {
         </div>}
 
         {errors.length > 0 && <p className="form-error" role="alert">Certains champs nécessitent ton attention. Vérifie les indications ci-dessus.</p>}
-        {showUnavailable && <div className="submit-notice" role="status"><Icon name="info" /><div><b>Envoi en ligne non activé</b><p>Le formulaire est prêt côté interface, mais la connexion sécurisée au serveur n’est pas encore configurée. Aucune candidature n’a été transmise.</p></div></div>}
+        {submitError && <div className="submit-notice" role="alert"><Icon name="info" /><div><b>Envoi impossible</b><p>{submitError}</p></div></div>}
         <div className="action-bar form-actions">
           <button className="button button-secondary" onClick={() => part > 0 ? setPart(p => p - 1) : go("presentation")}><Icon name="back" /> Retour</button>
-          <button className="button button-primary" onClick={nextPart}>{canContinue ? "Continuer" : "Envoyer ma candidature"} <Icon name="arrow" /></button>
+          <button className="button button-primary" onClick={nextPart} disabled={submitting}>{submitting ? "Envoi en cours…" : canContinue ? "Continuer" : "Envoyer ma candidature"} {!submitting && <Icon name="arrow" />}</button>
         </div>
       </div>}
 
