@@ -59,7 +59,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [user,setUser] = useState<User|null>(null);
   const [role,setRole] = useState<Role|null>(null);
   const [email,setEmail] = useState(""), [password,setPassword] = useState("");
-  const [error,setError] = useState(""), [notice,setNotice] = useState(""), [busy,setBusy] = useState(false);
+  const [error,setError] = useState(""), [busy,setBusy] = useState(false);
   const [tab,setTab] = useState<Tab>("overview");
   const [sidebarCollapsed,setSidebarCollapsed] = useState(false);
   const [currentPage,setCurrentPage] = useState(1);
@@ -121,7 +121,6 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       await updateDoc(doc(db,"candidatures",candidate.id),{status,reviewedAt:new Date(),reviewedBy:user?.uid??null});
       setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,status}:row));
       setSelected(prev=>prev?.id===candidate.id?{...prev,status}:prev);
-      setNotice("Statut du dossier mis à jour.");
     } catch { setError("Modification refusée. Les règles Firestore doivent autoriser cette action."); }
   };
   const openDetails = (row:Candidate) => { setSelected(row); setNewStatus(statusOf(row.status)); };
@@ -135,7 +134,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     try {
       await updateDoc(doc(db,"candidatures",selected.id),patch);
       setRows(prev=>prev.map(row=>row.id===selected.id?{...row,...patch}:row));
-      setEditOpen(false); setSelected(null); setNotice("Dossier modifié.");
+      setEditOpen(false); setSelected(null);
     } catch { setError("Modification impossible. Vérifie les autorisations Firestore."); }
   };
   const assets = rows.flatMap(row => [
@@ -168,7 +167,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
       <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":"Téléchargements"}</h1><p>Suivi et gestion des dossiers de candidature.</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
-      {error&&<p className="admin-error" role="alert">{error}</p>}{notice&&<p className="admin-notice" role="status">{notice}</p>}
+      {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary">
           <article><span>Total des dossiers</span><strong>{counts.total}</strong><small>Toutes les candidatures reçues</small></article>
