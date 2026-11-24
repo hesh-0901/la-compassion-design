@@ -61,6 +61,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [email,setEmail] = useState(""), [password,setPassword] = useState("");
   const [error,setError] = useState(""), [notice,setNotice] = useState(""), [busy,setBusy] = useState(false);
   const [tab,setTab] = useState<Tab>("overview");
+  const [sidebarCollapsed,setSidebarCollapsed] = useState(false);
   const [rows,setRows] = useState<Candidate[]>([]);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
