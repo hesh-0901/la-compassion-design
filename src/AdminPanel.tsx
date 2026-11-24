@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { createUserWithEmailAndPassword, deleteUser, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { deleteApp, initializeApp } from "firebase/app";
+import { auth, db, firebaseApp } from "./firebase";
 
 type Role = "superAdmin" | "admin";
 type Status = "received" | "review" | "accepted" | "waiting" | "refused";
