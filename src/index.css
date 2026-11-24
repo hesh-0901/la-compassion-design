@@ -890,3 +890,25 @@
   background:rgba(255,201,60,.16)!important;
   color:#9A6500!important;
 }
+
+
+/* Generated admin email and password visibility control */
+.admin-generated-email{
+  display:flex;align-items:center;gap:0;min-height:50px;margin-top:8px;
+  padding:0 13px;border:1px solid #d5e0f7;border-radius:10px;
+  background:#f3f7ff;color:#0b1533;font-size:14px;font-weight:650;
+  overflow-wrap:anywhere;
+}
+.admin-generated-email span{color:#168bb8}
+.admin-edit-card label>small{
+  display:block;margin-top:7px;color:#77839a;font-size:10px;font-weight:400;line-height:1.5;
+}
+.admin-password-field{position:relative;margin-top:7px}
+.admin-password-field input{margin-top:0!important;padding-right:54px!important}
+.admin-password-field button{
+  position:absolute;top:50%;right:9px;transform:translateY(-50%);
+  width:36px;height:36px;display:grid;place-items:center;
+  border:0;border-radius:8px;background:transparent;color:#52617a;cursor:pointer;
+}
+.admin-password-field button:hover{background:#e7eefb;color:#1555c9}
+.admin-password-field svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
