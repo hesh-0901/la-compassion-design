@@ -184,10 +184,13 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setEditOpen(false); setSelected(null);
     } catch { setError("Modification impossible. Vérifie les autorisations Firestore."); }
   };
-  const assets = rows.flatMap(row => [
-    row.profilePhotoUrl||row.photoUrl ? {name:personName(row),label:"Photo de profil",url:row.profilePhotoUrl||row.photoUrl}:null,
-    row.portfolioFileUrl||row.portfolioUrl ? {name:personName(row),label:"Création / portfolio",url:row.portfolioFileUrl||row.portfolioUrl}:null
-  ].filter(Boolean) as {name:string;label:string;url:string}[]);
+  const assetsByCandidate = rows.map(row => ({
+    candidate: row,
+    files: [
+      row.profilePhotoUrl||row.photoUrl ? {name:"Photo de profil",url:row.profilePhotoUrl||row.photoUrl}:null,
+      row.portfolioFileUrl||row.portfolioUrl ? {name:"Création / portfolio",url:row.portfolioFileUrl||row.portfolioUrl}:null
+    ].filter(Boolean) as {name:string;url:string}[]
+  })).filter(item => item.files.length);
 
   if(!user || !role) return <section className="admin-login-page">
     <button className="admin-back-home" onClick={onHome}>← Retour à l’accueil</button>
@@ -247,9 +250,25 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-section-head"><div><h2>Exporter les candidatures</h2><p>Les filtres actifs de la liste sont appliqués à l’export.</p></div></div>
         <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Fichier CSV / Excel</b><p>Nom, téléphone, assemblée, niveau, RAM, statut et réponses du formulaire.</p></div><button className="admin-primary" disabled={!filtered.length} onClick={()=>downloadCsv(filtered)}><Icon name="download"/>Télécharger CSV</button></div>
         <div className="admin-export-row"><div className="admin-export-icon"><Icon name="file"/></div><div><b>Rapport imprimable</b><p>Ouvre la boîte d’impression pour enregistrer la liste filtrée en PDF.</p></div><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer / PDF</button></div>
-        <div className="admin-section-head admin-assets-head"><div><h2>Pièces jointes</h2><p>Photos de profil et créations transmises par les candidats.</p></div></div>
-        {assets.map((asset,i)=><button type="button" className="admin-asset" onClick={()=>setPreviewAsset(asset)} key={asset.url+i}><span><b>{asset.name}</b><small>{asset.label}</small></span><strong>Afficher la pièce</strong></button>)}
-        {!assets.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
+        <div className="admin-section-head admin-assets-head"><div><h2>Documents des candidats</h2><p>Chaque dossier regroupe les pièces jointes sous le nom du candidat.</p></div><span className="admin-assets-count">{assetsByCandidate.length} dossier(s)</span></div>
+        <div className="admin-download-groups">
+          {assetsByCandidate.map(({candidate,files})=><article className="admin-download-candidate" key={candidate.id}>
+            <div className="admin-download-candidate-head">
+              <div className="admin-download-avatar">{personName(candidate).trim().charAt(0).toUpperCase()}</div>
+              <div className="admin-download-candidate-info"><b>{personName(candidate)}</b><span>{valueOf(candidate,"phone")} · {valueOf(candidate,"email")}</span><small>Inscription du {dateLabel(candidate.createdAt)} · {files.length} pièce(s)</small></div>
+              <StatusPill value={candidate.status}/>
+            </div>
+            <div className="admin-download-files">
+              {files.map(file=><div className="admin-download-file" key={file.url}>
+                <span className="admin-download-file-icon"><Icon name="file"/></span>
+                <div className="admin-download-file-info"><b>{file.name}</b><small>{file.url.toLowerCase().includes(".pdf")?"Document PDF":"Fichier image ou document"}</small></div>
+                <button type="button" className="admin-secondary" onClick={()=>setPreviewAsset({name:personName(candidate),label:file.name,url:file.url})}>Aperçu</button>
+                <a className="admin-download-link" href={file.url} target="_blank" rel="noreferrer" download>Télécharger <Icon name="download"/></a>
+              </div>)}
+            </div>
+          </article>)}
+        </div>
+        {!assetsByCandidate.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
       {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
         <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>Seul le super administrateur peut créer de nouveaux comptes.</p></div><button className="admin-primary" onClick={()=>{setError("");setAdminModalOpen(true)}}>＋ Créer un administrateur</button></div>
