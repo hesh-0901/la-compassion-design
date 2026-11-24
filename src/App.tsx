@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import AdminPanel from "./AdminPanel";
 
 type Step = "home" | "presentation" | "registration" | "confirmation" | "admin";
 type FormData = {
@@ -103,11 +104,7 @@ export default function App() {
         <button className="button button-primary home-button" onClick={() => go("presentation")}>J’accepte <Icon name="arrow" size={21} /></button>
       </section>}
 
-      {step === "admin" && <section className="admin-placeholder flow-screen">
-        <header className="brand-row"><span className="brand-mark">C</span><span>LA COMPASSION <b>DESIGN</b></span></header>
-        <button className="back-button" onClick={() => go("home")}><Icon name="back" size={18} /> Retour à l’accueil</button>
-        <div className="admin-placeholder-content"><span className="eyebrow">ESPACE PRIVÉ</span><h1>Espace d’administration</h1><p>L’accès administrateur sera activé après la configuration de la base de données et de l’authentification.</p></div>
-      </section>}
+      {step === "admin" && <AdminPanel onHome={() => go("home")} />}
 
       {step === "presentation" && <div className="flow-screen">
         <header className="brand-row"><span className="brand-mark">C</span><span>LA COMPASSION <b>DESIGN</b></span></header>
