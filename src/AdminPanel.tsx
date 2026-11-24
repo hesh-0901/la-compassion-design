@@ -71,6 +71,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [newStatus,setNewStatus] = useState<Status>("received");
   const [editOpen,setEditOpen] = useState(false);
   const [previewAsset,setPreviewAsset] = useState<{name:string;label:string;url:string}|null>(null);
+  const [previewZoom,setPreviewZoom] = useState(1);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -207,8 +208,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </main>
     {previewAsset&&<div className="admin-preview-overlay" onClick={()=>setPreviewAsset(null)}>
       <section className="admin-preview" role="dialog" aria-modal="true" aria-label="Aperçu de la pièce jointe" onClick={e=>e.stopPropagation()}>
-        <header className="admin-preview-head"><div><b>{previewAsset.name}</b><small>{previewAsset.label}</small></div><button type="button" onClick={()=>setPreviewAsset(null)} aria-label="Fermer l’aperçu" title="Fermer"><Icon name="close"/></button></header>
-        <div className="admin-preview-content">{(previewAsset.label.toLowerCase().includes("photo") || previewAsset.url.includes("/image/upload/") || [".jpg",".jpeg",".png",".webp",".gif"].some(ext=>previewAsset.url.toLowerCase().includes(ext))) ? <img src={previewAsset.url} alt={previewAsset.label}/> : <iframe src={previewAsset.url} title={previewAsset.label}/>}</div>
+        <header className="admin-preview-head"><div><b>{previewAsset.name}</b><small>{previewAsset.label}</small></div><div className="admin-preview-actions">{(previewAsset.label.toLowerCase().includes("photo") || previewAsset.url.includes("/image/upload/") || [".jpg",".jpeg",".png",".webp",".gif"].some(ext=>previewAsset.url.toLowerCase().includes(ext))) && <><button type="button" onClick={()=>setPreviewZoom(z=>Math.max(.25,Number((z-.25).toFixed(2))))} disabled={previewZoom<=.25} aria-label="Dézoomer" title="Dézoomer">−</button><span>{Math.round(previewZoom*100)}%</span><button type="button" onClick={()=>setPreviewZoom(z=>Math.min(4,Number((z+.25).toFixed(2))))} disabled={previewZoom>=4} aria-label="Zoomer" title="Zoomer">+</button><button type="button" onClick={()=>setPreviewZoom(1)} title="Taille réelle">100 %</button></>}<button type="button" onClick={()=>setPreviewAsset(null)} aria-label="Fermer l’aperçu" title="Fermer"><Icon name="close"/></button></div></header>
+        <div className="admin-preview-content">{(previewAsset.label.toLowerCase().includes("photo") || previewAsset.url.includes("/image/upload/") || [".jpg",".jpeg",".png",".webp",".gif"].some(ext=>previewAsset.url.toLowerCase().includes(ext))) ? <img style={{transform:`scale(${previewZoom})`}} src={previewAsset.url} alt={previewAsset.label}/> : <iframe src={previewAsset.url} title={previewAsset.label}/>}</div>
       </section>
     </div>}
     {selected&&<div className="admin-drawer-backdrop" onClick={()=>setSelected(null)}>
@@ -223,7 +224,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             ["Date de candidature",dateLabel(selected.createdAt)]
           ].map(([label,value])=><div key={label}><small>{label}</small><b>{Array.isArray(value)?value.join(", "):String(value)}</b></div>)}
         </div>
-        {selected.portfolioFileUrl||selected.portfolioUrl?<button type="button" className="admin-file-link" onClick={()=>setPreviewAsset({name:personName(selected),label:"Création jointe",url:selected.portfolioFileUrl||selected.portfolioUrl||""})}>Consulter la création jointe</button>:null}
+        {selected.portfolioFileUrl||selected.portfolioUrl?<button type="button" className="admin-file-link" onClick={()=>{setPreviewZoom(1);setPreviewAsset({name:personName(selected),label:"Création jointe",url:selected.portfolioFileUrl||selected.portfolioUrl||""})}}>Consulter la création jointe</button>:null}
         <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
         <button className="admin-primary admin-full" onClick={()=>void changeStatus(selected,newStatus)}>Enregistrer le statut</button>
         {role==="superAdmin"&&<button className="admin-secondary admin-full" onClick={()=>openEdit(selected)}><Icon name="edit"/> Modifier les informations</button>}
