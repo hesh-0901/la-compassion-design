@@ -301,15 +301,47 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <aside className="admin-drawer" onClick={e=>e.stopPropagation()}>
         <div className="admin-drawer-head"><div className="admin-profile-heading">{(selected.profilePhotoUrl||selected.photoUrl) ? <button type="button" className="admin-profile-photo-trigger" onClick={()=>{setPreviewZoom(1);setPreviewAsset({name:personName(selected),label:"Photo de profil",url:selected.profilePhotoUrl||selected.photoUrl||""})}} aria-label="Agrandir la photo de profil"><img className="admin-profile-photo" src={selected.profilePhotoUrl||selected.photoUrl} alt={"Photo de "+personName(selected)}/></button> : <div className="admin-profile-placeholder">{personName(selected).slice(0,1).toUpperCase()}</div>}<div><span className="admin-kicker">FICHE CANDIDAT</span><h2>{personName(selected)}</h2><small>{valueOf(selected,"phone")}</small></div></div><button onClick={()=>setSelected(null)} aria-label="Fermer"><Icon name="close"/></button></div>
         <StatusPill value={selected.status}/>
-        <div className="admin-detail-list">
-          {[
-            ["Téléphone",valueOf(selected,"phone")],["E-mail",valueOf(selected,"email")],["Commune / quartier",valueOf(selected,"area","commune")],
-            ["Assemblée",valueOf(selected,"assembly","extension")],["Département",valueOf(selected,"department")],["Niveau design",valueOf(selected,"level")],
-            ["Ordinateur · RAM",valueOf(selected,"ram")],["Disponibilité",valueOf(selected,"availability")],["Outils",valueOf(selected,"tools")],
-            ["Date de candidature",dateLabel(selected.createdAt)]
-          ].map(([label,value])=><div key={label}><small>{label}</small><b>{Array.isArray(value)?value.join(", "):String(value)}</b></div>)}
+        <div className="admin-detail-section">
+          <h3>Informations personnelles</h3>
+          <div className="admin-detail-list">
+            {[
+              ["Nom complet",valueOf(selected,"fullName","name")],["Genre",valueOf(selected,"gender")],
+              ["Téléphone",valueOf(selected,"phone")],["E-mail",valueOf(selected,"email")],
+              ["Âge",valueOf(selected,"age")],["Commune / quartier",valueOf(selected,"area","commune")]
+            ].map(([label,value])=><div key={label}><small>{label}</small><b>{String(value)}</b></div>)}
+          </div>
         </div>
-        {selected.portfolioFileUrl||selected.portfolioUrl?<button type="button" className="admin-file-link" onClick={()=>{setPreviewZoom(1);setPreviewAsset({name:personName(selected),label:"Création jointe",url:selected.portfolioFileUrl||selected.portfolioUrl||""})}}>Consulter la création jointe</button>:null}
+        <div className="admin-detail-section">
+          <h3>Parcours dans l’église</h3>
+          <div className="admin-detail-list">
+            {[
+              ["Membre de l’Église",valueOf(selected,"member")],["Ancienneté / durée de présence",valueOf(selected,"attendance")],
+              ["Assemblée / extension",valueOf(selected,"assembly","extension")],["Département",valueOf(selected,"department")],
+              ["Maturité spirituelle",valueOf(selected,"maturity")]
+            ].map(([label,value])=><div key={label}><small>{label}</small><b>{String(value)}</b></div>)}
+          </div>
+        </div>
+        <div className="admin-detail-section">
+          <h3>Profil et compétences en design</h3>
+          <div className="admin-detail-list">
+            {[
+              ["Niveau en design",valueOf(selected,"level")],["Outils maîtrisés",valueOf(selected,"tools")],
+              ["Lien du portfolio",valueOf(selected,"portfolio")]
+            ].map(([label,value])=><div key={label}><small>{label}</small><b>{Array.isArray(value)?value.join(", "):String(value)}</b></div>)}
+          </div>
+          {selected.portfolio&&String(selected.portfolio)!=="—"&&/^https?:\/\//i.test(String(selected.portfolio))&&<a className="admin-file-link" href={String(selected.portfolio)} target="_blank" rel="noreferrer">Ouvrir le lien du portfolio</a>}
+          {selected.portfolioFileUrl||selected.portfolioUrl?<button type="button" className="admin-file-link" onClick={()=>{setPreviewZoom(1);setPreviewAsset({name:personName(selected),label:"Création / portfolio",url:selected.portfolioFileUrl||selected.portfolioUrl||""})}}>Consulter la création jointe</button>:<p className="admin-detail-empty">Aucun fichier de création joint.</p>}
+        </div>
+        <div className="admin-detail-section">
+          <h3>Disponibilité et engagement</h3>
+          <div className="admin-detail-list">
+            {[
+              ["Ordinateur · RAM",valueOf(selected,"ram")],["Disponibilité pour la formation",valueOf(selected,"availability")],
+              ["Motivation",valueOf(selected,"motivation")],["Engagement à rejoindre le département Design",valueOf(selected,"commitment")]
+            ].map(([label,value])=><div key={label}><small>{label}</small><b>{String(value)}</b></div>)}
+            <div><small>Date de candidature</small><b>{dateLabel(selected.createdAt)}</b></div>
+          </div>
+        </div>
         <div className="admin-status-action-row">
           <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
           <button className="admin-primary admin-full" onClick={()=>void changeStatus(selected,newStatus)}>Enregistrer le statut</button>
