@@ -1021,3 +1021,11 @@
 .admin-detail-section .admin-detail-list{margin-top:0}
 .admin-detail-empty{margin:8px 0 0;color:#8995a8;font-size:11px}
 .admin-detail-section .admin-file-link{display:inline-flex;align-items:center;margin:10px 12px 0 0}
+
+
+/* Admin accounts — open profile and edit permitted details */
+.admin-admin-open{min-height:32px;padding:0 11px;border:1px solid #d9e4f7;border-radius:8px;background:#f5f8ff;color:#1f5bff;font-size:10px;font-weight:750;white-space:nowrap;cursor:pointer}
+.admin-admin-open:hover{background:#eaf1ff;border-color:#b9cdf5}
+.admin-admin-active-toggle{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;padding:12px;border:1px solid #e2e8f2;border-radius:9px;background:#f7f9fd}
+.admin-admin-active-toggle input{width:17px!important;height:17px!important;margin:0;accent-color:#1f5bff}
+@media(max-width:680px){.admin-admin-open{margin-left:46px}}
