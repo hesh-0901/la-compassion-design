@@ -24,7 +24,7 @@ service cloud.firestore {
     function validCloudinaryUrl(value) {
       return value is string
         && (value == ''
-          || value.matches('https://res\\.cloudinary\\.com/occgef9bk/(image|raw)/upload/.*'));
+          || value.matches('https://res\\.cloudinary\\.com/ocgef9bk/(image|raw)/upload/.*'));
     }
 
     function validPublicApplication() {
@@ -66,7 +66,7 @@ service cloud.firestore {
       && validCloudinaryUrl(request.resource.data.portfolioFileUrl)
       && request.resource.data.portfolioPublicId is string
       && request.resource.data.profilePhotoUrl is string
-      && request.resource.data.profilePhotoUrl.matches('https://res\\.cloudinary\\.com/occgef9bk/image/upload/.*')
+      && request.resource.data.profilePhotoUrl.matches('https://res\\.cloudinary\\.com/ocgef9bk/image/upload/.*')
       && request.resource.data.profilePhotoPublicId is string
       && request.resource.data.ram in ['Oui', 'Non', 'Je ne sais pas']
       && request.resource.data.availability in ['Oui', 'Partiellement']
