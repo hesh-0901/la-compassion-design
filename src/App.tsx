@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 type Step = "home" | "presentation" | "registration" | "confirmation";
 type FormData = {
   fullName: string; phone: string; email: string; area: string; age: string;
-  member: string; attendance: string; assembly: string; level: string; tools: string[];
+  member: string; extension: string; attendance: string; department: string; maturity: string; level: string; tools: string[];
   portfolio: string; ram: string; availability: string; motivation: string; commitment: boolean;
 };
 const initialForm: FormData = {
   fullName: "", phone: "", email: "", area: "", age: "", member: "", attendance: "",
-  assembly: "", level: "", tools: [], portfolio: "", ram: "", availability: "",
+  extension: "", department: "", maturity: "", level: "", tools: [], portfolio: "", ram: "", availability: "",
   motivation: "", commitment: false,
 };
 const steps = ["Toi", "Ton parcours", "Ton engagement"];
@@ -43,7 +43,7 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [showMemberNotice, setShowMemberNotice] = useState(false);
   const [showRamNotice, setShowRamNotice] = useState(false);
-  const [showUnavailable, setShowUnavailable] = useState(false);
+  const [showUnavailable, setShowUnavailable] = useState(false);\n  const [portfolioFile, setPortfolioFile] = useState<File | null>(null);\n  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
   const go = (next: Step) => {
     setStep(next);
@@ -68,14 +68,14 @@ export default function App() {
   const validate = () => {
     const required: (keyof FormData)[] = part === 0
       ? ["fullName", "phone", "area", "age"]
-      : part === 1 ? ["member", "attendance", "assembly", "level"]
+      : part === 1 ? ["member", "extension", "attendance", "department", "maturity", "level"]
       : ["ram", "availability", "motivation", "commitment"];
     const missing = required.filter(key => {
       const value = form[key];
       return typeof value === "string" ? !value.trim() : typeof value === "boolean" ? !value : false;
     }).map(String);
     if (part === 0 && phoneDigits.length !== 9) missing.push("phone");
-    setErrors(missing);
+    if (part === 2 && !profilePhoto) missing.push("profilePhoto");\n    setErrors(missing);
     return missing.length === 0;
   };
   const nextPart = () => {
@@ -147,7 +147,7 @@ export default function App() {
 
         {part === 0 && <div className="fields">
           <Field label="Nom complet" error={errors.includes("fullName") ? "Indique ton nom complet." : ""}><input autoComplete="name" value={form.fullName} onChange={e => update("fullName", e.target.value)} placeholder="Ex. Jean Kabeya" /></Field>
-          <Field label="Téléphone" error={errors.includes("phone") ? "Le numéro doit contenir 9 chiffres après +243." : ""}><div className="phone-input"><span>+243</span><input inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={e => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="81 234 56 78" /></div></Field>
+          <Field label="Numéro WhatsApp" error={errors.includes("phone") ? "Le numéro doit contenir 9 chiffres après +243." : ""}><div className="phone-input"><span>+243</span><input inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={e => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="81 234 56 78" /></div></Field>
           <Field label="Adresse e-mail" hint="Facultatif"><input type="email" autoComplete="email" value={form.email} onChange={e => update("email", e.target.value)} placeholder="nom@exemple.com" /></Field>
           <Field label="Commune ou quartier" error={errors.includes("area") ? "Précise ta commune ou ton quartier." : ""}><input autoComplete="address-level2" value={form.area} onChange={e => update("area", e.target.value)} placeholder="Ex. Lubumbashi, Golf" /></Field>
           <Field label="Tranche d’âge" error={errors.includes("age") ? "Choisis une tranche d’âge." : ""}><Choice value={form.age} onChange={v => update("age", v)} options={["Moins de 18 ans", "18–24 ans", "25–34 ans", "35 ans et plus"]} /></Field>
@@ -160,16 +160,16 @@ export default function App() {
           <Field label="Assemblée ou campus fréquenté" error={errors.includes("assembly") ? "Indique ton assemblée." : ""}><input value={form.assembly} onChange={e => update("assembly", e.target.value)} placeholder="Ton assemblée" /></Field>
           <Field label="Ton niveau actuel en design" error={errors.includes("level") ? "Choisis ton niveau." : ""}><Choice value={form.level} onChange={v => update("level", v)} options={["Débutant", "Intermédiaire", "Avancé"]} /></Field>
           <Field label="Quels outils as-tu déjà utilisés ?" hint="Plusieurs choix possibles"><div className="chip-list">{["Canva", "Photoshop", "Illustrator", "Figma", "Autre"].map(tool => <button type="button" key={tool} className={form.tools.includes(tool) ? "chip selected" : "chip"} onClick={() => update("tools", form.tools.includes(tool) ? form.tools.filter(x => x !== tool) : [...form.tools, tool])}>{form.tools.includes(tool) && <Icon name="check" size={14} />}{tool}</button>)}</div></Field>
-          <Field label="Lien vers une création déjà réalisée" hint="Facultatif"><input type="url" value={form.portfolio} onChange={e => update("portfolio", e.target.value)} placeholder="https://" /></Field>
+          <Field label="As-tu un lien ou un fichier d’une création déjà réalisée ?" hint="Facultatif — lien ou fichier"><input type="url" value={form.portfolio} onChange={e => update("portfolio", e.target.value)} placeholder="Colle un lien (facultatif)" /><input className="file-input" type="file" accept="image/*,.pdf,.psd,.ai,.svg" onChange={e => setPortfolioFile(e.target.files?.[0] || null)} /><span className="file-hint">{portfolioFile ? portfolioFile.name : "Ajouter un fichier (image, PDF, PSD, AI ou SVG)"}</span></Field>
         </div>}
 
         {part === 2 && <div className="fields">
           <Field label="Ton ordinateur a-t-il au moins 8 Go de RAM ?" error={errors.includes("ram") ? "Choisis une réponse." : ""}><Choice value={form.ram} onChange={v => { update("ram", v); setShowRamNotice(v === "Non"); }} options={["Oui", "Non", "Je ne sais pas"]} /></Field>
           {showRamNotice && <Notice>Un ordinateur avec au moins 8 Go de RAM est nécessaire pour suivre les exercices pratiques. Tu peux vérifier cette information dans les paramètres de ton appareil.</Notice>}
           <Field label="Seras-tu disponible du 15 au 19 décembre, de 19h à 22h ?" error={errors.includes("availability") ? "Indique ta disponibilité." : ""}><Choice value={form.availability} onChange={v => update("availability", v)} options={["Oui", "Partiellement"]} /></Field>
-          <Field label="Pourquoi veux-tu suivre cette Masterclass ?" error={errors.includes("motivation") ? "Ajoute quelques mots sur ta motivation." : ""}><textarea maxLength={300} value={form.motivation} onChange={e => update("motivation", e.target.value)} placeholder="Explique-nous brièvement ta motivation..." /><div className="character-count">{form.motivation.length}/300</div></Field>
+          <Field label="Pourquoi veux-tu suivre cette Masterclass ?" error={errors.includes("motivation") ? "Choisis une motivation." : ""}><Choice value={form.motivation} onChange={v => update("motivation", v)} options={["Me cultiver", "Rejoindre le département Design", "Contribuer aux créations visuelles de mon département", "Autres"]} /></Field>
           <label className={errors.includes("commitment") ? "commitment-check invalid" : "commitment-check"}><input type="checkbox" checked={form.commitment} onChange={e => update("commitment", e.target.checked)} /><span>Je m’engage à rejoindre le département Design après la formation.</span></label>
-          {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
+          {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}\n          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/*" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
         </div>}
 
         {errors.length > 0 && <p className="form-error" role="alert">Certains champs nécessitent ton attention. Vérifie les indications ci-dessus.</p>}
