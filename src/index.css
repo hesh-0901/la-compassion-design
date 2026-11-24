@@ -201,3 +201,16 @@
     justify-self:start;
   }
 }
+
+/* Upload controls for portfolio attachments and profile portrait */
+.file-input{
+  display:block;width:100%;min-height:52px;padding:10px 12px!important;
+  border:1.5px dashed rgba(143,227,250,.58)!important;border-radius:12px;
+  background:rgba(255,255,255,.07)!important;color:#fff!important;
+  font-size:13px!important;
+}
+.file-input::file-selector-button{
+  min-height:32px;margin-right:12px;padding:0 12px;border:0;border-radius:8px;
+  background:#fff;color:#1233A8;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;
+}
+.file-hint{display:block;margin-top:6px;color:rgba(255,255,255,.65);font-size:11px;line-height:1.45;overflow-wrap:anywhere}
