@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-type Step = "home" | "presentation" | "registration" | "confirmation";
+type Step = "home" | "presentation" | "registration" | "confirmation" | "admin";
 type FormData = {
   fullName: string; gender: string; phone: string; email: string; area: string; age: string;
   member: string; extension: string; attendance: string; department: string; maturity: string; level: string; tools: string[];
@@ -25,6 +25,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     back: "M19 12H5m6 6-6-6 6-6",
     check: "m5 12 4 4L19 6",
     info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-14v.01M12 11v6",
+    login: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5m5 5H3",
     laptopCheck: "M4 5h16v12H4zM2 21h20l-2-4H4zm7-10 2 2 4-4",
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] || paths.info} /></svg>;
@@ -36,6 +37,7 @@ export default function App() {
     if (path.startsWith("/presentation")) return "presentation";
     if (path.startsWith("/inscription")) return "registration";
     if (path.startsWith("/confirmation")) return "confirmation";
+    if (path.startsWith("/admin")) return "admin";
     return "home";
   });
   const [form, setForm] = useState<FormData>(initialForm);
@@ -49,14 +51,14 @@ export default function App() {
 
   const go = (next: Step) => {
     setStep(next);
-    const path = next === "home" ? "/" : next === "presentation" ? "/presentation" : next === "registration" ? "/inscription" : "/confirmation";
+    const path = next === "home" ? "/" : next === "presentation" ? "/presentation" : next === "registration" ? "/inscription" : next === "admin" ? "/admin" : "/confirmation";
     window.history.pushState({ step: next }, "", path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   useEffect(() => {
     const onPop = () => {
       const path = window.location.pathname;
-      setStep(path.startsWith("/presentation") ? "presentation" : path.startsWith("/inscription") ? "registration" : path.startsWith("/confirmation") ? "confirmation" : "home");
+      setStep(path.startsWith("/presentation") ? "presentation" : path.startsWith("/inscription") ? "registration" : path.startsWith("/confirmation") ? "confirmation" : path.startsWith("/admin") ? "admin" : "home");
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -93,11 +95,18 @@ export default function App() {
       <div className="ambient ambient-one" aria-hidden="true" />
       <div className="ambient ambient-two" aria-hidden="true" />
       {step === "home" && <section className="home-screen">
+        <button className="admin-login-icon" type="button" aria-label="Accéder à l’espace d’administration" title="Espace administration" onClick={() => go("admin")}><Icon name="login" size={19} /></button>
         <div className="poster-frame">
           <img className="poster" src="/images/masterclass-design.png" alt="Masterclass Design, intensive et pratique, du 15 au 19 décembre 2026, de 19h à 22h." />
         </div>
         <h1 className="home-question">Souhaites-tu participer à la Masterclass Design&nbsp;?</h1>
         <button className="button button-primary home-button" onClick={() => go("presentation")}>J’accepte <Icon name="arrow" size={21} /></button>
+      </section>}
+
+      {step === "admin" && <section className="admin-placeholder flow-screen">
+        <header className="brand-row"><span className="brand-mark">C</span><span>LA COMPASSION <b>DESIGN</b></span></header>
+        <button className="back-button" onClick={() => go("home")}><Icon name="back" size={18} /> Retour à l’accueil</button>
+        <div className="admin-placeholder-content"><span className="eyebrow">ESPACE PRIVÉ</span><h1>Espace d’administration</h1><p>L’accès administrateur sera activé après la configuration de la base de données et de l’authentification.</p></div>
       </section>}
 
       {step === "presentation" && <div className="flow-screen">
