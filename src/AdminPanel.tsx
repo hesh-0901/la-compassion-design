@@ -208,7 +208,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     {previewAsset&&<div className="admin-preview-overlay" onClick={()=>setPreviewAsset(null)}>
       <section className="admin-preview" role="dialog" aria-modal="true" aria-label="Aperçu de la pièce jointe" onClick={e=>e.stopPropagation()}>
         <header className="admin-preview-head"><div><b>{previewAsset.name}</b><small>{previewAsset.label}</small></div><button type="button" onClick={()=>setPreviewAsset(null)} aria-label="Fermer l’aperçu" title="Fermer"><Icon name="close"/></button></header>
-        <div className="admin-preview-content">{/\\.(png|jpe?g|webp|gif)(\\?|$)/i.test(previewAsset.url) ? <img src={previewAsset.url} alt={previewAsset.label}/> : <iframe src={previewAsset.url} title={previewAsset.label}/>}</div>
+        <div className="admin-preview-content">{(previewAsset.label.toLowerCase().includes("photo") || /\\/image\\/upload\\//i.test(previewAsset.url) || /\\.(png|jpe?g|webp|gif)(\\?|$)/i.test(previewAsset.url)) ? <img src={previewAsset.url} alt={previewAsset.label}/> : <iframe src={previewAsset.url} title={previewAsset.label}/>}</div>
       </section>
     </div>}
     {selected&&<div className="admin-drawer-backdrop" onClick={()=>setSelected(null)}>
