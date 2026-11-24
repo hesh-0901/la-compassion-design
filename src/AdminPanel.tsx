@@ -65,7 +65,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
-  const [newStatus,setNewStatus] = useState<Status>("received");
+  const [newStatus,setNewStatus] = useState<Status>("received");\n  const [editOpen,setEditOpen] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -128,7 +128,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     try {
       await updateDoc(doc(db,"candidatures",selected.id),patch);
       setRows(prev=>prev.map(row=>row.id===selected.id?{...row,...patch}:row));
-      setSelected(null); setNotice("Dossier modifié.");
+      setEditOpen(false); setSelected(null); setNotice("Dossier modifié.");
     } catch { setError("Modification impossible. Vérifie les autorisations Firestore."); }
   };
   const assets = rows.flatMap(row => [
@@ -216,7 +216,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         {role!=="superAdmin"&&<p className="admin-permission-note">La modification des informations personnelles est réservée au super administrateur.</p>}
       </aside>
     </div>}
-    {selected&&role==="superAdmin"&&edit.fullName!==""&&<div className="admin-edit-overlay"><form className="admin-edit-card" onSubmit={e=>{e.preventDefault();void saveEdit();}}><div className="admin-drawer-head"><h2>Modifier le dossier</h2><button type="button" onClick={()=>setEdit(v=>({...v,fullName:""}))} aria-label="Fermer"><Icon name="close"/></button></div>
+    {selected&&role==="superAdmin"&&editOpen&&<div className="admin-edit-overlay"><form className="admin-edit-card" onSubmit={e=>{e.preventDefault();void saveEdit();}}><div className="admin-drawer-head"><h2>Modifier le dossier</h2><button type="button" onClick={()=>setEditOpen(false)} aria-label="Fermer"><Icon name="close"/></button></div>
       {(["fullName","phone","email","area","assembly","level","ram"] as const).map(key=><label key={key}>{({fullName:"Nom complet",phone:"Téléphone",email:"E-mail",area:"Commune / quartier",assembly:"Assemblée",level:"Niveau design",ram:"Compatibilité PC"} as Record<string,string>)[key]}<input value={edit[key]} onChange={e=>setEdit(v=>({...v,[key]:e.target.value}))}/></label>)}
       <button className="admin-primary admin-full" type="submit">Enregistrer les modifications</button>
     </form></div>}
