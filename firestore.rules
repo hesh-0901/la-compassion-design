@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myAdminRecord() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isActiveAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && myAdminRecord().data.active == true
+        && myAdminRecord().data.role in ['admin', 'superAdmin'];
+    }
+
+    function isSuperAdmin() {
+      return isActiveAdmin()
+        && myAdminRecord().data.role == 'superAdmin';
+    }
+
+    match /admins/{uid} {
+      // Un administrateur peut lire son propre profil pour vérifier ses droits.
+      allow get: if signedIn() && request.auth.uid == uid;
+
+      // Seul le superAdmin peut consulter la liste et gérer les comptes admin.
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /candidatures/{candidateId} {
+      // Les administrateurs actifs peuvent consulter les candidatures.
+      allow get, list: if isActiveAdmin();
+
+      // Admin : peut uniquement changer le statut et les métadonnées de revue.
+      allow update: if isActiveAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'reviewedAt', 'reviewedBy']);
+
+      // SuperAdmin : peut aussi corriger les champs personnels autorisés.
+      allow update: if isSuperAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly([
+            'status', 'reviewedAt', 'reviewedBy',
+            'fullName', 'name', 'phone', 'email', 'area', 'commune',
+            'assembly', 'extension', 'level', 'ram'
+          ]);
+
+      // L'inscription publique sera autorisée avec validation dédiée
+      // lorsque le formulaire sera connecté à Firestore.
+      allow create, delete: if false;
+    }
+
+    // Tout autre document reste privé par défaut.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
