@@ -1149,3 +1149,39 @@
    letter-spacing:.04em!important;
  }
 }
+
+
+/* Mobile menu button fixed directly beside the brand logo */
+@media screen and (max-width:680px){
+ .admin-app .admin-mobile-head{
+   display:flex!important;align-items:center!important;justify-content:space-between!important;
+   gap:10px!important;min-height:68px!important;padding:10px 12px!important;
+   visibility:visible!important;
+ }
+ .admin-app .admin-mobile-brand-group{
+   display:flex!important;align-items:center!important;gap:10px!important;
+   min-width:0!important;flex:1 1 auto!important;
+ }
+ .admin-app .admin-mobile-brand-group .admin-menu-toggle-visible{
+   display:flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 42px!important;width:42px!important;min-width:42px!important;height:42px!important;
+   margin:0!important;padding:0!important;border:1px solid #cbd8ed!important;
+   border-radius:10px!important;background:#fff!important;color:#173b79!important;
+   box-shadow:0 2px 8px rgba(21,48,91,.10)!important;visibility:visible!important;
+   opacity:1!important;position:relative!important;z-index:55!important;cursor:pointer!important;
+ }
+ .admin-app .admin-mobile-brand-group .admin-menu-toggle-visible svg{
+   display:block!important;width:21px!important;height:21px!important;
+   fill:none!important;stroke:currentColor!important;stroke-width:2!important;
+   stroke-linecap:round!important;stroke-linejoin:round!important;
+ }
+ .admin-app .admin-mobile-brand-group .admin-brand{
+   display:flex!important;align-items:center!important;gap:8px!important;
+   min-width:0!important;white-space:nowrap!important;
+ }
+ .admin-app .admin-mobile-brand-group .admin-brand>span:last-child{
+   display:inline!important;font-size:10px!important;letter-spacing:.06em!important;
+ }
+ .admin-app .admin-mobile-head>button:last-child{flex:0 0 40px!important}
+ .admin-app .admin-mobile-menu{display:none!important}
+}
