@@ -1321,3 +1321,77 @@
  .admin-app *::before,
  .admin-app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
+
+
+/* PROFESSIONAL MOBILE APP HEADER — sticky, opaque and in normal document flow */
+@media(max-width:680px){
+  .admin-main>.admin-mobile-head{
+    position:sticky!important;
+    inset-block-start:0!important;
+    z-index:200!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    width:calc(100% + 24px)!important;
+    min-height:68px!important;
+    margin:0 -12px!important;
+    padding:calc(10px + env(safe-area-inset-top, 0px)) 14px 10px!important;
+    background:rgba(255,255,255,.98)!important;
+    -webkit-backdrop-filter:saturate(180%) blur(14px)!important;
+    backdrop-filter:saturate(180%) blur(14px)!important;
+    border-bottom:1px solid #e4eaf3!important;
+    box-shadow:0 2px 8px rgba(24,43,76,.045)!important;
+    isolation:isolate!important;
+  }
+  .admin-mobile-head .admin-mobile-brand-group{
+    display:flex!important;
+    align-items:center!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    gap:12px!important;
+  }
+  .admin-mobile-head .admin-menu-toggle-visible{
+    flex:0 0 42px!important;
+    width:42px!important;
+    height:42px!important;
+    border:1px solid #dce5f1!important;
+    border-radius:11px!important;
+    background:#f8faff!important;
+    box-shadow:none!important;
+  }
+  .admin-mobile-head .admin-brand{
+    display:flex!important;
+    align-items:center!important;
+    min-width:0!important;
+    gap:9px!important;
+  }
+  .admin-mobile-head .admin-brand-symbol{
+    flex:0 0 38px!important;
+    width:38px!important;
+    height:38px!important;
+  }
+  .admin-mobile-head .admin-brand>span:last-child{
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:clamp(8px,2.5vw,10px)!important;
+    letter-spacing:.045em!important;
+  }
+  .admin-mobile-head>button:last-child{
+    flex:0 0 40px!important;
+    width:40px!important;
+    height:40px!important;
+    border-radius:10px!important;
+    background:transparent!important;
+  }
+  /* Sticky header remains in normal flow: the first page section starts below it. */
+  .admin-main>.admin-page-head{
+    position:relative!important;
+    z-index:0!important;
+    margin-top:22px!important;
+    scroll-margin-top:82px!important;
+  }
+  .admin-main>*:not(.admin-mobile-head){
+    scroll-margin-top:82px;
+  }
+}
