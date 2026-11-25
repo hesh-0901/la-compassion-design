@@ -116,6 +116,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [capacityInput,setCapacityInput] = useState("");
   const [whatsappGroupLink,setWhatsappGroupLink] = useState("");
   const [settingsSaving,setSettingsSaving] = useState(false);
+  const [settingsTab,setSettingsTab] = useState<"capacity"|"whatsapp">("capacity");
+  const [settingsModal,setSettingsModal] = useState<"capacity"|"whatsapp"|null>(null);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
@@ -165,6 +167,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     try{
       await setDoc(doc(db,"configuration","masterclass"),{capacity:nextCapacity,whatsappGroupLink:link,updatedAt:serverTimestamp(),updatedBy:user.uid},{merge:true});
       setCapacity(nextCapacity);
+      setSettingsModal(null);
       setError("");
     }catch{setError("Enregistrement impossible. Vérifie les droits SuperAdmin dans Firestore.");}
     finally{setSettingsSaving(false);}
@@ -428,23 +431,23 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </div>
         {!assetsByCandidate.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
-      {tab==="settings"&&role==="superAdmin"&&<section className="admin-section admin-masterclass-settings">
-        <div className="admin-section-head"><div><h2>Configuration générale</h2><p>Ces paramètres s’appliquent au formulaire de candidature et aux e-mails de décision.</p></div></div>
-        <form className="admin-settings-form" onSubmit={saveMasterclassSettings}>
-          <div className="admin-settings-card">
-            <span className="admin-settings-icon">01</span>
-            <div><h3>Capacité de la Masterclass</h3><p>Définis le nombre maximal de candidatures autorisées. Laisse vide pour ne pas fixer de limite.</p></div>
-            <label>Nombre maximal de candidats<input type="number" min="1" max="10000" step="1" inputMode="numeric" value={capacityInput} onChange={e=>setCapacityInput(e.target.value)} placeholder="Ex. 30"/></label>
-            <small className="admin-settings-hint">{capacity===null?"Aucune limite actuellement définie":rows.length+" candidature(s) reçue(s) sur "+capacity+" place(s) configurée(s)"}</small>
-          </div>
-          <div className="admin-settings-card">
-            <span className="admin-settings-icon">02</span>
-            <div><h3>Groupe WhatsApp officiel</h3><p>Ce lien sera ajouté au bouton dans l’e-mail envoyé aux candidats dont la candidature est acceptée.</p></div>
-            <label>Lien d’invitation WhatsApp<input type="url" value={whatsappGroupLink} onChange={e=>setWhatsappGroupLink(e.target.value)} placeholder="https://chat.whatsapp.com/…"/></label>
-            {whatsappGroupLink&&<a className="admin-settings-preview" href={whatsappGroupLink} target="_blank" rel="noreferrer">Vérifier le lien du groupe <Icon name="chevron"/></a>}
-          </div>
-          <div className="admin-settings-footer"><span>Les modifications sont enregistrées dans la configuration de la Masterclass.</span><button className="admin-primary" type="submit" disabled={settingsSaving}>{settingsSaving?"Enregistrement…":"Enregistrer les paramètres"}</button></div>
-        </form>
+      {tab==="settings"&&role==="superAdmin"&&<section className="admin-masterclass-settings">
+        <div className="admin-settings-intro"><div><span className="admin-kicker">SUPERADMIN · CONFIGURATION</span><h2>Contrôle de la Masterclass</h2><p>Gère les paramètres qui influencent les inscriptions et les communications avec les candidats.</p></div><span className="admin-settings-secure">Accès SuperAdmin uniquement</span></div>
+        <div className="admin-settings-tabs" role="tablist" aria-label="Paramètres de la Masterclass">
+          <button type="button" role="tab" aria-selected={settingsTab==="capacity"} className={settingsTab==="capacity"?"active":""} onClick={()=>setSettingsTab("capacity")}><Icon name="grid"/> Capacité des inscriptions</button>
+          <button type="button" role="tab" aria-selected={settingsTab==="whatsapp"} className={settingsTab==="whatsapp"?"active":""} onClick={()=>setSettingsTab("whatsapp")}><Icon name="people"/> Groupe WhatsApp</button>
+        </div>
+        {settingsTab==="capacity"&&<div className="admin-settings-panel" role="tabpanel">
+          <div className="admin-settings-panel-head"><div><span className="admin-settings-eyebrow">GESTION DES PLACES</span><h3>Limite de candidatures</h3><p>Définis la capacité maximale autorisée pour cette session.</p></div><span className="admin-settings-symbol">01</span></div>
+          <div className="admin-capacity-overview"><div><small>CANDIDATURES REÇUES</small><strong>{rows.length}</strong></div><div className="admin-capacity-divider"/><div><small>CAPACITÉ CONFIGURÉE</small><strong>{capacity===null?"Illimitée":capacity}</strong></div><div className="admin-capacity-divider"/><div><small>PLACES RESTANTES</small><strong>{capacity===null?"—":Math.max(0,capacity-rows.length)}</strong></div></div>
+          <div className="admin-settings-progress"><div><span>Progression des inscriptions</span><b>{capacity===null?"Sans limite":Math.min(100,Math.round(rows.length/capacity*100))+"%"}</b></div><i><span style={{width:capacity===null?"0%":Math.min(100,rows.length/capacity*100)+"%"}}/></i></div>
+          <div className="admin-settings-panel-footer"><p>{capacity===null?"Aucune limite n’est actuellement appliquée.":rows.length>=capacity?"La capacité configurée est atteinte. Les nouvelles inscriptions sont bloquées.":"Les inscriptions restent ouvertes jusqu’à ce que la capacité soit atteinte."}</p><button type="button" className="admin-primary" onClick={()=>setSettingsModal("capacity")}>Modifier la capacité</button></div>
+        </div>}
+        {settingsTab==="whatsapp"&&<div className="admin-settings-panel" role="tabpanel">
+          <div className="admin-settings-panel-head"><div><span className="admin-settings-eyebrow">COMMUNICATION DES CANDIDATS</span><h3>Groupe WhatsApp officiel</h3><p>Le lien est transmis aux candidats dans leur e-mail d’acceptation.</p></div><span className="admin-settings-symbol">02</span></div>
+          <div className="admin-whatsapp-status"><span className="admin-whatsapp-mark">W</span><div><small>LIEN D’INVITATION ACTUEL</small><strong>{whatsappGroupLink?"Groupe WhatsApp configuré":"Aucun groupe configuré"}</strong><span>{whatsappGroupLink?whatsappGroupLink:"Le lien sera absent des e-mails tant qu’il n’est pas renseigné."}</span></div></div>
+          <div className="admin-settings-panel-footer"><p>Utilise un lien d’invitation généré depuis les paramètres du groupe WhatsApp. Tu peux le remplacer à tout moment.</p><button type="button" className="admin-primary" onClick={()=>setSettingsModal("whatsapp")}>{whatsappGroupLink?"Modifier le lien":"Ajouter un lien"}</button></div>
+        </div>}
       </section>}
       {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
         <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>La création des comptes sera réactivée après configuration de la fonction Cloudflare sécurisée.</p></div><button className="admin-primary" type="button" disabled title="La fonction serveur sécurisée doit être configurée avant toute création de compte.">Création sécurisée indisponible</button></div>
@@ -452,6 +455,15 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         {!admins.length&&<p className="admin-empty">Aucun administrateur trouvé.</p>}
       </section>}
     </main>
+    {settingsModal&&role==="superAdmin"&&<div className="admin-edit-overlay" onClick={()=>!settingsSaving&&setSettingsModal(null)}>
+      <form className="admin-edit-card admin-settings-modal" onSubmit={saveMasterclassSettings} onClick={e=>e.stopPropagation()}>
+        <div className="admin-drawer-head"><div><span className="admin-kicker">PARAMÈTRES MASTERCLASS</span><h2>{settingsModal==="capacity"?"Définir la capacité":"Configurer le groupe WhatsApp"}</h2></div><button type="button" onClick={()=>setSettingsModal(null)} disabled={settingsSaving} aria-label="Fermer"><Icon name="close"/></button></div>
+        <p className="admin-modal-description">{settingsModal==="capacity"?"Définis le nombre maximal de candidatures qui pourront être enregistrées.":"Ajoute le lien d’invitation qui sera transmis aux candidats acceptés."}</p>
+        {settingsModal==="capacity"?<label className="admin-settings-modal-field">Nombre maximal de candidats<input type="number" min="1" max="10000" step="1" inputMode="numeric" value={capacityInput} onChange={e=>setCapacityInput(e.target.value)} placeholder="Ex. 30"/><small>Laisse le champ vide pour autoriser un nombre illimité de candidatures.</small></label>:<label className="admin-settings-modal-field">Lien d’invitation WhatsApp<input type="url" value={whatsappGroupLink} onChange={e=>setWhatsappGroupLink(e.target.value)} placeholder="https://chat.whatsapp.com/…"/><small>Le lien doit commencer par https://chat.whatsapp.com/.</small></label>}
+        {error&&<p className="admin-error" role="alert">{error}</p>}
+        <div className="admin-create-modal-actions"><button type="button" className="admin-secondary" disabled={settingsSaving} onClick={()=>setSettingsModal(null)}>Annuler</button><button className="admin-primary" type="submit" disabled={settingsSaving}>{settingsSaving?"Enregistrement…":"Enregistrer"}</button></div>
+      </form>
+    </div>}
     {selectedAdmin&&role==="superAdmin"&&<div className="admin-edit-overlay" onClick={()=>!adminEditSaving&&setSelectedAdmin(null)}>
       <form className="admin-edit-card admin-create-admin-modal" onSubmit={saveAdminDetails} onClick={e=>e.stopPropagation()}>
         <div className="admin-drawer-head"><div><span className="admin-kicker">FICHE ADMINISTRATEUR</span><h2>{[selectedAdmin.firstName,selectedAdmin.lastName].filter(Boolean).join(" ")||"Administrateur"}</h2></div><button type="button" onClick={()=>setSelectedAdmin(null)} disabled={adminEditSaving} aria-label="Fermer"><Icon name="close"/></button></div>
