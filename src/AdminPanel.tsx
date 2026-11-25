@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createUserWithEmailAndPassword, deleteUser, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { deleteApp, initializeApp } from "firebase/app";
 import { auth, db, firebaseApp } from "./firebase";
 
@@ -93,32 +93,6 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
 function pctSafe(n:number,d:number){return d?Math.round(n/d*100):0}
-const chartPalette=["#1f5bff","#22b8d8","#ff9a3d","#8c9dbb","#1233a8","#6b7fd7","#45a6a0"];
-function AnalyticsDonut({items,total,centerLabel,small=false}:{items:{label:string;value:number}[];total:number;centerLabel:string;small?:boolean}){
-  const sum=items.reduce((n,x)=>n+x.value,0), radius=small?31:39, circumference=2*Math.PI*radius;
-  let offset=0;
-  return <div className={"analytics-donut-wrap"+(small?" is-small":"")}>
-    <div className="analytics-donut"><svg viewBox="0 0 100 100" role="img" aria-label={"Répartition sur "+sum+" réponses"}><circle cx="50" cy="50" r={radius} fill="none" stroke="#edf1f7" strokeWidth={small?9:10}/>{items.map((item,index)=>{const length=sum?item.value/sum*circumference:0;const node=<circle key={item.label} cx="50" cy="50" r={radius} fill="none" stroke={chartPalette[index%chartPalette.length]} strokeWidth={small?9:10} strokeDasharray={length+" "+(circumference-length)} strokeDashoffset={-offset} transform="rotate(-90 50 50)" strokeLinecap="butt"/>;offset+=length;return node;})}</svg><div className="analytics-donut-center"><strong>{total}</strong><small>{centerLabel}</small></div></div>
-    <div className="analytics-legend">{items.length?items.slice(0,6).map((item,index)=><div key={item.label}><i style={{background:chartPalette[index%chartPalette.length]}}/><span title={item.label}>{item.label}</span><b>{item.value}</b><small>{pctSafe(item.value,total)}%</small></div>):<p>Aucune réponse disponible</p>}</div>
-  </div>;
-}
-function AnalyticsLine({items}:{items:{label:string;value:number}[]}){
-  if(!items.length)return <div className="analytics-empty">L'évolution apparaîtra dès que plusieurs périodes seront renseignées.</div>;
-  const width=560,height=190,pad=28,max=Math.max(...items.map(x=>x.value),1),step=items.length>1?(width-pad*2)/(items.length-1):0;
-  const points=items.map((x,i)=>({x:items.length===1?width/2:pad+i*step,y:height-pad-(x.value/max)*(height-pad*2)}));
-  const line=points.map((p,i)=>(i?"L":"M")+p.x+" "+p.y).join(" ");
-  const area=line+" L "+points[points.length-1].x+" "+(height-pad)+" L "+points[0].x+" "+(height-pad)+" Z";
-  return <div className="analytics-line-wrap"><svg viewBox={"0 0 "+width+" "+height} preserveAspectRatio="none" role="img" aria-label="Courbe des inscriptions"><defs><linearGradient id="analyticsArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#22b8d8" stopOpacity=".24"/><stop offset="100%" stopColor="#22b8d8" stopOpacity="0"/></linearGradient></defs>{[.25,.5,.75].map(v=><line key={v} x1={pad} x2={width-pad} y1={height-pad-v*(height-pad*2)} y2={height-pad-v*(height-pad*2)} stroke="#edf1f7" strokeDasharray="3 5"/>)}<path d={area} fill="url(#analyticsArea)"/><path d={line} fill="none" stroke="#1f5bff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>{points.map((p,i)=><g key={items[i].label}><circle cx={p.x} cy={p.y} r="5" fill="#fff" stroke="#1f5bff" strokeWidth="2.5"/><text x={p.x} y={p.y-12} textAnchor="middle" fontSize="11" fill="#344766" fontWeight="700">{items[i].value}</text></g>)}</svg><div className="analytics-line-labels">{items.map(x=><span key={x.label}>{x.label}</span>)}</div></div>;
-}
-function AnalyticsGauge({value,label,detail}:{value:number;label:string;detail:string}){
- const r=34,c=2*Math.PI*r,progress=Math.max(0,Math.min(100,value))/100*c;
- return <div className="analytics-gauge"><div className="analytics-gauge-visual"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r={r} fill="none" stroke="#edf1f7" strokeWidth="7" strokeDasharray={c*.5+" "+c*.5} transform="rotate(180 44 44)" strokeLinecap="round"/><circle cx="44" cy="44" r={r} fill="none" stroke="#1f5bff" strokeWidth="7" strokeDasharray={progress*.5+" "+c} transform="rotate(180 44 44)" strokeLinecap="round"/></svg><strong>{value}%</strong></div><b>{label}</b><small>{detail}</small></div>;
-}
-function AnalyticsCompact({items,total}:{items:{label:string;value:number}[];total:number}){
- if(!items.length)return <div className="analytics-empty">Aucune réponse disponible</div>;
- const max=Math.max(...items.map(x=>x.value),1);
- return <div className="analytics-compact">{items.slice(0,6).map((item,index)=><div key={item.label}><div><span><i style={{background:chartPalette[index%chartPalette.length]}}/>{item.label}</span><b>{item.value}</b></div><div className="analytics-compact-track"><i style={{width:item.value/max*100+"%",background:chartPalette[index%chartPalette.length]}}/></div><small>{pctSafe(item.value,total)}% du total</small></div>)}</div>;
-}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
   return <span className={"admin-status status-" + status}>{label}</span>;
@@ -151,6 +125,11 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [adminEditForm,setAdminEditForm] = useState({firstName:"",lastName:"",active:true});
   const [adminEditSaving,setAdminEditSaving] = useState(false);
   const [showAdminPassword,setShowAdminPassword] = useState(false);
+  const [capacity,setCapacity] = useState("");
+  const [deadline,setDeadline] = useState("");
+  const [capacitySaving,setCapacitySaving] = useState(false);
+  const [internalNote,setInternalNote] = useState("");
+  const [noteSaving,setNoteSaving] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
     setUser(current); setRole(null);
@@ -183,63 +162,19 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Impossible de lire les candidatures. Vérifie la collection « candidatures » et ses règles d’accès."); }
     finally { setBusy(false); }
   };
-  useEffect(() => { if(user && role) void loadCandidates(); if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
+  const loadSettings = async () => { if(role!=="superAdmin") return; try { const snap=await getDoc(doc(db,"configuration","masterclass")); if(snap.exists()){const data=snap.data();setCapacity(data.capacity==null?"":String(data.capacity));setDeadline(data.deadline??"");} } catch { setError("Impossible de charger les réglages de la formation."); } };
+  useEffect(() => { if(user && role) void loadCandidates(); if(user && role==="superAdmin"){void loadAdmins();void loadSettings();} },[user,role]);
   const counts = useMemo(() => ({
     total:rows.length, accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
     waiting:rows.filter(r=>statusOf(r.status)==="waiting").length,
   }),[rows]);
-  const analytics = useMemo(() => {
-    const countBy = (get:(row:Candidate)=>unknown) => {
-      const map = new Map<string,number>();
-      rows.forEach(row => {
-        const raw=get(row);
-        const values=Array.isArray(raw)?raw:(typeof raw==="string"?raw.split(/[,;|]/):[raw]);
-        values.forEach(value=>{
-          const label=String(value??"").trim();
-          if(label && label!=="—" && label.toLowerCase()!=="non renseigné") map.set(label,(map.get(label)??0)+1);
-        });
-      });
-      return [...map.entries()].map(([label,value])=>({label,value})).sort((x,y)=>y.value-x.value);
-    };
-    const byMonth = new Map<string,number>();
-    rows.forEach(row=>{
-      const raw=row.createdAt, date=raw?.toDate?raw.toDate():raw?new Date(raw):null;
-      if(date && !Number.isNaN(date.getTime())){
-        const key=date.toLocaleDateString("fr-FR",{month:"short",year:"2-digit"});
-        byMonth.set(key,(byMonth.get(key)??0)+1);
-      }
-    });
-    const trend=[...byMonth.entries()].slice(0,8).reverse().map(([label,value])=>({label,value}));
-    const answered=(key:string)=>rows.filter(row=>row[key]!==undefined&&row[key]!==null&&row[key]!==""&&row[key]!=="—").length;
-    const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
-    const yesRam=rows.filter(row=>String(row.ram??"").toLowerCase()==="oui").length;
-    const available=rows.filter(row=>String(row.availability??"").toLowerCase()==="oui").length;
-    const committed=rows.filter(row=>row.commitment===true||String(row.commitment).toLowerCase()==="oui").length;
-    return {
-      trend,
-      status:countBy(row=>statusOptions.find(item=>item.value===statusOf(row.status))?.label??"Reçue"),
-      levels:countBy(row=>row.level),
-      assemblies:countBy(row=>row.assembly??row.extension),
-      tools:countBy(row=>row.tools),
-      maturity:countBy(row=>row.maturity),
-      departments:countBy(row=>row.department),
-      areas:countBy(row=>row.area??row.commune),
-      ages:countBy(row=>row.age),
-      genders:countBy(row=>row.gender),
-      attendance:countBy(row=>row.attendance),
-      ram:{yes:yesRam,unknown:rows.length-answered("ram"),rate:pct(yesRam,answered("ram"))},
-      availability:{yes:available,unknown:rows.length-answered("availability"),rate:pct(available,answered("availability"))},
-      commitment:{yes:committed,rate:pct(committed,rows.length)},
-      motivationAnswered:answered("motivation"),
-      profilePhotos:rows.filter(row=>Boolean(row.profilePhotoUrl||row.photoUrl)).length,
-      portfolio:rows.filter(row=>Boolean(row.portfolio||row.portfolioFileUrl||row.portfolioUrl)).length,
-      completeProfiles:rows.filter(row=>[["fullName","name"],["phone"],["area","commune"],["assembly","extension"],["level"],["ram"],["availability"],["motivation"]].every(keys=>keys.some(key=>row[key]!==undefined&&row[key]!==null&&row[key]!==""))).length
-    };
-  },[rows]);
   const filtered = useMemo(() => rows.filter(row => {
-    const haystack = [personName(row),row.phone,row.email,row.assembly,row.extension].join(" ").toLowerCase();
-    return (!query || haystack.includes(query.toLowerCase()))
+    const normalize=(value:unknown)=>String(value??"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/\\s+/g," ").trim();
+    const rawQuery=normalize(query), phoneQuery=rawQuery.replace(/\\D/g,"").replace(/^243/,"");
+    const haystack = normalize([personName(row),row.phone,row.email,row.assembly,row.extension].join(" "));
+    const candidatePhone=String(row.phone??"").replace(/\\D/g,"").replace(/^243/,"");
+    return (!rawQuery || haystack.includes(rawQuery) || (phoneQuery && candidatePhone.includes(phoneQuery)))
       && (filterStatus==="all" || statusOf(row.status)===filterStatus)
       && (filterLevel==="all" || valueOf(row,"level")===filterLevel)
       && (filterAssembly==="all" || valueOf(row,"assembly","extension")===filterAssembly)
@@ -255,11 +190,36 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     finally { setBusy(false); }
   };
   const changeStatus = async (candidate:Candidate,status:Status) => {
+    const previous=statusOf(candidate.status);
+    if(previous===status) return;
+    if(status==="refused" && !window.confirm("Confirmer le refus définitif de cette candidature ?")) return;
     try {
-      await updateDoc(doc(db,"candidatures",candidate.id),{status,reviewedAt:new Date(),reviewedBy:user?.uid??null});
-      setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,status}:row));
-      setSelected(prev=>prev?.id===candidate.id?{...prev,status}:prev);
-    } catch { setError("Modification refusée. Les règles Firestore doivent autoriser cette action."); }
+      const historyEntry={from:previous,to:status,adminId:user?.uid??"",changedAt:new Date()};
+      await updateDoc(doc(db,"candidatures",candidate.id),{status,reviewedAt:serverTimestamp(),reviewedBy:user?.uid??null,statusHistory:arrayUnion(historyEntry)});
+      const patch={status,reviewedAt:new Date(),reviewedBy:user?.uid??null,statusHistory:[...(candidate.statusHistory??[]),historyEntry]};
+      setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,...patch}:row));
+      setSelected(prev=>prev?.id===candidate.id?{...prev,...patch}:prev);
+      setNewStatus(status); setError("");
+    } catch { setError("Modification refusée. Vérifie les règles Firestore et les droits de cet administrateur."); }
+  };
+  const saveInternalNote = async () => {
+    if(!selected) return;
+    setNoteSaving(true);
+    try {
+      await updateDoc(doc(db,"candidatures",selected.id),{internalNote});
+      setRows(prev=>prev.map(row=>row.id===selected.id?{...row,internalNote}:row));
+      setSelected(prev=>prev?.id===selected.id?{...prev,internalNote}:prev);
+    } catch { setError("Impossible d’enregistrer la note interne. Vérifie les règles Firestore."); }
+    finally { setNoteSaving(false); }
+  };
+  const saveCapacitySettings = async (event:React.FormEvent) => {
+    event.preventDefault(); if(role!=="superAdmin") return;
+    const parsed=capacity.trim()===""?null:Number(capacity);
+    if(parsed!==null && (!Number.isInteger(parsed)||parsed<1)){setError("Le nombre de places doit être un entier positif.");return;}
+    setCapacitySaving(true);setError("");
+    try { await setDoc(doc(db,"configuration","masterclass"),{capacity:parsed,deadline:deadline||null,updatedAt:serverTimestamp(),updatedBy:user?.uid??null},{merge:true}); }
+    catch { setError("Impossible d’enregistrer les réglages. Vérifie les règles Firestore."); }
+    finally { setCapacitySaving(false); }
   };
   const openAdminDetails = (item:AdminRecord) => {
     setSelectedAdmin(item);
@@ -311,7 +271,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setAdminSaving(false);
     }
   };
-  const openDetails = (row:Candidate) => { setSelected(row); setNewStatus(statusOf(row.status)); };
+  const openDetails = (row:Candidate) => { setSelected(row); setNewStatus(statusOf(row.status)); setInternalNote(String(row.internalNote??"")); setError(""); };
   const openEdit = (row:Candidate) => {
     setSelected(row); setNewStatus(statusOf(row.status));
     setEdit({fullName:personName(row)==="Sans nom"?"":personName(row),phone:row.phone??"",email:row.email??"",area:row.area??row.commune??"",assembly:row.assembly??row.extension??"",level:row.level??"",ram:row.ram??""});
@@ -363,67 +323,32 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary admin-kpi-summary">
-          <article><span>Candidatures reçues</span><strong>{counts.total}</strong><small>Volume total enregistré</small></article>
-          <article><span>À traiter</span><strong>{counts.pending}</strong><small>{counts.total?pctSafe(counts.pending,counts.total):0}% du total</small></article>
+          <article><span>Candidatures reçues</span><strong>{counts.total}</strong><small>Tous les dossiers enregistrés</small></article>
+          <article><span>À traiter</span><strong>{counts.pending}</strong><small>Reçue + En étude</small></article>
           <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>{counts.total?pctSafe(counts.accepted,counts.total):0}% du total</small></article>
-          <article><span>En attente</span><strong>{counts.waiting}</strong><small>Décision à finaliser</small></article>
+          <article><span>En attente</span><strong>{counts.waiting}</strong><small>Liste d’attente</small></article>
         </div>
-        <div className="analytics-heading"><div><h2>Analyse des candidatures</h2><p>Vue synthétique des profils, compétences et conditions de participation</p></div><span>{rows.length} dossier{rows.length>1?"s":""} analysé{rows.length>1?"s":""}</span></div>
-        <div className="analytics-pro">
-          <section className="analytics-panel analytics-panel-trend">
-            <div className="analytics-panel-head"><div><h3>Rythme des inscriptions</h3><p>Évolution mensuelle des candidatures enregistrées</p></div><span className="analytics-tag">Tendance</span></div>
-            <AnalyticsLine items={analytics.trend}/>
-          </section>
-          <section className="analytics-panel analytics-panel-status">
-            <div className="analytics-panel-head"><div><h3>Décisions</h3><p>État actuel du traitement</p></div></div>
-            <AnalyticsDonut items={analytics.status} total={counts.total} centerLabel="DOSSIERS"/>
-          </section>
-          <section className="analytics-panel analytics-panel-skills">
-            <div className="analytics-panel-head"><div><h3>Profil de compétences</h3><p>Niveau déclaré en design</p></div></div>
-            <AnalyticsDonut items={analytics.levels} total={counts.total} centerLabel="CANDIDATS"/>
-          </section>
-          <section className="analytics-panel analytics-panel-tools">
-            <div className="analytics-panel-head"><div><h3>Environnement créatif</h3><p>Logiciels et outils déjà pratiqués</p></div></div>
-            <AnalyticsCompact items={analytics.tools} total={counts.total}/>
-          </section>
-          <section className="analytics-panel analytics-panel-spiritual">
-            <div className="analytics-panel-head"><div><h3>Profil ecclésial</h3><p>Maturité spirituelle déclarée</p></div></div>
-            <AnalyticsDonut items={analytics.maturity} total={counts.total} centerLabel="CANDIDATS"/>
-          </section>
-          <section className="analytics-panel analytics-panel-branches">
-            <div className="analytics-panel-head"><div><h3>Représentation des extensions</h3><p>Répartition des candidatures par assemblée</p></div></div>
-            <AnalyticsCompact items={analytics.assemblies} total={counts.total}/>
-          </section>
-          <section className="analytics-panel analytics-panel-readiness">
-            <div className="analytics-panel-head"><div><h3>Conditions de participation</h3><p>Indicateurs calculés sur les réponses renseignées</p></div></div>
-            <div className="analytics-gauges">
-              <AnalyticsGauge value={analytics.ram.rate} label="PC · 8 Go RAM" detail={analytics.ram.yes+" oui · "+analytics.ram.unknown+" autre(s) / non renseigné"}/>
-              <AnalyticsGauge value={analytics.availability.rate} label="Disponibilité complète" detail={analytics.availability.yes+" oui · "+analytics.availability.unknown+" autre(s) / non renseigné"}/>
-              <AnalyticsGauge value={analytics.commitment.rate} label="Engagement département" detail={analytics.commitment.yes+" engagement(s) sur "+counts.total}/>
-            </div>
-          </section>
-          <section className="analytics-panel analytics-panel-demographics">
-            <div className="analytics-panel-head"><div><h3>Profil des participants</h3><p>Âge et genre des candidats</p></div></div>
-            <div className="analytics-demographic-columns"><div><b>Âge</b><AnalyticsCompact items={analytics.ages} total={counts.total}/></div><div><b>Genre</b><AnalyticsDonut items={analytics.genders} total={counts.total} centerLabel="PROFILS" small/></div></div>
-          </section>
-          <section className="analytics-panel analytics-panel-community">
-            <div className="analytics-panel-head"><div><h3>Ancrage dans l'Église</h3><p>Départements d'origine et ancienneté</p></div></div>
-            <AnalyticsCompact items={analytics.departments} total={counts.total}/>
-            <div className="analytics-subchart"><span>Ancienneté</span><AnalyticsCompact items={analytics.attendance} total={counts.total}/></div>
-          </section>
-          <section className="analytics-panel analytics-panel-location">
-            <div className="analytics-panel-head"><div><h3>Origine géographique</h3><p>Communes et quartiers représentés</p></div></div>
-            <AnalyticsCompact items={analytics.areas} total={counts.total}/>
-          </section>
-          <section className="analytics-panel analytics-panel-quality">
-            <div className="analytics-panel-head"><div><h3>Complétude des dossiers</h3><p>Éléments disponibles pour l'étude des candidatures</p></div></div>
-            <div className="analytics-quality-grid"><div><strong>{analytics.completeProfiles}</strong><span>Profils avec informations clés</span></div><div><strong>{analytics.profilePhotos}</strong><span>Photos reçues</span></div><div><strong>{analytics.portfolio}</strong><span>Portfolios fournis</span></div><div><strong>{analytics.motivationAnswered}</strong><span>Motivations renseignées</span></div></div>
-          </section>
-        </div>
-        <section className="admin-section analytics-recent"><div className="admin-section-head"><div><h2>Dossiers récents</h2><p>Accès rapide aux dernières candidatures enregistrées.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
-          <CandidateTable rows={rows.slice(0,6)} onOpen={openDetails} startNumber={0}/>
-          {!rows.length&&<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucune candidature enregistrée pour le moment."}</p>}
+        {role==="superAdmin"&&(capacity.trim()!==""||deadline)&&<p className="admin-capacity-summary">{capacity.trim()!==""?counts.accepted+" acceptés sur "+capacity+" places":""}{capacity.trim()!==""&&deadline?" · ":""}{deadline?"Date limite : "+new Date(deadline+"T00:00:00").toLocaleDateString("fr-FR"):""}</p>}
+        {rows.length>=5&&<section className="admin-section admin-status-distribution">
+          <div className="admin-section-head"><div><h2>Répartition des statuts</h2><p>Vue globale du traitement des candidatures.</p></div></div>
+          <div className="admin-status-segments" role="img" aria-label={statusOptions.map(item=>item.label+" : "+rows.filter(row=>statusOf(row.status)===item.value).length).join(", ")}>
+            {statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return amount>0?<span key={item.value} className={"segment-"+item.value} style={{width:(amount/rows.length*100)+"%"}} title={item.label+" : "+amount}></span>:null})}
+          </div>
+          <div className="admin-status-legend">{statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return <span key={item.value}><i className={"status-dot-"+item.value}></i>{item.label} <b>{amount}</b></span>})}</div>
+        </section>}
+        <section className="admin-section admin-review-queue">
+          <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les candidatures en attente de décision, de la plus ancienne à la plus récente.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
+          {rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).length>0?
+            <div className="admin-review-list">{rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).map((row,index)=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}>
+              <span className="admin-review-number">{index+1}</span><span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")} · {valueOf(row,"level")}</small></span>
+              <span className={"admin-review-availability"+(row.availability==="Partiellement"?" partial":"")}>{row.availability==="Partiellement"?"Disponibilité partielle":valueOf(row,"availability")}</span>
+              <StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time><Icon name="chevron"/>
+            </button>)}</div>
+            :<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier ne nécessite actuellement de décision."}</p>}
         </section>
+        {role==="superAdmin"&&<section className="admin-section admin-capacity-settings"><div className="admin-section-head"><div><h2>Paramètres de la formation</h2><p>Facultatif · aucune limite n’est appliquée tant que ces champs restent vides.</p></div></div>
+          <form className="admin-capacity-form" onSubmit={saveCapacitySettings}><label>Nombre de places<input type="number" min="1" step="1" value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Non défini"/></label><label>Date limite d’inscription<input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/></label><button className="admin-primary" type="submit" disabled={capacitySaving}>{capacitySaving?"Enregistrement…":"Enregistrer"}</button></form>
+        </section>}
       </>}
       {tab==="candidates"&&<>
         <section className={"admin-toolbar" + (mobileFiltersOpen ? " mobile-filters-open" : "")}>
@@ -562,6 +487,16 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             ].map(([label,value])=><div key={label}><small>{label}</small><b>{String(value)}</b></div>)}
             <div><small>Date de candidature</small><b>{dateLabel(selected.createdAt)}</b></div>
           </div>
+        </div>
+        <div className="admin-detail-section admin-contact-actions">
+          <h3>Contacter le candidat</h3>
+          <div className="admin-contact-links">{String(selected.phone??"").replace(/\\D/g,"").length>=9&&<><a href={"tel:"+String(selected.phone).replace(/[^+0-9]/g,"")}>Appeler</a><a href={"https://wa.me/243"+String(selected.phone).replace(/\\D/g,"").replace(/^243/,"")} target="_blank" rel="noreferrer">WhatsApp</a></>}</div>
+        </div>
+        <div className="admin-detail-section">
+          <h3>Suivi administratif</h3>
+          <div className="admin-detail-list"><div><small>Dernière modification</small><b>{selected.reviewedBy?("Administrateur "+String(selected.reviewedBy).slice(0,8)+" · "+dateLabel(selected.reviewedAt)):"Aucune décision enregistrée"}</b></div></div>
+          <label className="admin-internal-note">Note interne<textarea rows={4} value={internalNote} onChange={e=>setInternalNote(e.target.value)} placeholder="Ajouter une observation réservée à l’équipe administrative…"/></label>
+          <button type="button" className="admin-secondary admin-full" onClick={()=>void saveInternalNote()} disabled={noteSaving}>{noteSaving?"Enregistrement…":"Enregistrer la note"}</button>
         </div>
         <div className="admin-status-action-row">
           <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
