@@ -1925,3 +1925,43 @@
  .admin-section{padding:18px!important}
  .admin-table-wrap{overflow-x:auto}
 }
+
+
+/* Desktop dashboard table: distribute every column across the full content width */
+@media(min-width:1101px){
+ .admin-app .admin-section{width:100%;min-width:0}
+ .admin-app .admin-table-wrap{display:block;width:100%;min-width:0;max-width:100%;overflow-x:visible}
+ .admin-app .admin-table{
+  display:table!important;
+  width:100%!important;
+  min-width:100%!important;
+  max-width:100%!important;
+  table-layout:fixed!important;
+  border-collapse:collapse!important;
+ }
+ .admin-app .admin-table th,
+ .admin-app .admin-table td{
+  box-sizing:border-box;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+ }
+ .admin-app .admin-table th:nth-child(1),
+ .admin-app .admin-table td:nth-child(1){width:5%}
+ .admin-app .admin-table th:nth-child(2),
+ .admin-app .admin-table td:nth-child(2){width:25%}
+ .admin-app .admin-table th:nth-child(3),
+ .admin-app .admin-table td:nth-child(3){width:14%}
+ .admin-app .admin-table th:nth-child(4),
+ .admin-app .admin-table td:nth-child(4){width:10%}
+ .admin-app .admin-table th:nth-child(5),
+ .admin-app .admin-table td:nth-child(5){width:8%}
+ .admin-app .admin-table th:nth-child(6),
+ .admin-app .admin-table td:nth-child(6){width:13%}
+ .admin-app .admin-table th:nth-child(7),
+ .admin-app .admin-table td:nth-child(7){width:15%}
+ .admin-app .admin-table th:nth-child(8),
+ .admin-app .admin-table td:nth-child(8){width:5%;text-align:center}
+ .admin-app .admin-table td:nth-child(2) b,
+ .admin-app .admin-table td:nth-child(2) small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
