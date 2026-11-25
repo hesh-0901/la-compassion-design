@@ -205,6 +205,12 @@ export function escapeHtml(value: unknown) {
   return String(value ?? "").replace(/[&<>"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char]!);
 }
 
+export async function createAdminServiceContext(env: { FIREBASE_SERVICE_ACCOUNT: string }) {
+  const account = accountFrom(env);
+  const token = await serviceAccessToken(account, "https://www.googleapis.com/auth/cloud-platform");
+  return { account, token };
+}
+
 export async function createContext(env: Env) {
   if (!env.MAILER_WEB_APP_URL || !env.MAILER_SECRET) throw new Error("Configuration Gmail manquante dans Cloudflare.");
   const account = accountFrom(env);
