@@ -2277,3 +2277,20 @@
  .admin-review-pagination{font-size:9px}
  .admin-review-pagination button{padding:6px 7px}
 }
+
+
+/* SuperAdmin — paramètres Masterclass */
+.admin-masterclass-settings{max-width:900px}
+.admin-settings-form{display:grid;gap:16px}
+.admin-settings-card{display:grid;gap:12px;padding:22px;border:1px solid var(--admin-border,#e5e9e7);border-radius:18px;background:var(--admin-card,#fff)}
+.admin-settings-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#eaf3ee;color:#236a49;font-size:12px;font-weight:800;letter-spacing:.06em}
+.admin-settings-card h3{margin:0 0 5px;font-size:16px;color:var(--admin-text,#17251f)}
+.admin-settings-card p{margin:0;color:var(--admin-muted,#718078);font-size:13px;line-height:1.6}
+.admin-settings-card label{display:grid;gap:7px;font-size:13px;font-weight:650;color:var(--admin-text,#17251f)}
+.admin-settings-card input{width:100%;min-height:46px;padding:0 13px;border:1px solid var(--admin-border,#dfe6e1);border-radius:10px;background:var(--admin-input,#fff);color:inherit;font:inherit;outline:none}
+.admin-settings-card input:focus{border-color:#38835d;box-shadow:0 0 0 3px #38835d1c}
+.admin-settings-hint{color:var(--admin-muted,#718078);font-size:12px}
+.admin-settings-preview{display:inline-flex;align-items:center;gap:7px;color:#28724d;font-size:13px;font-weight:650;text-decoration:none}
+.admin-settings-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 2px}
+.admin-settings-footer>span{color:var(--admin-muted,#718078);font-size:12px;line-height:1.5}
+@media(max-width:640px){.admin-settings-card{padding:17px}.admin-settings-footer{align-items:stretch;flex-direction:column}.admin-settings-footer .admin-primary{width:100%}}
