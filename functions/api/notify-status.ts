@@ -1,6 +1,6 @@
 import { authenticateFirebaseUser, createContext, escapeHtml, readDocument, sendEmail, updateFields, jsonResponse } from "../_shared/notifications";
 
-type Env = { FIREBASE_SERVICE_ACCOUNT: string; RESEND_API_KEY: string; RESEND_FROM_EMAIL: string };
+type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string };
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
