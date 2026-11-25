@@ -35,12 +35,12 @@ function accountFrom(env: Env): ServiceAccount {
   return account;
 }
 
-async function serviceAccessToken(account: ServiceAccount): Promise<string> {
+export async function serviceAccessToken(account: ServiceAccount, scope = "https://www.googleapis.com/auth/datastore"): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = b64url(JSON.stringify({
     iss: account.client_email,
-    scope: "https://www.googleapis.com/auth/datastore",
+    scope,
     aud: account.token_uri || "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 3600,
@@ -126,6 +126,55 @@ export async function sendEmail(env: Env, to: string, subject: string, html: str
   catch { throw new Error("Réponse Apps Script invalide : " + raw.slice(0, 250)); }
   if (!result.ok || !data.success) throw new Error(data.error || "Échec de l'envoi Gmail.");
   return idempotencyKey;
+}
+
+
+export async function createAdminProfile(account: ServiceAccount, token: string, uid: string, profile: { firstName: string; lastName: string; email: string }) {
+  const url = "/admins?documentId=" + encodeURIComponent(uid);
+  return firestoreRequest(account, token, url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fields: {
+      firstName: { stringValue: profile.firstName },
+      lastName: { stringValue: profile.lastName },
+      email: { stringValue: profile.email },
+      role: { stringValue: "admin" },
+      active: { booleanValue: true },
+      createdAt: { timestampValue: new Date().toISOString() },
+    } }),
+  });
+}
+
+export async function createFirebaseAuthUser(projectId: string, apiKey: string, accessToken: string, user: { email: string; password: string; displayName: string }) {
+  const url = "https://identitytoolkit.googleapis.com/v1/projects/" + encodeURIComponent(projectId) + "/accounts?key=" + encodeURIComponent(apiKey);
+  const result = await fetch(url, {
+    method: "POST",
+    headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
+    body: JSON.stringify({ email: user.email, password: user.password, displayName: user.displayName, emailVerified: false, disabled: false, returnSecureToken: false }),
+  });
+  const data = await result.json() as { localId?: string; error?: { message?: string } };
+  if (!result.ok || !data.localId) {
+    const code = data.error?.message || "AUTH_CREATE_FAILED";
+    const messages: Record<string, string> = {
+      EMAIL_EXISTS: "Cette adresse e-mail est déjà utilisée.",
+      INVALID_EMAIL: "L’adresse e-mail générée est invalide.",
+      WEAK_PASSWORD: "Le mot de passe ne respecte pas les exigences de sécurité Firebase.",
+      OPERATION_NOT_ALLOWED: "La connexion par e-mail et mot de passe n’est pas activée dans Firebase Authentication.",
+      PERMISSION_DENIED: "Le compte de service n’a pas l’autorisation de créer des utilisateurs Firebase.",
+    };
+    throw new Error(messages[code] || "Firebase Authentication : " + code);
+  }
+  return data.localId;
+}
+
+export async function deleteFirebaseAuthUser(projectId: string, apiKey: string, accessToken: string, uid: string) {
+  const url = "https://identitytoolkit.googleapis.com/v1/projects/" + encodeURIComponent(projectId) + "/accounts:delete?key=" + encodeURIComponent(apiKey);
+  const result = await fetch(url, {
+    method: "POST",
+    headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
+    body: JSON.stringify({ localId: uid }),
+  });
+  if (!result.ok) throw new Error("Impossible d’annuler la création du compte Firebase : " + result.status);
 }
 
 export async function authenticateFirebaseUser(request: Request, projectId: string): Promise<string> {
