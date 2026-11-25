@@ -155,7 +155,9 @@ export default function App() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ candidateId: candidateRef.id }),
       }).then(async response => {
-        if (!response.ok) console.error("Notification d'inscription non envoyée :", await response.text());
+        const result = await response.json().catch(() => null) as { ok?: boolean; notifications?: Record<string, string>; error?: string } | null;
+        if (!response.ok || !result?.ok) console.error("Notifications d'inscription incomplètes :", result);
+        else console.info("Notifications d'inscription :", result.notifications);
       }).catch(error => console.error("Service de notification indisponible :", error));
       go("confirmation");
     } catch (error) {
