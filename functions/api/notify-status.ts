@@ -46,8 +46,10 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       </div>`;
     const messageId = await sendEmail(env, email, subject, html, "candidate-status-" + candidateId + "-" + nextStatus);
     await updateFields(account, token, "candidatures/" + candidateId, { statusNotificationSentFor: nextStatus, statusNotificationSentAt: new Date().toISOString() });
+    console.log("Notification de décision envoyée", { candidateId, status: nextStatus, messageId });
     return jsonResponse({ ok: true, notification: "sent", messageId });
   } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : "Erreur interne." }, 500);
+    console.error("Échec notification de décision", error);
+    return jsonResponse({ ok: false, error: error instanceof Error ? error.message : "Erreur interne." }, 500);
   }
 };
