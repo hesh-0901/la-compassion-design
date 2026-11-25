@@ -15,16 +15,12 @@ type Env = {
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   let createdUid = "";
-  let accessToken = "";
-  let projectId = "";
   try {
     if (!env.FIREBASE_API_KEY) {
       return jsonResponse({ error: "La variable FIREBASE_API_KEY est absente de Cloudflare Pages." }, 500);
     }
 
     const { account, token } = await createAdminServiceContext(env);
-    projectId = account.project_id;
-    accessToken = token;
 
     const uid = await authenticateFirebaseUser(request, projectId);
     const adminDoc = await readDocument(account, token, "admins", uid);
