@@ -95,7 +95,8 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
 function pctSafe(n:number,d:number){return d?Math.round(n/d*100):0}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
-  return <span className={"admin-status status-" + status}>{label}</span>;
+  const icons:Record<Status,string>={received:"M12 3v18M3 12h18",review:"M12 3v18m-9-9h18",accepted:"m5 12 4 4L19 6",waiting:"M12 8v4l3 2",refused:"M18 6 6 18M6 6l12 12"};
+  return <span className={"admin-status status-" + status}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[status]}/></svg>{label}</span>;
 }
 
 export default function AdminPanel({ onHome }: { onHome: () => void }) {
