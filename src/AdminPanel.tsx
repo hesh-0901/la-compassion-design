@@ -147,7 +147,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setError("Impossible de charger les administrateurs. Vérifie les règles Firestore.");
     }
   };
-  const loadCapacity = async () => { try { const snap=await getDoc(doc(db,"configuration","masterclass"));const value=snap.exists()?snap.data().capacity:null;setCapacity(typeof value==="number"&&value>0?value:null); } catch { setCapacity(null); } };
+  const loadCapacity = async () => { try { const snap=await getDoc(doc(db,"configuration","masterclass"));const raw=snap.exists()?snap.data().capacity:null;const value=Number(raw);setCapacity(raw!==null&&raw!==""&&Number.isFinite(value)&&value>0?value:null); } catch { setCapacity(null); } };
   const loadCandidates = async () => {
     setBusy(true); setError("");
     try {
