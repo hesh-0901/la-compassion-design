@@ -95,7 +95,7 @@ type PromotionCategory = { name: string; count: number; accepted: number; color:
 function PromotionSemiDonut({ title, total, categories }: { title: string; total: number; categories: PromotionCategory[] }) {
   const radius = 88, circumference = Math.PI * radius, innerRadius = 59, innerCircumference = Math.PI * innerRadius;
   const colors = ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"];
-  const arcSegments = (items: PromotionCategory[], r: number, length: number, key: "count" | "accepted") => {
+  const arcSegments = (items: PromotionCategory[], length: number, key: "count" | "accepted") => {
     let offset = 0;
     return items.map((item, index) => {
       const value = item[key], portion = total ? value / total : 0, segment = length * portion;
@@ -106,15 +106,15 @@ function PromotionSemiDonut({ title, total, categories }: { title: string; total
       return result;
     }).filter(item => item.dash > 0);
   };
-  const outer = arcSegments(categories, radius, circumference, "count");
-  const inner = arcSegments(categories, innerRadius, innerCircumference, "accepted");
+  const outer = arcSegments(categories, circumference, "count");
+  const inner = arcSegments(categories, innerCircumference, "accepted");
   const summary = categories.map(item => `${item.name}: ${item.count} candidatures, ${item.accepted} acceptées (${total ? Math.round(item.count / total * 100) : 0} %)`).join("; ");
   return <article className="admin-promotion-card">
     <h3>{title}</h3>
     <div className="admin-promotion-chart-wrap">
       <svg className="admin-promotion-donut" viewBox="0 0 240 145" role="img" aria-label={`${title}. ${total} candidatures. ${summary}`}>
         <path className="admin-promotion-track-base" d="M32 118 A88 88 0 0 1 208 118" />
-        {outer.map((item,index) => <path key={item.name} className="admin-promotion-arc admin-promotion-arc-outer" d="M32 118 A88 88 0 0 1 208 118" stroke={item.color} strokeDasharray={`${item.dash} ${circumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.count} candidatures · {item.percent} %</title></path>)}
+        {outer.map(item => <path key={item.name} className="admin-promotion-arc admin-promotion-arc-outer" d="M32 118 A88 88 0 0 1 208 118" stroke={item.color} strokeDasharray={`${item.dash} ${circumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.count} candidatures · {item.percent} %</title></path>)}
         {categories.some(item=>item.accepted>0) ? <>
           <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />
           {inner.map(item=><path key={item.name} className="admin-promotion-arc admin-promotion-arc-inner" d="M61 118 A59 59 0 0 1 179 118" stroke={item.color} strokeDasharray={`${item.dash} ${innerCircumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.accepted} acceptées · {total ? Math.round(item.accepted / total * 100) : 0} %</title></path>)}
