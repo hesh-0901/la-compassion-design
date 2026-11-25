@@ -177,6 +177,31 @@ export async function deleteFirebaseAuthUser(projectId: string, apiKey: string, 
   if (!result.ok) throw new Error("Impossible d’annuler la création du compte Firebase : " + result.status);
 }
 
+
+export async function deleteAdminProfile(account: ServiceAccount, token: string, uid: string) {
+  return firestoreRequest(account, token, "/admins/" + encodeURIComponent(uid), { method: "DELETE" });
+}
+
+export async function updateFirebaseAuthPassword(projectId: string, apiKey: string, accessToken: string, uid: string, password: string) {
+  const url = "https://identitytoolkit.googleapis.com/v1/projects/" + encodeURIComponent(projectId) + "/accounts:update?key=" + encodeURIComponent(apiKey);
+  const result = await fetch(url, {
+    method: "POST",
+    headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
+    body: JSON.stringify({ localId: uid, password, returnSecureToken: false }),
+  });
+  const data = await result.json() as { localId?: string; error?: { message?: string } };
+  if (!result.ok || !data.localId) {
+    const code = data.error?.message || "AUTH_PASSWORD_UPDATE_FAILED";
+    const messages: Record<string, string> = {
+      USER_NOT_FOUND: "Compte Firebase introuvable.",
+      WEAK_PASSWORD: "Le mot de passe doit contenir au moins 8 caractères et respecter les exigences Firebase.",
+      OPERATION_NOT_ALLOWED: "La gestion des mots de passe n’est pas autorisée dans Firebase Authentication.",
+      PERMISSION_DENIED: "Le compte de service n’a pas l’autorisation de modifier les comptes Firebase.",
+    };
+    throw new Error(messages[code] || "Firebase Authentication : " + code);
+  }
+}
+
 export async function authenticateFirebaseUser(request: Request, projectId: string): Promise<string> {
   const authorization = request.headers.get("authorization") || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
