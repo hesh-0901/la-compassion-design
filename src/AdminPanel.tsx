@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
+import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 type Role = "superAdmin" | "admin";
 type Status = "received" | "review" | "accepted" | "waiting" | "refused";
 type Candidate = Record<string, any> & { id: string; fullName?: string; name?: string; email?: string; phone?: string; status?: string };
-type Tab = "overview" | "candidates" | "downloads" | "admins";
+type Tab = "overview" | "candidates" | "downloads" | "admins" | "settings";
 type AdminRecord = {id:string;firstName?:string;lastName?:string;email?:string;role?:Role;active?:boolean;createdAt?:any};
 const statusOptions: { value: Status; label: string }[] = [
   { value: "received", label: "Reçue" }, { value: "review", label: "En étude" },
@@ -113,6 +113,9 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [reviewPage,setReviewPage] = useState(1);
   const reviewPageSize=5;
   const [capacity,setCapacity] = useState<number|null>(null);
+  const [capacityInput,setCapacityInput] = useState("");
+  const [whatsappGroupLink,setWhatsappGroupLink] = useState("");
+  const [settingsSaving,setSettingsSaving] = useState(false);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
@@ -149,7 +152,23 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setError("Impossible de charger les administrateurs. Vérifie les règles Firestore.");
     }
   };
-  const loadCapacity = async () => { try { const snap=await getDoc(doc(db,"configuration","masterclass"));const raw=snap.exists()?snap.data().capacity:null;const value=Number(raw);setCapacity(raw!==null&&raw!==""&&Number.isFinite(value)&&value>0?value:null); } catch { setCapacity(null); } };
+  const loadCapacity = async () => { try { const snap=await getDoc(doc(db,"configuration","masterclass"));const data=snap.exists()?snap.data():{};const raw=data.capacity??null;const value=Number(raw);const valid=raw!==null&&raw!==""&&Number.isFinite(value)&&value>0?value:null;setCapacity(valid);setCapacityInput(valid===null?"":String(valid));setWhatsappGroupLink(String(data.whatsappGroupLink??"")); } catch { setCapacity(null); } };
+  const saveMasterclassSettings = async (event:React.FormEvent) => {
+    event.preventDefault();
+    if(role!=="superAdmin"||!user)return;
+    const raw=capacityInput.trim();
+    const nextCapacity=raw===""?null:Number(raw);
+    const link=whatsappGroupLink.trim();
+    if(nextCapacity!==null&&(!Number.isInteger(nextCapacity)||nextCapacity<1||nextCapacity>10000)){setError("Le nombre maximal doit être un entier compris entre 1 et 10 000.");return;}
+    if(link&&!/^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]+\/?$/.test(link)){setError("Le lien doit être un lien d’invitation WhatsApp valide (https://chat.whatsapp.com/…).");return;}
+    setSettingsSaving(true);setError("");
+    try{
+      await setDoc(doc(db,"configuration","masterclass"),{capacity:nextCapacity,whatsappGroupLink:link,updatedAt:serverTimestamp(),updatedBy:user.uid},{merge:true});
+      setCapacity(nextCapacity);
+      setError("");
+    }catch{setError("Enregistrement impossible. Vérifie les droits SuperAdmin dans Firestore.");}
+    finally{setSettingsSaving(false);}
+  };
   const loadCandidates = async () => {
     setBusy(true); setError("");
     try {
@@ -317,12 +336,13 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
       <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
       <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
+      {role==="superAdmin"&&<button className={tab==="settings"?"selected":""} onClick={()=>setTab("settings")} title="Paramètres de la Masterclass"><Icon name="edit"/><span>Paramètres</span></button>}
       {role==="superAdmin"&&<button className={tab==="admins"?"selected":""} onClick={()=>setTab("admins")} title="Gestion des administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>}
       <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-mobile-brand-group"><button className="admin-menu-toggle-visible" type="button" onClick={()=>setMobileSidebarOpen(value=>!value)} aria-label={mobileSidebarOpen?"Fermer le menu":"Ouvrir le menu"} aria-expanded={mobileSidebarOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
-      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><div className="admin-page-actions">{tab==="overview"&&<button className="admin-refresh admin-export-head" onClick={()=>downloadXlsx(rows)}>Exporter Excel</button>}<button className="admin-refresh" onClick={()=>{void loadCandidates();void loadCapacity()}} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div></div>
+      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":tab==="settings"?"Paramètres de la Masterclass":"Gestion des administrateurs"}</h1><p>{tab==="settings"?"Configure la capacité d’accueil et les communications de la formation.":tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><div className="admin-page-actions">{tab==="overview"&&<button className="admin-refresh admin-export-head" onClick={()=>downloadXlsx(rows)}>Exporter Excel</button>}<button className="admin-refresh" onClick={()=>{void loadCandidates();void loadCapacity()}} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary admin-kpi-summary">
@@ -407,6 +427,24 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           })}
         </div>
         {!assetsByCandidate.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
+      </section>}
+      {tab==="settings"&&role==="superAdmin"&&<section className="admin-section admin-masterclass-settings">
+        <div className="admin-section-head"><div><h2>Configuration générale</h2><p>Ces paramètres s’appliquent au formulaire de candidature et aux e-mails de décision.</p></div></div>
+        <form className="admin-settings-form" onSubmit={saveMasterclassSettings}>
+          <div className="admin-settings-card">
+            <span className="admin-settings-icon">01</span>
+            <div><h3>Capacité de la Masterclass</h3><p>Définis le nombre maximal de candidatures autorisées. Laisse vide pour ne pas fixer de limite.</p></div>
+            <label>Nombre maximal de candidats<input type="number" min="1" max="10000" step="1" inputMode="numeric" value={capacityInput} onChange={e=>setCapacityInput(e.target.value)} placeholder="Ex. 30"/></label>
+            <small className="admin-settings-hint">{capacity===null?"Aucune limite actuellement définie":rows.length+" candidature(s) reçue(s) sur "+capacity+" place(s) configurée(s)"}</small>
+          </div>
+          <div className="admin-settings-card">
+            <span className="admin-settings-icon">02</span>
+            <div><h3>Groupe WhatsApp officiel</h3><p>Ce lien sera ajouté au bouton dans l’e-mail envoyé aux candidats dont la candidature est acceptée.</p></div>
+            <label>Lien d’invitation WhatsApp<input type="url" value={whatsappGroupLink} onChange={e=>setWhatsappGroupLink(e.target.value)} placeholder="https://chat.whatsapp.com/…"/></label>
+            {whatsappGroupLink&&<a className="admin-settings-preview" href={whatsappGroupLink} target="_blank" rel="noreferrer">Vérifier le lien du groupe <Icon name="chevron"/></a>}
+          </div>
+          <div className="admin-settings-footer"><span>Les modifications sont enregistrées dans la configuration de la Masterclass.</span><button className="admin-primary" type="submit" disabled={settingsSaving}>{settingsSaving?"Enregistrement…":"Enregistrer les paramètres"}</button></div>
+        </form>
       </section>}
       {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
         <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>La création des comptes sera réactivée après configuration de la fonction Cloudflare sécurisée.</p></div><button className="admin-primary" type="button" disabled title="La fonction serveur sécurisée doit être configurée avant toute création de compte.">Création sécurisée indisponible</button></div>
