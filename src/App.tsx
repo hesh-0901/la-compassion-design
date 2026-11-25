@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AdminPanel from "./AdminPanel";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
@@ -52,6 +52,10 @@ export default function App() {
   const [submitError, setSubmitError] = useState("");
   const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
+  const filesPhotoInput = useRef<HTMLInputElement>(null);
+  const cameraPhotoInput = useRef<HTMLInputElement>(null);
 
   const go = (next: Step) => {
     setStep(next);
@@ -248,7 +252,17 @@ export default function App() {
           <Field label="Pourquoi veux-tu suivre cette Masterclass ?" error={errors.includes("motivation") ? "Choisis une motivation." : ""}><select value={form.motivation} onChange={e => update("motivation", e.target.value)}><option value="">Sélectionner une raison</option>{["Me cultiver", "Rejoindre le département Design", "Contribuer aux créations visuelles de mon département", "Autres"].map(x => <option key={x}>{x}</option>)}</select></Field>
           <label className={errors.includes("commitment") ? "commitment-check invalid" : "commitment-check"}><input type="checkbox" checked={form.commitment} onChange={e => update("commitment", e.target.checked)} /><span>Je m’engage à rejoindre le département Design après la formation.</span></label>
           {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
-          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Photo nette, de préférence un portrait"><input className="file-input" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e => setProfilePhoto(e.target.files?.[0] || null)} /><span className="file-hint">{profilePhoto ? profilePhoto.name : "Choisir une photo de profil"}</span></Field>
+          <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Choisis une photo, puis ajuste son cadrage avant de la valider.">
+            <button type="button" className={"profile-photo-picker"+(profilePhoto?" has-photo":"")} onClick={()=>setPhotoSourceOpen(true)}>
+              {profilePhoto ? <><img src={URL.createObjectURL(profilePhoto)} alt="Aperçu de la photo sélectionnée"/><span><b>Photo prête</b><small>Appuie pour modifier ou recadrer</small></span></> : <><span className="profile-photo-picker-icon"><Icon name="info" size={22}/></span><span><b>Ajouter une photo de profil</b><small>Fichiers ou appareil photo · recadrage personnalisable</small></span></>}
+              <span className="profile-photo-picker-action">{profilePhoto?"Modifier":"Choisir"}</span>
+            </button>
+            <input ref={filesPhotoInput} className="visually-hidden-file" type="file" accept="image/*" onChange={e=>{const file=e.target.files?.[0];if(file)setPhotoToCrop(file);e.currentTarget.value="";}}/>
+            <input ref={cameraPhotoInput} className="visually-hidden-file" type="file" accept="image/*" capture="user" onChange={e=>{const file=e.target.files?.[0];if(file)setPhotoToCrop(file);e.currentTarget.value="";}}/>
+            {profilePhoto&&<span className="file-hint">Photo recadrée : {profilePhoto.name}</span>}
+            {photoSourceOpen&&<div className="photo-source-overlay" onClick={()=>setPhotoSourceOpen(false)}><section className="photo-source-dialog" role="dialog" aria-modal="true" aria-label="Choisir une source de photo" onClick={e=>e.stopPropagation()}><button type="button" className="photo-dialog-close" onClick={()=>setPhotoSourceOpen(false)} aria-label="Fermer">×</button><span className="photo-dialog-kicker">PHOTO DE PROFIL</span><h3>Comment veux-tu ajouter ta photo ?</h3><p>Tu peux sélectionner une image existante ou prendre un nouveau portrait.</p><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);filesPhotoInput.current?.click();}}><span className="photo-source-icon">▧</span><span><b>Choisir dans les fichiers</b><small>Galerie, photos ou documents de l’appareil</small></span><span>›</span></button><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);cameraPhotoInput.current?.click();}}><span className="photo-source-icon">◎</span><span><b>Prendre une photo</b><small>Ouvrir l’appareil photo</small></span><span>›</span></button></section></div>}
+            {photoToCrop&&<PhotoCropper file={photoToCrop} onCancel={()=>setPhotoToCrop(null)} onConfirm={file=>{setProfilePhoto(file);setPhotoToCrop(null);setErrors(prev=>prev.filter(item=>item!=="profilePhoto"));}}/>}
+          </Field>
         </div>}
 
         {errors.length > 0 && <p className="form-error" role="alert">Certains champs nécessitent ton attention. Vérifie les indications ci-dessus.</p>}
@@ -278,6 +292,45 @@ function Progress({ active }: { active: number }) {
 function Info({ icon, label, value }: { icon: string; label: string; value: string }) {
   return <div className="info-item"><span className="info-icon"><Icon name={icon} size={21} /></span><div><small>{label}</small><b>{value}</b></div></div>;
 }
+
+function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onConfirm:(file:File)=>void}){
+  const [source,setSource]=useState("");
+  const [dimensions,setDimensions]=useState({width:0,height:0});
+  const [zoom,setZoom]=useState(1);
+  const [offset,setOffset]=useState({x:0,y:0});
+  const [dragging,setDragging]=useState(false);
+  const [processing,setProcessing]=useState(false);
+  const viewportRef=useRef<HTMLDivElement>(null);
+  const dragRef=useRef({x:0,y:0,offsetX:0,offsetY:0});
+  const size=280;
+  useEffect(()=>{const url=URL.createObjectURL(file);setSource(url);return()=>URL.revokeObjectURL(url);},[file]);
+  const baseScale=dimensions.width&&dimensions.height?Math.max(size/dimensions.width,size/dimensions.height):1;
+  const renderedWidth=dimensions.width*baseScale*zoom,renderedHeight=dimensions.height*baseScale*zoom;
+  const imageStyle:React.CSSProperties={width:renderedWidth,height:renderedHeight,maxWidth:"none",position:"absolute",left:(size-renderedWidth)/2+offset.x,top:(size-renderedHeight)/2+offset.y,userSelect:"none",pointerEvents:"none"};
+  const pointerDown=(event:React.PointerEvent<HTMLDivElement>)=>{event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);dragRef.current={x:event.clientX,y:event.clientY,offsetX:offset.x,offsetY:offset.y};setDragging(true);};
+  const pointerMove=(event:React.PointerEvent<HTMLDivElement>)=>{if(!dragging)return;const w=renderedWidth,h=renderedHeight;setOffset({x:Math.min(0,Math.max(size-w,dragRef.current.offsetX+event.clientX-dragRef.current.x)),y:Math.min(0,Math.max(size-h,dragRef.current.offsetY+event.clientY-dragRef.current.y))});};
+  const confirm=async()=>{
+    const image=new Image();image.src=source;await image.decode();
+    const scale=baseScale*zoom,sw=size/scale,sh=size/scale;
+    const sx=Math.max(0,Math.min(image.naturalWidth-sw,-offset.x/scale)),sy=Math.max(0,Math.min(image.naturalHeight-sh,-offset.y/scale));
+    const canvas=document.createElement("canvas");canvas.width=512;canvas.height=512;
+    const context=canvas.getContext("2d");if(!context)return;
+    context.imageSmoothingEnabled=true;context.imageSmoothingQuality="high";
+    context.drawImage(image,sx,sy,sw,sh,0,0,512,512);
+    setProcessing(true);
+    canvas.toBlob(blob=>{if(blob){const base=file.name.replace(/\\.[^.]+$/,"")||"photo";onConfirm(new File([blob],base+"-recadree.jpg",{type:"image/jpeg",lastModified:Date.now()}));}setProcessing(false);},"image/jpeg",.92);
+  };
+  return <div className="photo-crop-overlay" onClick={onCancel}><section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-label="Recadrer la photo" onClick={e=>e.stopPropagation()}>
+    <header className="photo-crop-header"><div><span className="photo-dialog-kicker">PHOTO DE PROFIL</span><h3>Recadre ta photo</h3><p>Déplace l’image et ajuste le zoom pour choisir ton cadrage.</p></div><button type="button" onClick={onCancel} aria-label="Fermer">×</button></header>
+    <div className="photo-crop-workspace"><div ref={viewportRef} className={"photo-crop-viewport"+(dragging?" is-dragging":"")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>setDragging(false)} onPointerCancel={()=>setDragging(false)}>
+      {source&&<img src={source} alt="Image à recadrer" draggable={false} onLoad={e=>setDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight})} style={imageStyle}/>}
+      <span className="photo-crop-guide" aria-hidden="true"/>
+    </div><span className="photo-crop-tip">Fais glisser l’image pour ajuster le cadrage</span></div>
+    <div className="photo-crop-zoom"><span>Zoom</span><button type="button" onClick={()=>setZoom(v=>Math.max(1,Number((v-.1).toFixed(2))))} disabled={zoom<=1}>−</button><input aria-label="Zoom de la photo" type="range" min="1" max="3" step=".01" value={zoom} onChange={e=>{setZoom(Number(e.target.value));setOffset({x:0,y:0});}}/><button type="button" onClick={()=>{setZoom(v=>Math.min(3,Number((v+.1).toFixed(2))));setOffset({x:0,y:0});}} disabled={zoom>=3}>+</button><b>{Math.round(zoom*100)}%</b></div>
+    <footer className="photo-crop-actions"><button type="button" className="photo-cancel" onClick={onCancel}>Annuler</button><button type="button" className="photo-confirm" onClick={()=>void confirm()} disabled={!dimensions.width||processing}>{processing?"Préparation…":"Valider le recadrage"}</button></footer>
+  </section></div>;
+}
+
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
   return <div className="field"><label className="field-label">{label}</label>{children}<div className="field-meta">{error ? <span className="field-error">{error}</span> : <span>{hint || " "}</span>}</div></div>;
 }
