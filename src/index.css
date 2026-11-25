@@ -2303,7 +2303,7 @@
 .admin-settings-intro p{max-width:620px;margin:0;color:#748078;font-size:13px;line-height:1.65}
 .admin-settings-secure{flex:none;padding:8px 11px;border:1px solid #dcebe2;border-radius:9px;background:#f3f8f5;color:#397653;font-size:11px;font-weight:650}
 .admin-settings-tabs{display:flex;gap:5px;padding:5px;border:1px solid #e6ebe7;border-radius:12px;background:#f5f7f5;width:max-content;max-width:100%}
-.admin-settings-tabs button{display:flex;align-items:center;gap:9px;min-height:42px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#66746b;font:600 12px inherit;cursor:pointer;white-space:nowrap}
+.admin-settings-tabs button{display:flex;align-items:center;gap:9px;min-height:42px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#66746b;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
 .admin-settings-tabs button svg{width:16px;height:16px}
 .admin-settings-tabs button.active{background:#fff;color:#216a46;box-shadow:0 1px 4px #17251f14}
 .admin-settings-panel{overflow:hidden;border:1px solid #e5ebe7;border-radius:16px;background:#fff;box-shadow:0 5px 22px #17251f08}
