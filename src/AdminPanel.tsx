@@ -165,7 +165,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const loadSettings = async () => { if(!role) return; try { const snap=await getDoc(doc(db,"configuration","masterclass")); if(snap.exists()){const data=snap.data();setCapacity(data.capacity==null?"":String(data.capacity));setDeadline(data.deadline??"");} } catch { setError("Impossible de charger les réglages de la formation."); } };
   useEffect(() => { if(user && role){void loadCandidates();void loadSettings();} if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
   const counts = useMemo(() => ({
-    total:rows.length, accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
+    total:rows.length, received:rows.filter(r=>statusOf(r.status)==="received").length,
+    accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
     waiting:rows.filter(r=>statusOf(r.status)==="waiting").length,
   }),[rows]);
@@ -314,31 +315,30 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary admin-kpi-summary">
-          <article><span>Candidatures reçues</span><strong>{counts.total}</strong><small>Tous les dossiers enregistrés</small></article>
-          <article><span>À traiter</span><strong>{counts.pending}</strong><small>Reçue + En étude</small></article>
-          <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>{counts.total?pctSafe(counts.accepted,counts.total):0}% du total</small></article>
+          <article><span>Reçues</span><strong>{counts.received}</strong><small>Statut Reçue</small></article>
+          <article><span>À traiter</span><strong>{counts.pending}</strong><small>Reçues + En étude</small></article>
+          <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>Décisions positives</small></article>
           <article><span>En attente</span><strong>{counts.waiting}</strong><small>Liste d’attente</small></article>
         </div>
-        {(capacity.trim()!==""||deadline)&&<p className="admin-capacity-summary">{capacity.trim()!==""?counts.accepted+" acceptés sur "+capacity+" places":""}{capacity.trim()!==""&&deadline?" · ":""}{deadline?"Date limite : "+new Date(deadline+"T00:00:00").toLocaleDateString("fr-FR"):""}</p>}
-        {rows.length>=5&&<section className="admin-section admin-status-distribution">
-          <div className="admin-section-head"><div><h2>Répartition des statuts</h2><p>Vue globale du traitement des candidatures.</p></div></div>
-          <div className="admin-status-segments" role="img" aria-label={statusOptions.map(item=>item.label+" : "+rows.filter(row=>statusOf(row.status)===item.value).length).join(", ")}>
-            {statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return amount>0?<span key={item.value} className={"segment-"+item.value} style={{width:(amount/rows.length*100)+"%"}} title={item.label+" : "+amount}></span>:null})}
-          </div>
-          <div className="admin-status-legend">{statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return <span key={item.value}><i className={"status-dot-"+item.value}></i>{item.label} <b>{amount}</b></span>})}</div>
-        </section>}
         <section className="admin-section admin-review-queue">
-          <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les candidatures en attente de décision, de la plus ancienne à la plus récente.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
+          <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les 5 plus anciens dossiers Reçue ou En étude.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Voir toutes les candidatures <Icon name="chevron"/></button></div>
           {rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).length>0?
             <div className="admin-review-list">{rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).map((row,index)=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}>
-              <span className="admin-review-number">{index+1}</span><span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")} · {valueOf(row,"level")}</small></span>
-              <span className={"admin-review-availability"+(row.availability==="Partiellement"?" partial":"")}>{row.availability==="Partiellement"?"Disponibilité partielle":valueOf(row,"availability")}</span>
+              <span className="admin-review-number">{index+1}</span>
+              <span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")}</small></span>
+              <span className="admin-review-level">{valueOf(row,"level")}</span>
+              <span className="admin-review-ram">{valueOf(row,"ram")}</span>
+              <span className={"admin-review-availability"+(row.availability==="Partiellement"?" partial":"")}>{valueOf(row,"availability")}{row.availability==="Partiellement"&&<small className="admin-partial-signal">Disponibilité à confirmer</small>}</span>
               <StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time><Icon name="chevron"/>
             </button>)}</div>
             :<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier ne nécessite actuellement de décision."}</p>}
         </section>
-        {role==="superAdmin"&&<section className="admin-section admin-capacity-settings"><div className="admin-section-head"><div><h2>Paramètres de la formation</h2><p>Facultatif · aucune limite n’est appliquée tant que ces champs restent vides.</p></div></div>
-          <form className="admin-capacity-form" onSubmit={saveCapacitySettings}><label>Nombre de places<input type="number" min="1" step="1" value={capacity} onChange={e=>setCapacity(e.target.value)} placeholder="Non défini"/></label><label>Date limite d’inscription<input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/></label><button className="admin-primary" type="submit" disabled={capacitySaving}>{capacitySaving?"Enregistrement…":"Enregistrer"}</button></form>
+        {rows.length>=5&&<section className="admin-section admin-status-distribution">
+          <div className="admin-section-head"><div><h2>Répartition des statuts</h2></div></div>
+          <div className="admin-status-segments" role="img" aria-label={statusOptions.map(item=>item.label+" : "+rows.filter(row=>statusOf(row.status)===item.value).length).join(", ")}>
+            {statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return amount>0?<span key={item.value} className={"segment-"+item.value} style={{width:(amount/rows.length*100)+"%"}} title={item.label+" : "+amount}></span>:null})}
+          </div>
+          <div className="admin-status-legend">{statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return <span key={item.value}><i className={"status-dot-"+item.value}></i>{item.label} <b>{amount}</b></span>})}</div>
         </section>}
       </>}
       {tab==="candidates"&&<>
