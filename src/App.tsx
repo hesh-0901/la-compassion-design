@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Children, isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import AdminPanel from "./AdminPanel";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
@@ -370,8 +370,8 @@ function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onC
 }
 
 function fieldHasAnswer(node: React.ReactNode): boolean {
-  return React.Children.toArray(node).some(child => {
-    if (!React.isValidElement(child)) return false;
+  return Children.toArray(node).some(child => {
+    if (!isValidElement(child)) return false;
     const props = child.props as { value?: unknown; checked?: boolean; children?: React.ReactNode };
     if (typeof props.value === "string" && props.value.trim() !== "") return true;
     if (typeof props.value === "boolean" && props.value) return true;
