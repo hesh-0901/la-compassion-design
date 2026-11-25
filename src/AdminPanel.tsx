@@ -92,6 +92,12 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
+function pctSafe(n:number,d:number){return d?Math.round(n/d*100):0}
+function AnalyticsBars({items,total}:{items:{label:string;value:number}[];total:number}){
+  if(!items.length)return <div className="analytics-empty">Aucune réponse disponible pour le moment.</div>;
+  const max=Math.max(...items.map(item=>item.value),1);
+  return <div className="analytics-bar-list">{items.slice(0,7).map(item=><div className="analytics-bar-item" key={item.label}><div><span title={item.label}>{item.label}</span><b>{item.value}</b></div><i><em style={{width:(item.value/max*100)+"%"}}/></i><small>{pctSafe(item.value,total)}% des dossiers</small></div>)}</div>;
+}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
   return <span className={"admin-status status-" + status}>{label}</span>;
@@ -162,6 +168,54 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
     waiting:rows.filter(r=>statusOf(r.status)==="waiting").length,
   }),[rows]);
+  const analytics = useMemo(() => {
+    const countBy = (get:(row:Candidate)=>unknown) => {
+      const map = new Map<string,number>();
+      rows.forEach(row => {
+        const raw=get(row);
+        const values=Array.isArray(raw)?raw:(typeof raw==="string"?raw.split(/[,;|]/):[raw]);
+        values.forEach(value=>{
+          const label=String(value??"").trim();
+          if(label && label!=="—" && label.toLowerCase()!=="non renseigné") map.set(label,(map.get(label)??0)+1);
+        });
+      });
+      return [...map.entries()].map(([label,value])=>({label,value})).sort((x,y)=>y.value-x.value);
+    };
+    const byMonth = new Map<string,number>();
+    rows.forEach(row=>{
+      const raw=row.createdAt, date=raw?.toDate?raw.toDate():raw?new Date(raw):null;
+      if(date && !Number.isNaN(date.getTime())){
+        const key=date.toLocaleDateString("fr-FR",{month:"short",year:"2-digit"});
+        byMonth.set(key,(byMonth.get(key)??0)+1);
+      }
+    });
+    const trend=[...byMonth.entries()].slice(-8).map(([label,value])=>({label,value}));
+    const answered=(key:string)=>rows.filter(row=>row[key]!==undefined&&row[key]!==null&&row[key]!==""&&row[key]!=="—").length;
+    const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
+    const yesRam=rows.filter(row=>String(row.ram??"").toLowerCase()==="oui").length;
+    const available=rows.filter(row=>String(row.availability??"").toLowerCase()==="oui").length;
+    const committed=rows.filter(row=>row.commitment===true||String(row.commitment).toLowerCase()==="oui").length;
+    return {
+      trend,
+      status:countBy(row=>statusOptions.find(item=>item.value===statusOf(row.status))?.label??"Reçue"),
+      levels:countBy(row=>row.level),
+      assemblies:countBy(row=>row.assembly??row.extension),
+      tools:countBy(row=>row.tools),
+      maturity:countBy(row=>row.maturity),
+      departments:countBy(row=>row.department),
+      areas:countBy(row=>row.area??row.commune),
+      ages:countBy(row=>row.age),
+      genders:countBy(row=>row.gender),
+      attendance:countBy(row=>row.attendance),
+      ram:{yes:yesRam,unknown:rows.length-answered("ram"),rate:pct(yesRam,answered("ram"))},
+      availability:{yes:available,unknown:rows.length-answered("availability"),rate:pct(available,answered("availability"))},
+      commitment:{yes:committed,rate:pct(committed,rows.length)},
+      motivationAnswered:answered("motivation"),
+      profilePhotos:rows.filter(row=>Boolean(row.profilePhotoUrl||row.photoUrl)).length,
+      portfolio:rows.filter(row=>Boolean(row.portfolio||row.portfolioFileUrl||row.portfolioUrl)).length,
+      completeProfiles:rows.filter(row=>["fullName","phone","area","assembly","level","ram","availability","motivation"].every(key=>row[key]!==undefined&&row[key]!==null&&row[key]!=="")).length
+    };
+  },[rows]);
   const filtered = useMemo(() => rows.filter(row => {
     const haystack = [personName(row),row.phone,row.email,row.assembly,row.extension].join(" ").toLowerCase();
     return (!query || haystack.includes(query.toLowerCase()))
@@ -287,13 +341,33 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
-        <div className="admin-summary">
-          <article><span>Total des dossiers</span><strong>{counts.total}</strong><small>Toutes les candidatures reçues</small></article>
-          <article><span>À traiter</span><strong>{counts.pending}</strong><small>Reçues ou en étude</small></article>
-          <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>Candidatures retenues</small></article>
-          <article><span>Liste d’attente</span><strong>{counts.waiting}</strong><small>Dossiers en attente</small></article>
+        <div className="admin-summary admin-kpi-summary">
+          <article><span>Candidatures reçues</span><strong>{counts.total}</strong><small>Volume total enregistré</small></article>
+          <article><span>À traiter</span><strong>{counts.pending}</strong><small>{counts.total?pctSafe(counts.pending,counts.total):0}% du total</small></article>
+          <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>{counts.total?pctSafe(counts.accepted,counts.total):0}% du total</small></article>
+          <article><span>En attente</span><strong>{counts.waiting}</strong><small>Décision à finaliser</small></article>
         </div>
-        <section className="admin-section"><div className="admin-section-head"><div><h2>Dossiers récents</h2><p>Les dernières candidatures enregistrées.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
+        <div className="analytics-heading"><div><h2>Analyse des candidatures</h2><p>Lecture des profils, des compétences et des conditions de participation</p></div><span>{rows.length} dossier{rows.length>1?"s":""} analysé{rows.length>1?"s":""}</span></div>
+        <div className="analytics-grid">
+          <section className="analytics-panel analytics-trend"><div className="analytics-panel-head"><div><h3>Évolution des inscriptions</h3><p>Nombre de dossiers par mois d'enregistrement</p></div><span className="analytics-tag">Volume</span></div>
+            {analytics.trend.length?<div className="analytics-bars analytics-month-bars">{analytics.trend.map(item=><div className="analytics-bar-column" key={item.label}><b>{item.value}</b><span style={{height:(Math.max(10,item.value/Math.max(...analytics.trend.map(x=>x.value))*100))+"%"}}/><small>{item.label}</small></div>)}</div>:<div className="analytics-empty">Les données de dates ne sont pas encore suffisantes pour afficher une évolution.</div>}
+          </section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Répartition des statuts</h3><p>État du traitement des dossiers</p></div></div>
+            <div className="analytics-status-list">{analytics.status.map(item=><div className="analytics-status-row" key={item.label}><span>{item.label}</span><b>{item.value}</b><i><em style={{width:(counts.total?item.value/counts.total*100:0)+"%"}}/></i><small>{counts.total?pctSafe(item.value,counts.total):0}%</small></div>)}</div>
+          </section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Niveau en design</h3><p>Autonomie déclarée à l'inscription</p></div></div><AnalyticsBars items={analytics.levels} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Outils maîtrisés</h3><p>Logiciels et plateformes déjà utilisés</p></div></div><AnalyticsBars items={analytics.tools} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Assemblées représentées</h3><p>Répartition des candidats par extension</p></div></div><AnalyticsBars items={analytics.assemblies} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Maturité spirituelle</h3><p>Niveaux déclarés dans le formulaire</p></div></div><AnalyticsBars items={analytics.maturity} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Préparation matérielle</h3><p>Compatibilité avec le prérequis ordinateur</p></div></div><div className="analytics-metric"><strong>{analytics.ram.rate}%</strong><span>disposent d'au moins 8 Go de RAM parmi les réponses renseignées</span></div><div className="analytics-mini-track"><i style={{width:analytics.ram.rate+"%"}}/></div><div className="analytics-footnote">{analytics.ram.yes} oui · {analytics.ram.unknown} non renseigné / autre</div></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Disponibilité</h3><p>Présence prévue du 15 au 19 décembre, 19h–22h</p></div></div><div className="analytics-metric"><strong>{analytics.availability.rate}%</strong><span>disponibles parmi les réponses « Oui »</span></div><div className="analytics-mini-track"><i style={{width:analytics.availability.rate+"%"}}/></div><div className="analytics-footnote">{analytics.availability.yes} oui · {analytics.availability.unknown} autres réponses / non renseigné</div></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Engagement département</h3><p>Volonté de rejoindre le Département Design</p></div></div><div className="analytics-metric"><strong>{analytics.commitment.rate}%</strong><span>des dossiers avec engagement confirmé</span></div><div className="analytics-mini-track"><i style={{width:analytics.commitment.rate+"%"}}/></div><div className="analytics-footnote">{analytics.commitment.yes} engagement(s) confirmé(s) sur {counts.total}</div></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Origine géographique</h3><p>Communes et quartiers déclarés</p></div></div><AnalyticsBars items={analytics.areas} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Tranches d'âge</h3><p>Structure d'âge des candidats</p></div></div><AnalyticsBars items={analytics.ages} total={counts.total}/></section>
+          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Départements d'origine</h3><p>Implication dans la vie de l'Église</p></div></div><AnalyticsBars items={analytics.departments} total={counts.total}/></section>
+        </div>
+        <section className="analytics-panel analytics-data-quality"><div className="analytics-panel-head"><div><h3>Qualité et complétude des dossiers</h3><p>Suivi des pièces et des informations utiles à l'étude</p></div></div><div className="analytics-quality-grid"><div><strong>{analytics.completeProfiles}</strong><span>Profils avec champs clés renseignés</span></div><div><strong>{analytics.profilePhotos}</strong><span>Photos de profil reçues</span></div><div><strong>{analytics.portfolio}</strong><span>Portfolios fournis</span></div><div><strong>{analytics.motivationAnswered}</strong><span>Motivations renseignées</span></div></div></section>
+        <section className="admin-section analytics-recent"><div className="admin-section-head"><div><h2>Dossiers récents</h2><p>Accès rapide aux dernières candidatures enregistrées.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
           <CandidateTable rows={rows.slice(0,6)} onOpen={openDetails} startNumber={0}/>
           {!rows.length&&<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucune candidature enregistrée pour le moment."}</p>}
         </section>
