@@ -2236,3 +2236,44 @@
  .admin-review-row .admin-status{grid-column:2;grid-row:1}
  .admin-review-row time{grid-column:2;grid-row:2}
 }
+
+
+/* Vue générale — gabarit fixe et listes internes */
+.admin-page-head,.admin-overview-meta,.admin-kpi-summary,.admin-overview-columns,.admin-promotion-section{width:100%;max-width:1410px;margin-left:auto!important;margin-right:auto!important}
+.admin-overview-meta{justify-content:flex-end}
+.admin-overview-columns{grid-template-columns:minmax(0,2fr) minmax(280px,1fr);height:510px;align-items:stretch}
+.admin-review-queue{height:510px;min-height:510px;max-height:510px;display:flex;flex-direction:column;overflow:hidden}
+.admin-review-queue .admin-section-head{flex:0 0 auto}
+.admin-review-table-head{flex:0 0 auto}
+.admin-review-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.admin-review-row{min-height:68px!important}
+.admin-review-pagination{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 4px 0;border-top:1px solid #edf1f7;color:#78869e;font-size:10px}
+.admin-review-pagination>div{display:flex;gap:6px}
+.admin-review-pagination button{border:1px solid #dce5f4;border-radius:7px;background:#fff;color:#26416d;padding:6px 9px;font-size:10px}
+.admin-review-pagination button:disabled{opacity:.35;cursor:not-allowed}
+.admin-overview-side{height:510px;display:grid;grid-template-rows:1fr 1fr;gap:14px;min-height:0}
+.admin-overview-side>.admin-section{height:248px;min-height:0;max-height:248px;display:flex;flex-direction:column;overflow:hidden}
+.admin-verify-card .admin-section-head,.admin-decisions-card .admin-section-head{flex:0 0 auto}
+.admin-verify-card .admin-verify-item{flex:1 1 0;min-height:0}
+.admin-decision-list{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.admin-decision-row{min-height:52px}
+.admin-empty{flex:1 1 auto;display:flex;align-items:center;justify-content:center;text-align:center}
+.admin-review-row .admin-status svg{width:12px;height:12px;flex:none}
+.admin-overview-columns+.admin-promotion-section{margin-top:20px!important}
+@media(max-width:1100px){
+ .admin-overview-columns{height:auto;grid-template-columns:1fr}
+ .admin-review-queue{height:480px;min-height:480px;max-height:480px}
+ .admin-overview-side{height:auto;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none}
+ .admin-overview-side>.admin-section{height:248px;max-height:248px}
+}
+@media(max-width:760px){
+ .admin-page-head,.admin-overview-meta,.admin-kpi-summary,.admin-overview-columns,.admin-promotion-section{max-width:100%}
+ .admin-overview-columns{gap:12px}
+ .admin-review-queue{height:440px;min-height:440px;max-height:440px}
+ .admin-review-table-head{display:none}
+ .admin-review-list{padding-right:3px}
+ .admin-overview-side{display:grid;grid-template-columns:1fr;gap:12px}
+ .admin-overview-side>.admin-section{height:230px;max-height:230px}
+ .admin-review-pagination{font-size:9px}
+ .admin-review-pagination button{padding:6px 7px}
+}
