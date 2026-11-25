@@ -92,42 +92,132 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
 type PromotionCategory = { name: string; count: number; accepted: number; color: string };
-function PromotionSemiDonut({ title, total, categories }: { title: string; total: number; categories: PromotionCategory[] }) {
-  const radius = 88, circumference = Math.PI * radius, innerRadius = 59, innerCircumference = Math.PI * innerRadius;
-  const colors = ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"];
-  const arcSegments = (items: PromotionCategory[], length: number, key: "count" | "accepted") => {
-    let offset = 0;
-    return items.map((item, index) => {
-      const value = item[key], portion = total ? value / total : 0, segment = length * portion;
-      const gap = value > 0 && items.filter(entry => entry[key] > 0).length > 1 ? 2 : 0;
-      const dash = Math.max(0, segment - gap);
-      const result = { ...item, dash, offset, percent: total ? Math.round(value / total * 100) : 0, color: item.name === "Non renseigné" ? "#D5E0F7" : item.color || colors[index % colors.length] };
-      offset += segment;
-      return result;
-    }).filter(item => item.dash > 0);
-  };
-  const outer = arcSegments(categories, circumference, "count");
-  const inner = arcSegments(categories, innerCircumference, "accepted");
-  const summary = categories.map(item => `${item.name}: ${item.count} candidatures, ${item.accepted} acceptées (${total ? Math.round(item.count / total * 100) : 0} %)`).join("; ");
+type PromotionSegment = { item: PromotionCategory; start: number; end: number; percent: number };
+const promotionPoint = (angle: number, radius: number, cx: number, cy: number, invertY = false) => ({
+  x: cx + radius * Math.cos(angle),
+  y: cy + (invertY ? -1 : 1) * radius * Math.sin(angle),
+});
+const promotionArcPath = (start: number, end: number, radius: number, cx: number, cy: number, invertY = false) => {
+  const first = promotionPoint(start, radius, cx, cy, invertY);
+  const last = promotionPoint(end, radius, cx, cy, invertY);
+  const span = Math.abs(end - start);
+  if (span >= Math.PI * 2 - 0.0001) {
+    const middle = promotionPoint(start + (end > start ? 1 : -1) * Math.PI, radius, cx, cy, invertY);
+    return "M " + first.x + " " + first.y + " A " + radius + " " + radius + " 0 1 1 " + middle.x + " " + middle.y + " A " + radius + " " + radius + " 0 1 1 " + last.x + " " + last.y;
+  }
+  const largeArc = span > Math.PI ? 1 : 0;
+  const sweep = end > start ? 1 : 1;
+  return "M " + first.x + " " + first.y + " A " + radius + " " + radius + " 0 " + largeArc + " " + sweep + " " + last.x + " " + last.y;
+};
+const promotionSegments = (categories: PromotionCategory[], key: "count" | "accepted", full = false): PromotionSegment[] => {
+  const items = categories.filter(item => item[key] > 0);
+  const total = items.reduce((sum, item) => sum + item[key], 0);
+  if (!total) return [];
+  const extent = full ? Math.PI * 2 : Math.PI;
+  const raw = items.map(item => item[key] / total * extent);
+  const minimum = Math.PI / 60;
+  const adjusted = raw.some(value => value < minimum)
+    ? (() => {
+        const remaining = Math.max(0, extent - minimum * items.length);
+        const weights = raw.map(value => Math.max(0, value - minimum));
+        const weightTotal = weights.reduce((sum, value) => sum + value, 0);
+        return weights.map(value => minimum + (weightTotal ? remaining * value / weightTotal : remaining / items.length));
+      })()
+    : raw;
+  let cursor = full ? -Math.PI / 2 : Math.PI;
+  return items.map((item, index) => {
+    const next = cursor + (full ? adjusted[index] : -adjusted[index]);
+    const segment = { item, start: cursor, end: next, percent: Math.round(item[key] / total * 100) };
+    cursor = next;
+    return segment;
+  });
+};
+function PromotionLegend({ categories, total, acceptedTotal, common = false }: { categories: PromotionCategory[]; total: number; acceptedTotal: number; common?: boolean }) {
+  if (common) return <div className="admin-promotion-legend admin-promotion-common-legend">
+    <div className="admin-promotion-legend-head"><span>Légende</span><span>Repères</span></div>
+    <div className="admin-promotion-legend-row"><span className="admin-promotion-category-name"><i style={{ background: "#1F5BFF" }}/>Candidatures</span><span className="admin-promotion-legend-description">Nombre de dossiers</span></div>
+    <div className="admin-promotion-legend-row"><span className="admin-promotion-category-name"><i style={{ background: "#22C7F2" }}/>Acceptées</span><span className="admin-promotion-legend-description">Décisions positives</span></div>
+  </div>;
+  return <div className="admin-promotion-legend">
+    <div className="admin-promotion-legend-head"><span>Catégorie</span><span>Cand. · Acc.</span><span>%</span></div>
+    {categories.map(item => <div className="admin-promotion-legend-row" key={item.name}>
+      <span className="admin-promotion-category-name"><i style={{ background: item.color }}/>{item.name}</span>
+      <span className="admin-promotion-values">{item.count} · {item.accepted}</span>
+      <span className="admin-promotion-percent">{total ? Math.round(item.count / total * 100) : 0} %</span>
+    </div>)}
+    <span className="admin-promotion-legend-total" aria-hidden="true">{total} candidatures · {acceptedTotal} acceptées</span>
+  </div>;
+}
+function PromotionSemiDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
+  const acceptedTotal = categories.reduce((sum, item) => sum + item.accepted, 0);
+  const outer = promotionSegments(categories, "count");
+  const inner = promotionSegments(categories, "accepted");
+  const summary = categories.map(item => item.name + ": " + item.count + " candidatures, " + item.accepted + " acceptées").join("; ");
   return <article className="admin-promotion-card">
-    <h3>{title}</h3>
+    <h3>Genre</h3>
     <div className="admin-promotion-chart-wrap">
-      <svg className="admin-promotion-donut" viewBox="0 0 240 145" role="img" aria-label={`${title}. ${total} candidatures. ${summary}`}>
-        <path className="admin-promotion-track-base" d="M32 118 A88 88 0 0 1 208 118" />
-        {outer.map(item => <path key={item.name} className="admin-promotion-arc admin-promotion-arc-outer" d="M32 118 A88 88 0 0 1 208 118" stroke={item.color} strokeDasharray={`${item.dash} ${circumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.count} candidatures · {item.percent} %</title></path>)}
-        {categories.some(item=>item.accepted>0) ? <>
-          <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />
-          {inner.map(item=><path key={item.name} className="admin-promotion-arc admin-promotion-arc-inner" d="M61 118 A59 59 0 0 1 179 118" stroke={item.color} strokeDasharray={`${item.dash} ${innerCircumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.accepted} acceptées · {total ? Math.round(item.accepted / total * 100) : 0} %</title></path>)}
-        </> : <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />}
-        <text className="admin-promotion-total" x="120" y="91" textAnchor="middle">{total}</text>
-        <text className="admin-promotion-total-label" x="120" y="108" textAnchor="middle">candidatures</text>
+      <svg className="admin-promotion-chart admin-promotion-semi" viewBox="0 0 220 120" role="img" aria-label={"Répartition par genre, " + total + " candidatures. " + summary}>
+        <path className="admin-promotion-track-outer" d="M32 110 A78 78 0 0 1 188 110"/>
+        {outer.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 78, 110, 110, true)} stroke={segment.item.color} strokeWidth="26"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>)}
+        <path className="admin-promotion-track-inner" d="M60 110 A50 50 0 0 1 160 110"/>
+        {inner.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 50, 110, 110, true)} stroke={segment.item.color} strokeWidth="14"><title>{segment.item.name} — {segment.item.accepted} acceptées — {segment.percent} %</title></path>)}
+        <text className="admin-promotion-total" x="110" y="91" textAnchor="middle">{total}</text>
+        <text className="admin-promotion-total-label" x="110" y="106" textAnchor="middle">candidatures</text>
       </svg>
     </div>
-    <ul className="admin-promotion-legend-list">{categories.map(item=><li key={item.name}>
-      <span className="admin-promotion-category-name"><i style={{background:item.color}}/>{item.name}</span>
-      <span className="admin-promotion-values">{item.count} · {item.accepted}</span>
-      <span className="admin-promotion-percent">{total ? Math.round(item.count/total*100) : 0} %</span>
-    </li>)}</ul>
+    <PromotionLegend categories={categories} total={total} acceptedTotal={acceptedTotal}/>
+  </article>;
+}
+function PromotionBars({ total, categories }: { total: number; categories: PromotionCategory[] }) {
+  const acceptedTotal = categories.reduce((sum, item) => sum + item.accepted, 0);
+  const max = Math.max(1, ...categories.flatMap(item => [item.count, item.accepted]));
+  const baseY = 91, maxHeight = 57, chartWidth = 300, groupWidth = chartWidth / Math.max(categories.length, 1);
+  const shortName = (name: string) => name.replace("Moins de 18 ans", "Moins de 18").replace(" ans et plus", "+").replace(" ans", "").replace("–", "–");
+  const barPath = (x: number, y: number, width: number, height: number) => "M " + x + " " + (y + height) + " L " + x + " " + (y + 6) + " Q " + x + " " + y + " " + (x + 6) + " " + y + " L " + (x + width - 6) + " " + y + " Q " + (x + width) + " " + y + " " + (x + width) + " " + (y + 6) + " L " + (x + width) + " " + (y + height) + " Z";
+  const summary = categories.map(item => item.name + ": " + item.count + " candidatures, " + item.accepted + " acceptées").join("; ");
+  return <article className="admin-promotion-card">
+    <h3>Tranche d'âge</h3>
+    <div className="admin-promotion-chart-wrap">
+      <svg className="admin-promotion-chart admin-promotion-bars" viewBox="0 0 300 130" role="img" aria-label={"Candidatures et acceptations par tranche d'âge. " + summary}>
+        <path d="M8 92 H292" className="admin-promotion-axis"/>
+        {categories.map((item, index) => {
+          const center = groupWidth * index + groupWidth / 2;
+          const barWidth = Math.min(18, groupWidth * .24);
+          const countHeight = Math.max(item.count ? 6 : 0, item.count / max * maxHeight);
+          const acceptedHeight = Math.max(item.accepted ? 6 : 0, item.accepted / max * maxHeight);
+          const countX = center - barWidth - 2, acceptedX = center + 2;
+          const countY = baseY - countHeight, acceptedY = baseY - acceptedHeight;
+          return <g key={item.name}>
+            <path d={barPath(countX, countY, barWidth, countHeight)} fill="#1F5BFF"><title>{item.name} — {item.count} candidatures — {total ? Math.round(item.count / total * 100) : 0} %</title></path>
+            <path d={barPath(acceptedX, acceptedY, barWidth, acceptedHeight)} fill="#22C7F2"><title>{item.name} — {item.accepted} acceptées — {acceptedTotal ? Math.round(item.accepted / acceptedTotal * 100) : 0} %</title></path>
+            <text className="admin-promotion-bar-value" x={countX + barWidth / 2} y={Math.max(10, countY - 4)} textAnchor="middle">{item.count}</text>
+            <text className="admin-promotion-bar-value" x={acceptedX + barWidth / 2} y={Math.max(10, acceptedY - 4)} textAnchor="middle">{item.accepted}</text>
+            <text className="admin-promotion-bar-label" x={center} y="108" textAnchor="middle">{shortName(item.name)}</text>
+          </g>;
+        })}
+      </svg>
+    </div>
+    <PromotionLegend categories={categories} total={total} acceptedTotal={acceptedTotal} common/>
+  </article>;
+}
+function PromotionDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
+  const acceptedTotal = categories.reduce((sum, item) => sum + item.accepted, 0);
+  const outer = promotionSegments(categories, "count", true);
+  const inner = promotionSegments(categories, "accepted", true);
+  const summary = categories.map(item => item.name + ": " + item.count + " candidatures, " + item.accepted + " acceptées").join("; ");
+  return <article className="admin-promotion-card">
+    <h3>Niveau en design</h3>
+    <div className="admin-promotion-chart-wrap">
+      <svg className="admin-promotion-chart admin-promotion-full-donut" viewBox="0 0 220 130" role="img" aria-label={"Répartition par niveau en design, " + total + " candidatures. " + summary}>
+        <circle className="admin-promotion-track-outer" cx="110" cy="65" r="48"/>
+        {outer.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 48, 110, 65)} stroke={segment.item.color} strokeWidth="22"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>)}
+        <circle className="admin-promotion-track-inner" cx="110" cy="65" r="31"/>
+        {inner.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 31, 110, 65)} stroke={segment.item.color} strokeWidth="10"><title>{segment.item.name} — {segment.item.accepted} acceptées — {segment.percent} %</title></path>)}
+        <text className="admin-promotion-total" x="110" y="62" textAnchor="middle">{total}</text>
+        <text className="admin-promotion-total-label" x="110" y="76" textAnchor="middle">candidatures</text>
+      </svg>
+    </div>
+    <PromotionLegend categories={categories} total={total} acceptedTotal={acceptedTotal}/>
   </article>;
 }
 function StatusPill({ value }: { value?: string }) {
@@ -448,22 +538,38 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           </div>
         </div>
         <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition informative des candidatures et des acceptations.</p></div></div>
-          {rows.length<5?<p className="admin-promotion-threshold">{rows.length} candidatures. Les graphiques apparaissent à partir de 5 dossiers.</p>:<div className="admin-promotion-grid">
-            {([{title:"Genre",field:"gender",order:[] as string[]},{title:"Tranche d'âge",field:"age",order:["Moins de 18 ans","18–24 ans","18-24 ans","25–34 ans","25-34 ans","35–44 ans","35-44 ans","45 ans et plus"]},{title:"Niveau en design",field:"level",order:["Débutant","Intermédiaire","Avancé"]}] as const).map(chart=>{
-              const active=rows.filter(r=>statusOf(r.status)!=="refused");
-              const categories=Array.from(new Set(active.map(r=>String(r[chart.field]??"").trim()||"Non renseigné")));
-              categories.sort((a,b)=>{
-                if(a==="Non renseigné")return 1;if(b==="Non renseigné")return -1;
-                const normalize=(value:string)=>value.toLowerCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim();
-                const ai=chart.order.findIndex(v=>normalize(v)===normalize(a)),bi=chart.order.findIndex(v=>normalize(v)===normalize(b));
-                if(ai>=0||bi>=0)return (ai<0?999:ai)-(bi<0?999:bi);
-                return a.localeCompare(b,"fr");
-              });
-              const colors=["#1F5BFF","#22C7F2","#1233A8","#8FE3FA"];
-              const data=categories.map((name,index)=>({name,count:active.filter(r=>(String(r[chart.field]??"").trim()||"Non renseigné")===name).length,accepted:active.filter(r=>statusOf(r.status)==="accepted"&&(String(r[chart.field]??"").trim()||"Non renseigné")===name).length,color:name==="Non renseigné"?"#D5E0F7":colors[index%colors.length]}));
-              return <PromotionSemiDonut key={chart.field} title={chart.title} total={active.length} categories={data}/>;
-            })}
-          </div>}
+          {rows.filter(row => statusOf(row.status) !== "refused").length < 5
+            ? <p className="admin-promotion-threshold">{rows.filter(row => statusOf(row.status) !== "refused").length} candidatures. Les graphiques apparaissent à partir de 5 dossiers.</p>
+            : (() => {
+                const active = rows.filter(row => statusOf(row.status) !== "refused");
+                const buildCategories = (field: string, order: string[], palette: string[]) => {
+                  const names = Array.from(new Set(active.map(row => String(row[field] ?? "").trim() || "Non renseigné")));
+                  names.sort((a, b) => {
+                    if (a === "Non renseigné") return 1;
+                    if (b === "Non renseigné") return -1;
+                    const normalize = (value: string) => value.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
+                    const ai = order.findIndex(value => normalize(value) === normalize(a));
+                    const bi = order.findIndex(value => normalize(value) === normalize(b));
+                    if (ai >= 0 || bi >= 0) return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
+                    return a.localeCompare(b, "fr");
+                  });
+                  return names.map((name, index) => ({
+                    name,
+                    count: active.filter(row => (String(row[field] ?? "").trim() || "Non renseigné") === name).length,
+                    accepted: active.filter(row => statusOf(row.status) === "accepted" && (String(row[field] ?? "").trim() || "Non renseigné") === name).length,
+                    color: palette[index % palette.length],
+                  }));
+                };
+                const gender = buildCategories("gender", [], ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"]);
+                const ages = buildCategories("age", ["Moins de 18 ans", "18–24 ans", "18-24 ans", "25–34 ans", "25-34 ans", "35–44 ans", "35-44 ans", "45 ans et plus"], ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"]);
+                const levels = buildCategories("level", ["Débutant", "Intermédiaire", "Avancé"], ["#8FE3FA", "#22C7F2", "#1F5BFF"]);
+                const total = active.length;
+                return <div className="admin-promotion-grid">
+                  <PromotionSemiDonut total={total} categories={gender}/>
+                  <PromotionBars total={total} categories={ages}/>
+                  <PromotionDonut total={total} categories={levels}/>
+                </div>;
+              })()}
         </section>
       </>}
       {tab==="candidates"&&<>
