@@ -185,7 +185,7 @@ function PromotionBars({ total, categories }: { total: number; categories: Promo
 }
 function PromotionDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
   const segments = promotionSegments(categories, true);
-  const summary = categories.map(item => item.name + ": " + item.count + " candidatures").join("; ");
+  const summary = categories.map(item => item.name + ": " + item.count + " inscrits").join("; ");
   return <article className="admin-promotion-card">
     <h3>Niveau en design</h3>
     <div className="admin-promotion-chart-wrap">
