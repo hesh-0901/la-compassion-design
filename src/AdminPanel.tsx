@@ -133,6 +133,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [adminEditForm,setAdminEditForm] = useState({firstName:"",lastName:"",active:true});
   const [adminEditSaving,setAdminEditSaving] = useState(false);
   const [adminNewPassword,setAdminNewPassword] = useState("");
+  const [showAdminPasswordEditor,setShowAdminPasswordEditor] = useState(false);
   const [adminPasswordSaving,setAdminPasswordSaving] = useState(false);
   const [adminDeleteSaving,setAdminDeleteSaving] = useState(false);
   const [showAdminPassword,setShowAdminPassword] = useState(false);
@@ -258,6 +259,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     setSelectedAdmin(item);
     setAdminEditForm({firstName:item.firstName??"",lastName:item.lastName??"",active:item.active===true});
     setAdminNewPassword("");
+    setShowAdminPasswordEditor(false);
     setError("");
   };
   const saveAdminDetails = async (event:React.FormEvent) => {
@@ -286,6 +288,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       const result=await response.json().catch(()=>({}));
       if(!response.ok) throw new Error(result.error||"Modification du mot de passe impossible.");
       setAdminNewPassword("");
+      setShowAdminPasswordEditor(false);
       setError("Mot de passe modifié avec succès.");
     }catch(err:any){setError(err?.message||"Modification du mot de passe impossible.");}
     finally{setAdminPasswordSaving(false);}
@@ -509,7 +512,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </div>
         <label>Adresse e-mail de connexion<input value={selectedAdmin.email??""} readOnly/><small>L’adresse de connexion est gérée par Firebase Authentication et ne peut pas être modifiée ici.</small></label>
         <label>Rôle<input value={selectedAdmin.role==="superAdmin"?"Super administrateur":"Administrateur"} readOnly/></label>
-        {selectedAdmin.role!=="superAdmin"&&<div className="admin-password-management"><label>Nouveau mot de passe<input type="password" autoComplete="new-password" minLength={8} value={adminNewPassword} onChange={e=>setAdminNewPassword(e.target.value)} placeholder="8 caractères minimum"/></label><button type="button" className="admin-secondary" onClick={changeAdminPassword} disabled={adminPasswordSaving||adminNewPassword.length<8}>{adminPasswordSaving?"Modification…":"Modifier le mot de passe"}</button></div>}
+        {selectedAdmin.role!=="superAdmin"&&<div className="admin-password-management"><button type="button" className="admin-secondary" onClick={()=>{setShowAdminPasswordEditor(value=>!value);setAdminNewPassword("");setError("");}} disabled={adminPasswordSaving}>{showAdminPasswordEditor?"Annuler le changement":"Changer le mot de passe"}</button>{showAdminPasswordEditor&&<><label>Nouveau mot de passe<input type="password" autoComplete="new-password" minLength={8} value={adminNewPassword} onChange={e=>setAdminNewPassword(e.target.value)} placeholder="8 caractères minimum"/></label><button type="button" className="admin-primary" onClick={changeAdminPassword} disabled={adminPasswordSaving||adminNewPassword.length<8}>{adminPasswordSaving?"Modification…":"Confirmer le nouveau mot de passe"}</button></>}</div>}
         <label className="admin-admin-active-toggle"><input type="checkbox" checked={adminEditForm.active} onChange={e=>setAdminEditForm(v=>({...v,active:e.target.checked}))}/> Compte actif — autoriser l’accès à l’espace admin</label>
         {error&&<p className="admin-error" role="alert">{error}</p>}
         <div className="admin-create-modal-actions">{selectedAdmin.role!=="superAdmin"&&<button type="button" className="admin-danger" onClick={deleteAdmin} disabled={adminDeleteSaving||adminEditSaving}>{adminDeleteSaving?"Suppression…":"Supprimer le compte"}</button>}<button type="button" className="admin-secondary" disabled={adminEditSaving||adminPasswordSaving||adminDeleteSaving} onClick={()=>setSelectedAdmin(null)}>Fermer</button><button className="admin-primary" type="submit" disabled={adminEditSaving||adminPasswordSaving||adminDeleteSaving}>{adminEditSaving?"Enregistrement…":"Enregistrer les modifications"}</button></div>
