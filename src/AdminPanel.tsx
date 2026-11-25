@@ -199,6 +199,19 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     try {
       const historyEntry={from:String(candidate.status??"received"),to:status,adminId:user?.uid??"",changedAt:new Date()};
       await updateDoc(doc(db,"candidatures",candidate.id),{status,reviewedAt:serverTimestamp(),reviewedBy:user?.uid??null,statusHistory:arrayUnion(historyEntry)});
+      if (status === "accepted" || status === "refused") {
+        try {
+          const idToken = await user?.getIdToken();
+          const notificationResponse = await fetch("/api/notify-status", {
+            method: "POST",
+            headers: { "content-type": "application/json", ...(idToken ? { authorization: "Bearer " + idToken } : {}) },
+            body: JSON.stringify({ candidateId: candidate.id, status }),
+          });
+          if (!notificationResponse.ok) console.error("Notification de décision non envoyée :", await notificationResponse.text());
+        } catch (notificationError) {
+          console.error("Service de notification indisponible :", notificationError);
+        }
+      }
       const patch={status,reviewedAt:new Date(),reviewedBy:user?.uid??null,statusHistory:[...(candidate.statusHistory??[]),historyEntry]};
       setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,...patch}:row));
       setSelected(prev=>prev?.id===candidate.id?{...prev,...patch}:prev);
