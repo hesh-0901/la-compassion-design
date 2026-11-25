@@ -169,28 +169,22 @@ function PromotionSemiDonut({ total, categories }: { total: number; categories: 
 }
 function PromotionBars({ total, categories }: { total: number; categories: PromotionCategory[] }) {
   const max = Math.max(1, ...categories.flatMap(item => [item.count, item.accepted]));
-  const baseY = 160, maxHeight = 112, chartWidth = 300, groupWidth = chartWidth / Math.max(categories.length, 1);
-  const shortName = (name: string) => name.replace("Moins de 18 ans", "Moins de 18").replace(" ans et plus", "+").replace(" ans", "");
-  const barPath = (x: number, y: number, width: number, height: number) => "M " + x + " " + (y + height) + " L " + x + " " + (y + 6) + " Q " + x + " " + y + " " + (x + 6) + " " + y + " L " + (x + width - 6) + " " + y + " Q " + (x + width) + " " + y + " " + (x + width) + " " + (y + 6) + " L " + (x + width) + " " + (y + height) + " Z";
   const summary = categories.map(item => item.name + ": " + item.count + " candidatures, " + item.accepted + " acceptées").join("; ");
   return <article className="admin-promotion-card">
     <h3>Tranche d'âge</h3>
     <div className="admin-promotion-chart-wrap">
-      <svg className="admin-promotion-chart admin-promotion-bars" viewBox="0 0 300 200" role="img" aria-label={"Candidatures et acceptations par tranche d'âge. " + summary}>
-        <path d="M6 162 H294" className="admin-promotion-axis"/>
-        {categories.map(item => {
-          const center = groupWidth * categories.indexOf(item) + groupWidth / 2;
-          const barWidth = 20;
-          const countHeight = Math.max(item.count ? 6 : 0, item.count / max * maxHeight);
-          const acceptedHeight = Math.max(item.accepted ? 6 : 0, item.accepted / max * maxHeight);
-          const countX = center - barWidth - 3, acceptedX = center + 3;
-          const countY = baseY - countHeight, acceptedY = baseY - acceptedHeight;
+      <svg className="admin-promotion-chart admin-promotion-bars" viewBox="0 0 420 200" role="img" aria-label={"Comparaison des candidatures et acceptations par tranche d'âge. " + summary}>
+        <g className="admin-promotion-bars-key"><rect x="105" y="8" width="9" height="9" rx="3" fill="#1F5BFF"/><text x="120" y="17">Candidatures</text><rect x="230" y="8" width="9" height="9" rx="3" fill="#22C7F2"/><text x="245" y="17">Acceptées</text></g>
+        {categories.map((item,index) => {
+          const y = 40 + index * 39, w1 = item.count ? Math.max(6,item.count/max*205) : 0, w2 = item.accepted ? Math.max(6,item.accepted/max*205) : 0;
+          const name = item.name.replace("Moins de 18 ans","Moins de 18").replace(" ans et plus","+").replace(" ans","");
           return <g key={item.name}>
-            <path d={barPath(countX, countY, barWidth, countHeight)} fill="#1F5BFF"><title>{item.name} — {item.count} candidatures</title></path>
-            <path d={barPath(acceptedX, acceptedY, barWidth, acceptedHeight)} fill="#22C7F2"><title>{item.name} — {item.accepted} acceptées</title></path>
-            <text className="admin-promotion-bar-value" x={countX + barWidth / 2} y={Math.max(13, countY - 7)} textAnchor="middle">{item.count}</text>
-            <text className="admin-promotion-bar-value" x={acceptedX + barWidth / 2} y={Math.max(13, acceptedY - 7)} textAnchor="middle">{item.accepted}</text>
-            <text className="admin-promotion-bar-label" x={center} y="188" textAnchor="middle">{shortName(item.name)}</text>
+            <text className="admin-promotion-age-label" x="0" y={y+17}>{name}</text>
+            <rect x="105" y={y} width={w1} height="12" rx="6" fill="#1F5BFF"><title>{item.count} candidatures</title></rect>
+            <text className="admin-promotion-age-value" x={Math.min(405,112+w1)} y={y+10}>{item.count}</text>
+            <rect x="105" y={y+16} width={w2} height="12" rx="6" fill="#22C7F2"><title>{item.accepted} acceptées</title></rect>
+            <text className="admin-promotion-age-value" x={Math.min(405,112+w2)} y={y+26}>{item.accepted}</text>
+            {index<categories.length-1 && <path d={"M0 "+(y+34)+" H420"} className="admin-promotion-age-separator"/>}
           </g>;
         })}
       </svg>
