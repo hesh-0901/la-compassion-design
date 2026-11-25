@@ -65,7 +65,7 @@ async function firestoreRequest(account: ServiceAccount, token: string, path: st
   const url = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(account.project_id) + "/databases/(default)/documents" + path;
   const result = await fetch(url, { ...init, headers: { authorization: "Bearer " + token, ...(init?.headers || {}) } });
   if (!result.ok) throw new Error("Firestore REST: " + result.status + " " + (await result.text()).slice(0, 400));
-  return result.status === 204 ? null : result.json() as Promise<any>;
+  return result.status === 204 || init?.method === "DELETE" ? null : result.json() as Promise<any>;
 }
 
 function fieldValue(field: any): any {
