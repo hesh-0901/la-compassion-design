@@ -103,7 +103,7 @@ service cloud.firestore {
 
     match /admins/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
-      allow list: if isSuperAdmin();
+      allow list: if isActiveAdmin();
       allow create, update, delete: if isSuperAdmin();
     }
 
