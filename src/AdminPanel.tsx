@@ -91,6 +91,45 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
+type PromotionCategory = { name: string; count: number; accepted: number; color: string };
+function PromotionSemiDonut({ title, total, categories }: { title: string; total: number; categories: PromotionCategory[] }) {
+  const radius = 88, circumference = Math.PI * radius, innerRadius = 59, innerCircumference = Math.PI * innerRadius;
+  const colors = ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"];
+  const arcSegments = (items: PromotionCategory[], r: number, length: number, key: "count" | "accepted") => {
+    let offset = 0;
+    return items.map((item, index) => {
+      const value = item[key], portion = total ? value / total : 0, segment = length * portion;
+      const gap = value > 0 && items.filter(entry => entry[key] > 0).length > 1 ? 2 : 0;
+      const dash = Math.max(0, segment - gap);
+      const result = { ...item, dash, offset, percent: total ? Math.round(value / total * 100) : 0, color: item.name === "Non renseigné" ? "#D5E0F7" : item.color || colors[index % colors.length] };
+      offset += segment;
+      return result;
+    }).filter(item => item.dash > 0);
+  };
+  const outer = arcSegments(categories, radius, circumference, "count");
+  const inner = arcSegments(categories, innerRadius, innerCircumference, "accepted");
+  const summary = categories.map(item => `${item.name}: ${item.count} candidatures, ${item.accepted} acceptées (${total ? Math.round(item.count / total * 100) : 0} %)`).join("; ");
+  return <article className="admin-promotion-card">
+    <h3>{title}</h3>
+    <div className="admin-promotion-chart-wrap">
+      <svg className="admin-promotion-donut" viewBox="0 0 240 145" role="img" aria-label={`${title}. ${total} candidatures. ${summary}`}>
+        <path className="admin-promotion-track-base" d="M32 118 A88 88 0 0 1 208 118" />
+        {outer.map((item,index) => <path key={item.name} className="admin-promotion-arc admin-promotion-arc-outer" d="M32 118 A88 88 0 0 1 208 118" stroke={item.color} strokeDasharray={`${item.dash} ${circumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.count} candidatures · {item.percent} %</title></path>)}
+        {categories.some(item=>item.accepted>0) ? <>
+          <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />
+          {inner.map(item=><path key={item.name} className="admin-promotion-arc admin-promotion-arc-inner" d="M61 118 A59 59 0 0 1 179 118" stroke={item.color} strokeDasharray={`${item.dash} ${innerCircumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.accepted} acceptées</title></path>)}
+        </> : <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />}
+        <text className="admin-promotion-total" x="120" y="91" textAnchor="middle">{total}</text>
+        <text className="admin-promotion-total-label" x="120" y="108" textAnchor="middle">candidatures</text>
+      </svg>
+    </div>
+    <ul className="admin-promotion-legend-list">{categories.map(item=><li key={item.name}>
+      <span className="admin-promotion-category-name"><i style={{background:item.color}}/>{item.name}</span>
+      <span className="admin-promotion-values">{item.count} · {item.accepted}</span>
+      <span className="admin-promotion-percent">{total ? Math.round(item.count/total*100) : 0} %</span>
+    </li>)}</ul>
+  </article>;
+}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
   const icons:Record<Status,string>={received:"M5 12h14",review:"M12 3v18m-9-9h18",accepted:"m5 12 4 4L19 6",waiting:"M12 8v4l3 2",refused:"M18 6 6 18M6 6l12 12"};
@@ -410,7 +449,20 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </div>
         <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition informative des candidatures et des acceptations.</p></div></div>
           {rows.length<5?<p className="admin-promotion-threshold">{rows.length} candidatures. Les graphiques apparaissent à partir de 5 dossiers.</p>:<div className="admin-promotion-grid">
-            {[{title:"Genre",field:"gender",order:[] as string[]},{title:"Tranche d’âge",field:"age",order:["Moins de 18 ans","18–24 ans","18-24 ans","25–34 ans","25-34 ans","35–44 ans","35-44 ans","45 ans et plus"]},{title:"Niveau en design",field:"level",order:["Débutant","Intermédiaire","Avancé"]}].map(chart=>{const active=rows.filter(r=>statusOf(r.status)!=="refused");const cats=Array.from(new Set(active.map(r=>String(r[chart.field]??"").trim()||"Non renseigné"))).sort((a,b)=>{if(a==="Non renseigné")return 1;if(b==="Non renseigné")return -1;const ai=chart.order.findIndex(v=>v.toLowerCase()===a.toLowerCase()),bi=chart.order.findIndex(v=>v.toLowerCase()===b.toLowerCase());if(ai>=0||bi>=0)return (ai<0?999:ai)-(bi<0?999:bi);return a.localeCompare(b,"fr")});return <article className="admin-promotion-card" key={chart.field}><h3>{chart.title}</h3><div className="admin-promotion-bars">{cats.map(category=>{const n=active.filter(r=>(String(r[chart.field]??"").trim()||"Non renseigné")===category).length,accepted=active.filter(r=>statusOf(r.status)==="accepted"&&(String(r[chart.field]??"").trim()||"Non renseigné")===category).length;return <div className="admin-promotion-category" key={category}><b>{category}</b><div className="admin-promotion-track"><i className="applicants" style={{width:(n/active.length*100)+"%"}}/><span>{n} · {Math.round(n/active.length*100)}%</span></div><div className="admin-promotion-track"><i className="accepted" style={{width:(accepted/active.length*100)+"%"}}/><span>{accepted} · {Math.round(accepted/active.length*100)}%</span></div></div>})}</div><div className="admin-promotion-legend"><span><i className="applicants"/>Candidatures</span><span><i className="accepted"/>Acceptées</span></div></article>})}
+            {([{title:"Genre",field:"gender",order:[] as string[]},{title:"Tranche d'âge",field:"age",order:["Moins de 18 ans","18–24 ans","18-24 ans","25–34 ans","25-34 ans","35–44 ans","35-44 ans","45 ans et plus"]},{title:"Niveau en design",field:"level",order:["Débutant","Intermédiaire","Avancé"]}] as const).map(chart=>{
+              const active=rows.filter(r=>statusOf(r.status)!=="refused");
+              const categories=Array.from(new Set(active.map(r=>String(r[chart.field]??"").trim()||"Non renseigné")));
+              categories.sort((a,b)=>{
+                if(a==="Non renseigné")return 1;if(b==="Non renseigné")return -1;
+                const normalize=(value:string)=>value.toLowerCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim();
+                const ai=chart.order.findIndex(v=>normalize(v)===normalize(a)),bi=chart.order.findIndex(v=>normalize(v)===normalize(b));
+                if(ai>=0||bi>=0)return (ai<0?999:ai)-(bi<0?999:bi);
+                return a.localeCompare(b,"fr");
+              });
+              const colors=["#1F5BFF","#22C7F2","#1233A8","#8FE3FA"];
+              const data=categories.map((name,index)=>({name,count:active.filter(r=>(String(r[chart.field]??"").trim()||"Non renseigné")===name).length,accepted:active.filter(r=>statusOf(r.status)==="accepted"&&(String(r[chart.field]??"").trim()||"Non renseigné")===name).length,color:name==="Non renseigné"?"#D5E0F7":colors[index%colors.length]}));
+              return <PromotionSemiDonut key={chart.field} title={chart.title} total={active.length} categories={data}/>;
+            })}
           </div>}
         </section>
       </>}
