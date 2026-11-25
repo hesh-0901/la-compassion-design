@@ -93,7 +93,7 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
 }
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
-  const icons:Record<Status,string>={received:"M12 3v18M3 12h18",review:"M12 3v18m-9-9h18",accepted:"m5 12 4 4L19 6",waiting:"M12 8v4l3 2",refused:"M18 6 6 18M6 6l12 12"};
+  const icons:Record<Status,string>={received:"M5 12h14",review:"M12 3v18m-9-9h18",accepted:"m5 12 4 4L19 6",waiting:"M12 8v4l3 2",refused:"M18 6 6 18M6 6l12 12"};
   return <span className={"admin-status status-" + status}><svg viewBox="0 0 24 24" aria-hidden="true"><path d={icons[status]}/></svg>{label}</span>;
 }
 
@@ -110,6 +110,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const pageSize = 15;
   const [rows,setRows] = useState<Candidate[]>([]);
   const [attentionFilter,setAttentionFilter] = useState<"all"|"partial"|"ram"|"photo"|"portfolio">("all");
+  const [reviewPage,setReviewPage] = useState(1);
+  const reviewPageSize=5;
   const [capacity,setCapacity] = useState<number|null>(null);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
@@ -268,6 +270,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setEditOpen(false); setSelected(null);
     } catch { setError("Modification impossible. Vérifie les autorisations Firestore."); }
   };
+  const reviewRows=useMemo(()=>rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(a.createdAt)-t(b.createdAt)}),[rows]);
+  const reviewPageCount=Math.max(1,Math.ceil(reviewRows.length/reviewPageSize));
+  const visibleReviewRows=reviewRows.slice((reviewPage-1)*reviewPageSize,reviewPage*reviewPageSize);
+  useEffect(()=>setReviewPage(1),[rows.length]);
   const assetsByCandidate = rows.map(row => ({
     candidate: row,
     files: [
@@ -316,7 +322,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           <section className="admin-section admin-review-queue">
             <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les 5 plus anciens dossiers Reçue ou En étude.</p></div><button className="admin-text-action" onClick={()=>{setAttentionFilter("all");setTab("candidates")}}>Voir toutes les candidatures <Icon name="chevron"/></button></div>
             <div className="admin-review-table-head"><span>Candidat</span><span>Niveau</span><span>PC</span><span>Disponibilité</span><span>Statut</span><span>Date</span></div>
-            {rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(a.createdAt)-t(b.createdAt)}).slice(0,5).length>0?<div className="admin-review-list">{rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(a.createdAt)-t(b.createdAt)}).slice(0,5).map(row=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}><span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")}</small></span><span className="admin-review-level">{valueOf(row,"level")}</span><span className="admin-review-ram">{valueOf(row,"ram")}</span><span className={"admin-review-availability"+(String(row.availability??"").toLowerCase().includes("partiellement")?" partial":"")}>{valueOf(row,"availability")}{String(row.availability??"").toLowerCase().includes("partiellement")&&<small className="admin-partial-signal">À confirmer</small>}</span><StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time></button>)}</div>:<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier à examiner."}</p>}
+            {visibleReviewRows.length>0?<><div className="admin-review-list">{visibleReviewRows.map(row=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}><span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")}</small></span><span className="admin-review-level">{valueOf(row,"level")}</span><span className="admin-review-ram">{valueOf(row,"ram")}</span><span className={"admin-review-availability"+(String(row.availability??"").toLowerCase().includes("partiellement")?" partial":"")}>{valueOf(row,"availability")}{String(row.availability??"").toLowerCase().includes("partiellement")&&<small className="admin-partial-signal">À confirmer</small>}</span><StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time></button>)}</div><div className="admin-review-pagination"><span>{reviewRows.length} dossiers · Page {reviewPage}/{reviewPageCount}</span><div><button type="button" disabled={reviewPage<=1} onClick={()=>setReviewPage(p=>Math.max(1,p-1))}>Précédent</button><button type="button" disabled={reviewPage>=reviewPageCount} onClick={()=>setReviewPage(p=>Math.min(reviewPageCount,p+1))}>Suivant</button></div></div></>:<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier à examiner."}</p>}
           </section>
           <div className="admin-overview-side">
             <section className="admin-section admin-verify-card"><div className="admin-section-head"><div><h2>À vérifier</h2><p>Points nécessitant une vérification.</p></div></div>
