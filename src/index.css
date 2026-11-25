@@ -2022,3 +2022,84 @@
  .analytics-bars{height:132px}
 }
 @media(prefers-reduced-motion:reduce){.analytics-panel *{transition:none!important}}
+
+
+/* Professional analytics composition */
+.analytics-pro{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px;align-items:stretch}
+.analytics-pro .analytics-panel{padding:20px 21px;min-width:0;display:flex;flex-direction:column}
+.analytics-panel-trend{grid-column:span 8;min-height:300px}
+.analytics-panel-status{grid-column:span 4;min-height:300px}
+.analytics-panel-skills,.analytics-panel-spiritual{grid-column:span 4}
+.analytics-panel-tools,.analytics-panel-branches{grid-column:span 4}
+.analytics-panel-readiness{grid-column:span 7}
+.analytics-panel-demographics{grid-column:span 5}
+.analytics-panel-community,.analytics-panel-location,.analytics-panel-quality{grid-column:span 4}
+.analytics-pro .analytics-panel-head{margin-bottom:16px}
+.analytics-pro .analytics-panel-head h3{font-size:14px}
+.analytics-pro .analytics-panel-head p{font-size:11px}
+.analytics-line-wrap{width:100%;margin-top:auto}
+.analytics-line-wrap svg{display:block;width:100%;height:205px;overflow:visible}
+.analytics-line-labels{display:flex;justify-content:space-between;gap:8px;padding:8px 24px 0;color:#8491a6;font-size:10px}
+.analytics-donut-wrap{display:flex;align-items:center;justify-content:center;gap:clamp(12px,2vw,25px);flex:1;min-height:170px}
+.analytics-donut{position:relative;flex:0 0 142px;width:142px;height:142px}
+.analytics-donut svg{display:block;width:100%;height:100%;transform:rotate(0)}
+.analytics-donut-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none}
+.analytics-donut-center strong{color:#122f75;font:800 27px/1 "Plus Jakarta Sans",Inter,sans-serif;letter-spacing:-.05em}
+.analytics-donut-center small{margin-top:5px;color:#8b97aa;font-size:8px;font-weight:700;letter-spacing:.1em}
+.analytics-legend{display:flex;flex:1;min-width:0;flex-direction:column;gap:10px}
+.analytics-legend>div{display:grid;grid-template-columns:8px minmax(0,1fr) 22px 34px;align-items:center;gap:7px}
+.analytics-legend>div>i,.analytics-compact>div>div>span>i{display:block;width:7px;height:7px;border-radius:50%}
+.analytics-legend span{overflow:hidden;color:#63718a;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.analytics-legend b{color:#233858;font-size:11px;text-align:right}
+.analytics-legend small{color:#8995a8;font-size:9px;text-align:right}
+.analytics-legend p{color:#8a95a8;font-size:11px}
+.analytics-compact{display:flex;flex-direction:column;gap:12px}
+.analytics-compact>div>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.analytics-compact>div>div>span{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;color:#64728a;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.analytics-compact>div>div>b{color:#253958;font-size:11px}
+.analytics-compact-track{height:5px;overflow:hidden;border-radius:5px;background:#edf1f7}
+.analytics-compact-track i{display:block;height:100%;border-radius:5px}
+.analytics-compact>div>small{display:block;margin-top:4px;color:#929db0;font-size:9px;text-align:right}
+.analytics-gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:auto 0}
+.analytics-gauge{display:flex;align-items:center;flex-direction:column;text-align:center;min-width:0}
+.analytics-gauge-visual{position:relative;width:94px;height:88px}
+.analytics-gauge-visual svg{width:100%;height:100%}
+.analytics-gauge-visual strong{position:absolute;left:0;right:0;bottom:4px;color:#173c91;font:800 20px/1 "Plus Jakarta Sans",Inter,sans-serif}
+.analytics-gauge>b{margin-top:7px;color:#33445f;font-size:10px}
+.analytics-gauge>small{max-width:150px;margin-top:4px;color:#8b96a8;font-size:9px;line-height:1.4}
+.analytics-demographic-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
+.analytics-demographic-columns>div>b{display:block;margin-bottom:10px;color:#62718a;font-size:10px}
+.analytics-demographic-columns .analytics-donut{flex-basis:105px;width:105px;height:105px}
+.analytics-demographic-columns .analytics-donut-center strong{font-size:20px}
+.analytics-demographic-columns .analytics-donut-wrap{gap:8px;min-height:110px}
+.analytics-demographic-columns .analytics-legend{gap:6px}
+.analytics-demographic-columns .analytics-legend>div{grid-template-columns:7px minmax(0,1fr) 16px}
+.analytics-demographic-columns .analytics-legend small{display:none}
+.analytics-subchart{margin-top:16px;padding-top:14px;border-top:1px solid #edf1f6}
+.analytics-subchart>span{display:block;margin-bottom:10px;color:#8793a7;font-size:10px;font-weight:700}
+.analytics-quality-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.analytics-quality-grid>div{padding:11px 12px;border-left:2px solid #d8e8f8;background:#f8faff}
+.analytics-quality-grid strong{font:800 23px/1 "Plus Jakarta Sans",Inter,sans-serif;color:#173c91}
+.analytics-quality-grid span{font-size:10px;color:#77859b}
+@media(max-width:1100px){
+ .analytics-panel-trend{grid-column:span 7}.analytics-panel-status{grid-column:span 5}
+ .analytics-panel-skills,.analytics-panel-spiritual,.analytics-panel-tools,.analytics-panel-branches{grid-column:span 6}
+ .analytics-panel-readiness{grid-column:span 12}.analytics-panel-demographics{grid-column:span 6}
+ .analytics-panel-community,.analytics-panel-location,.analytics-panel-quality{grid-column:span 6}
+}
+@media(max-width:700px){
+ .analytics-pro{grid-template-columns:minmax(0,1fr);gap:10px}
+ .analytics-pro .analytics-panel{grid-column:1;padding:16px;min-height:0}
+ .analytics-panel-trend{min-height:245px!important}
+ .analytics-line-wrap svg{height:160px}
+ .analytics-donut-wrap{justify-content:flex-start;min-height:145px}
+ .analytics-donut{flex-basis:124px;width:124px;height:124px}
+ .analytics-gauges{gap:4px}
+ .analytics-gauge-visual{width:82px;height:78px}
+ .analytics-gauge-visual strong{font-size:18px}
+ .analytics-gauge>b{font-size:9px}
+ .analytics-gauge>small{font-size:8px}
+ .analytics-demographic-columns{gap:8px}
+ .analytics-demographic-columns .analytics-donut{flex-basis:90px;width:90px;height:90px}
+ .analytics-line-labels{padding-left:12px;padding-right:12px;font-size:9px}
+}
