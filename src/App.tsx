@@ -123,7 +123,7 @@ export default function App() {
         if (!imageFile && !pdfFile) throw new Error("La création jointe doit être une image ou un PDF.");
         portfolioUpload = await uploadToCloudinary(portfolioFile, imageFile ? "image" : "raw");
       }
-      await addDoc(collection(db, "candidatures"), {
+      const candidateRef = await addDoc(collection(db, "candidatures"), {
         fullName: form.fullName.trim(),
         gender: form.gender,
         phone: "+243" + phoneDigits,
@@ -149,7 +149,15 @@ export default function App() {
         status: "received",
         createdAt: serverTimestamp(),
       });
-        go("confirmation");
+      // L'inscription est déjà enregistrée : une panne e-mail ne doit jamais annuler la confirmation à l'écran.
+      void fetch("/api/notify-registration", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ candidateId: candidateRef.id }),
+      }).then(async response => {
+        if (!response.ok) console.error("Notification d'inscription non envoyée :", await response.text());
+      }).catch(error => console.error("Service de notification indisponible :", error));
+      go("confirmation");
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Une erreur est survenue pendant l’envoi.");
     } finally {
