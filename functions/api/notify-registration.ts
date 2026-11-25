@@ -4,7 +4,7 @@ type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILE
 
 const firstNameOf = (fullName: unknown) => {
   const name = String(fullName || "").trim();
-  return name ? name.split(/\\s+/)[0] : "Candidat";
+  return name ? name.split(/\s+/)[0] : "Candidat";
 };
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
