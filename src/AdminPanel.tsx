@@ -117,7 +117,7 @@ function PromotionSemiDonut({ title, total, categories }: { title: string; total
         {outer.map((item,index) => <path key={item.name} className="admin-promotion-arc admin-promotion-arc-outer" d="M32 118 A88 88 0 0 1 208 118" stroke={item.color} strokeDasharray={`${item.dash} ${circumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.count} candidatures · {item.percent} %</title></path>)}
         {categories.some(item=>item.accepted>0) ? <>
           <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />
-          {inner.map(item=><path key={item.name} className="admin-promotion-arc admin-promotion-arc-inner" d="M61 118 A59 59 0 0 1 179 118" stroke={item.color} strokeDasharray={`${item.dash} ${innerCircumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.accepted} acceptées</title></path>)}
+          {inner.map(item=><path key={item.name} className="admin-promotion-arc admin-promotion-arc-inner" d="M61 118 A59 59 0 0 1 179 118" stroke={item.color} strokeDasharray={`${item.dash} ${innerCircumference-item.dash}`} strokeDashoffset={-item.offset}><title>{item.name} — {item.accepted} acceptées · {total ? Math.round(item.accepted / total * 100) : 0} %</title></path>)}
         </> : <path className="admin-promotion-track-inner" d="M61 118 A59 59 0 0 1 179 118" />}
         <text className="admin-promotion-total" x="120" y="91" textAnchor="middle">{total}</text>
         <text className="admin-promotion-total-label" x="120" y="108" textAnchor="middle">candidatures</text>
