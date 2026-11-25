@@ -93,6 +93,32 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
 function pctSafe(n:number,d:number){return d?Math.round(n/d*100):0}
+const chartPalette=["#1f5bff","#22b8d8","#ff9a3d","#8c9dbb","#1233a8","#6b7fd7","#45a6a0"];
+function AnalyticsDonut({items,total,centerLabel,small=false}:{items:{label:string;value:number}[];total:number;centerLabel:string;small?:boolean}){
+  const sum=items.reduce((n,x)=>n+x.value,0), radius=small?31:39, circumference=2*Math.PI*radius;
+  let offset=0;
+  return <div className={"analytics-donut-wrap"+(small?" is-small":"")}>
+    <div className="analytics-donut"><svg viewBox="0 0 100 100" role="img" aria-label={"Répartition sur "+sum+" réponses"}><circle cx="50" cy="50" r={radius} fill="none" stroke="#edf1f7" strokeWidth={small?9:10}/>{items.map((item,index)=>{const length=sum?item.value/sum*circumference:0;const node=<circle key={item.label} cx="50" cy="50" r={radius} fill="none" stroke={chartPalette[index%chartPalette.length]} strokeWidth={small?9:10} strokeDasharray={length+" "+(circumference-length)} strokeDashoffset={-offset} transform="rotate(-90 50 50)" strokeLinecap="butt"/>;offset+=length;return node;})}</svg><div className="analytics-donut-center"><strong>{total}</strong><small>{centerLabel}</small></div></div>
+    <div className="analytics-legend">{items.length?items.slice(0,6).map((item,index)=><div key={item.label}><i style={{background:chartPalette[index%chartPalette.length]}}/><span title={item.label}>{item.label}</span><b>{item.value}</b><small>{pctSafe(item.value,total)}%</small></div>):<p>Aucune réponse disponible</p>}</div>
+  </div>;
+}
+function AnalyticsLine({items}:{items:{label:string;value:number}[]}){
+  if(!items.length)return <div className="analytics-empty">L'évolution apparaîtra dès que plusieurs périodes seront renseignées.</div>;
+  const width=560,height=190,pad=28,max=Math.max(...items.map(x=>x.value),1),step=items.length>1?(width-pad*2)/(items.length-1):0;
+  const points=items.map((x,i)=>({x:items.length===1?width/2:pad+i*step,y:height-pad-(x.value/max)*(height-pad*2)}));
+  const line=points.map((p,i)=>(i?"L":"M")+p.x+" "+p.y).join(" ");
+  const area=line+" L "+points[points.length-1].x+" "+(height-pad)+" L "+points[0].x+" "+(height-pad)+" Z";
+  return <div className="analytics-line-wrap"><svg viewBox={"0 0 "+width+" "+height} preserveAspectRatio="none" role="img" aria-label="Courbe des inscriptions"><defs><linearGradient id="analyticsArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#22b8d8" stopOpacity=".24"/><stop offset="100%" stopColor="#22b8d8" stopOpacity="0"/></linearGradient></defs>{[.25,.5,.75].map(v=><line key={v} x1={pad} x2={width-pad} y1={height-pad-v*(height-pad*2)} y2={height-pad-v*(height-pad*2)} stroke="#edf1f7" strokeDasharray="3 5"/>)}<path d={area} fill="url(#analyticsArea)"/><path d={line} fill="none" stroke="#1f5bff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>{points.map((p,i)=><g key={items[i].label}><circle cx={p.x} cy={p.y} r="5" fill="#fff" stroke="#1f5bff" strokeWidth="2.5"/><text x={p.x} y={p.y-12} textAnchor="middle" fontSize="11" fill="#344766" fontWeight="700">{items[i].value}</text></g>)}</svg><div className="analytics-line-labels">{items.map(x=><span key={x.label}>{x.label}</span>)}</div></div>;
+}
+function AnalyticsGauge({value,label,detail}:{value:number;label:string;detail:string}){
+ const r=34,c=2*Math.PI*r,progress=Math.max(0,Math.min(100,value))/100*c;
+ return <div className="analytics-gauge"><div className="analytics-gauge-visual"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r={r} fill="none" stroke="#edf1f7" strokeWidth="7" strokeDasharray={c*.72+" "+c} transform="rotate(144 44 44)" strokeLinecap="round"/><circle cx="44" cy="44" r={r} fill="none" stroke="#1f5bff" strokeWidth="7" strokeDasharray={progress*.72+" "+c} transform="rotate(144 44 44)" strokeLinecap="round"/></svg><strong>{value}%</strong></div><b>{label}</b><small>{detail}</small></div>;
+}
+function AnalyticsCompact({items,total}:{items:{label:string;value:number}[];total:number}){
+ if(!items.length)return <div className="analytics-empty">Aucune réponse disponible</div>;
+ const max=Math.max(...items.map(x=>x.value),1);
+ return <div className="analytics-compact">{items.slice(0,6).map((item,index)=><div key={item.label}><div><span><i style={{background:chartPalette[index%chartPalette.length]}}/>{item.label}</span><b>{item.value}</b></div><div className="analytics-compact-track"><i style={{width:item.value/max*100+"%",background:chartPalette[index%chartPalette.length]}}/></div><small>{pctSafe(item.value,total)}% du total</small></div>)}</div>;
+}
 function AnalyticsBars({items,total}:{items:{label:string;value:number}[];total:number}){
   if(!items.length)return <div className="analytics-empty">Aucune réponse disponible pour le moment.</div>;
   const max=Math.max(...items.map(item=>item.value),1);
@@ -347,28 +373,58 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>{counts.total?pctSafe(counts.accepted,counts.total):0}% du total</small></article>
           <article><span>En attente</span><strong>{counts.waiting}</strong><small>Décision à finaliser</small></article>
         </div>
-        <div className="analytics-heading"><div><h2>Analyse des candidatures</h2><p>Lecture des profils, des compétences et des conditions de participation</p></div><span>{rows.length} dossier{rows.length>1?"s":""} analysé{rows.length>1?"s":""}</span></div>
-        <div className="analytics-grid">
-          <section className="analytics-panel analytics-trend"><div className="analytics-panel-head"><div><h3>Évolution des inscriptions</h3><p>Nombre de dossiers par mois d'enregistrement</p></div><span className="analytics-tag">Volume</span></div>
-            {analytics.trend.length?<div className="analytics-bars analytics-month-bars">{analytics.trend.map(item=><div className="analytics-bar-column" key={item.label}><b>{item.value}</b><span style={{height:(Math.max(10,item.value/Math.max(...analytics.trend.map(x=>x.value))*100))+"%"}}/><small>{item.label}</small></div>)}</div>:<div className="analytics-empty">Les données de dates ne sont pas encore suffisantes pour afficher une évolution.</div>}
+        <div className="analytics-heading"><div><h2>Analyse des candidatures</h2><p>Vue synthétique des profils, compétences et conditions de participation</p></div><span>{rows.length} dossier{rows.length>1?"s":""} analysé{rows.length>1?"s":""}</span></div>
+        <div className="analytics-pro">
+          <section className="analytics-panel analytics-panel-trend">
+            <div className="analytics-panel-head"><div><h3>Rythme des inscriptions</h3><p>Évolution mensuelle des candidatures enregistrées</p></div><span className="analytics-tag">Tendance</span></div>
+            <AnalyticsLine items={analytics.trend}/>
           </section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Répartition des statuts</h3><p>État du traitement des dossiers</p></div></div>
-            <div className="analytics-status-list">{analytics.status.map(item=><div className="analytics-status-row" key={item.label}><span>{item.label}</span><b>{item.value}</b><i><em style={{width:(counts.total?item.value/counts.total*100:0)+"%"}}/></i><small>{counts.total?pctSafe(item.value,counts.total):0}%</small></div>)}</div>
+          <section className="analytics-panel analytics-panel-status">
+            <div className="analytics-panel-head"><div><h3>Décisions</h3><p>État actuel du traitement</p></div></div>
+            <AnalyticsDonut items={analytics.status} total={counts.total} centerLabel="DOSSIERS"/>
           </section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Niveau en design</h3><p>Autonomie déclarée à l'inscription</p></div></div><AnalyticsBars items={analytics.levels} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Outils maîtrisés</h3><p>Logiciels et plateformes déjà utilisés</p></div></div><AnalyticsBars items={analytics.tools} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Assemblées représentées</h3><p>Répartition des candidats par extension</p></div></div><AnalyticsBars items={analytics.assemblies} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Maturité spirituelle</h3><p>Niveaux déclarés dans le formulaire</p></div></div><AnalyticsBars items={analytics.maturity} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Préparation matérielle</h3><p>Compatibilité avec le prérequis ordinateur</p></div></div><div className="analytics-metric"><strong>{analytics.ram.rate}%</strong><span>disposent d'au moins 8 Go de RAM parmi les réponses renseignées</span></div><div className="analytics-mini-track"><i style={{width:analytics.ram.rate+"%"}}/></div><div className="analytics-footnote">{analytics.ram.yes} oui · {analytics.ram.unknown} non renseigné / autre</div></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Disponibilité</h3><p>Présence prévue du 15 au 19 décembre, 19h–22h</p></div></div><div className="analytics-metric"><strong>{analytics.availability.rate}%</strong><span>ayant confirmé une disponibilité complète parmi les réponses renseignées</span></div><div className="analytics-mini-track"><i style={{width:analytics.availability.rate+"%"}}/></div><div className="analytics-footnote">{analytics.availability.yes} oui · {analytics.availability.unknown} autres réponses / non renseigné</div></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Engagement département</h3><p>Volonté de rejoindre le Département Design</p></div></div><div className="analytics-metric"><strong>{analytics.commitment.rate}%</strong><span>des dossiers avec engagement confirmé</span></div><div className="analytics-mini-track"><i style={{width:analytics.commitment.rate+"%"}}/></div><div className="analytics-footnote">{analytics.commitment.yes} engagement(s) confirmé(s) sur {counts.total}</div></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Origine géographique</h3><p>Communes et quartiers déclarés</p></div></div><AnalyticsBars items={analytics.areas} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Tranches d'âge</h3><p>Structure d'âge des candidats</p></div></div><AnalyticsBars items={analytics.ages} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Répartition par genre</h3><p>Structure des candidatures reçues</p></div></div><AnalyticsBars items={analytics.genders} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Ancienneté dans l'Église</h3><p>Durée de fréquentation déclarée</p></div></div><AnalyticsBars items={analytics.attendance} total={counts.total}/></section>
-          <section className="analytics-panel"><div className="analytics-panel-head"><div><h3>Départements d'origine</h3><p>Implication dans la vie de l'Église</p></div></div><AnalyticsBars items={analytics.departments} total={counts.total}/></section>
+          <section className="analytics-panel analytics-panel-skills">
+            <div className="analytics-panel-head"><div><h3>Profil de compétences</h3><p>Niveau déclaré en design</p></div></div>
+            <AnalyticsDonut items={analytics.levels} total={counts.total} centerLabel="CANDIDATS"/>
+          </section>
+          <section className="analytics-panel analytics-panel-tools">
+            <div className="analytics-panel-head"><div><h3>Environnement créatif</h3><p>Logiciels et outils déjà pratiqués</p></div></div>
+            <AnalyticsCompact items={analytics.tools} total={counts.total}/>
+          </section>
+          <section className="analytics-panel analytics-panel-spiritual">
+            <div className="analytics-panel-head"><div><h3>Profil ecclésial</h3><p>Maturité spirituelle déclarée</p></div></div>
+            <AnalyticsDonut items={analytics.maturity} total={counts.total} centerLabel="CANDIDATS"/>
+          </section>
+          <section className="analytics-panel analytics-panel-branches">
+            <div className="analytics-panel-head"><div><h3>Représentation des extensions</h3><p>Répartition des candidatures par assemblée</p></div></div>
+            <AnalyticsCompact items={analytics.assemblies} total={counts.total}/>
+          </section>
+          <section className="analytics-panel analytics-panel-readiness">
+            <div className="analytics-panel-head"><div><h3>Conditions de participation</h3><p>Indicateurs calculés sur les réponses renseignées</p></div></div>
+            <div className="analytics-gauges">
+              <AnalyticsGauge value={analytics.ram.rate} label="PC · 8 Go RAM" detail={analytics.ram.yes+" oui · "+analytics.ram.unknown+" autre(s) / non renseigné"}/>
+              <AnalyticsGauge value={analytics.availability.rate} label="Disponibilité complète" detail={analytics.availability.yes+" oui · "+analytics.availability.unknown+" autre(s) / non renseigné"}/>
+              <AnalyticsGauge value={analytics.commitment.rate} label="Engagement département" detail={analytics.commitment.yes+" engagement(s) sur "+counts.total}/>
+            </div>
+          </section>
+          <section className="analytics-panel analytics-panel-demographics">
+            <div className="analytics-panel-head"><div><h3>Profil des participants</h3><p>Âge et genre des candidats</p></div></div>
+            <div className="analytics-demographic-columns"><div><b>Âge</b><AnalyticsCompact items={analytics.ages} total={counts.total}/></div><div><b>Genre</b><AnalyticsDonut items={analytics.genders} total={counts.total} centerLabel="PROFILS" small/></div></div>
+          </section>
+          <section className="analytics-panel analytics-panel-community">
+            <div className="analytics-panel-head"><div><h3>Ancrage dans l'Église</h3><p>Départements d'origine et ancienneté</p></div></div>
+            <AnalyticsCompact items={analytics.departments} total={counts.total}/>
+            <div className="analytics-subchart"><span>Ancienneté</span><AnalyticsCompact items={analytics.attendance} total={counts.total}/></div>
+          </section>
+          <section className="analytics-panel analytics-panel-location">
+            <div className="analytics-panel-head"><div><h3>Origine géographique</h3><p>Communes et quartiers représentés</p></div></div>
+            <AnalyticsCompact items={analytics.areas} total={counts.total}/>
+          </section>
+          <section className="analytics-panel analytics-panel-quality">
+            <div className="analytics-panel-head"><div><h3>Complétude des dossiers</h3><p>Éléments disponibles pour l'étude des candidatures</p></div></div>
+            <div className="analytics-quality-grid"><div><strong>{analytics.completeProfiles}</strong><span>Profils avec informations clés</span></div><div><strong>{analytics.profilePhotos}</strong><span>Photos reçues</span></div><div><strong>{analytics.portfolio}</strong><span>Portfolios fournis</span></div><div><strong>{analytics.motivationAnswered}</strong><span>Motivations renseignées</span></div></div>
+          </section>
         </div>
-        <section className="analytics-panel analytics-data-quality"><div className="analytics-panel-head"><div><h3>Qualité et complétude des dossiers</h3><p>Suivi des pièces et des informations utiles à l'étude</p></div></div><div className="analytics-quality-grid"><div><strong>{analytics.completeProfiles}</strong><span>Profils avec champs clés renseignés</span></div><div><strong>{analytics.profilePhotos}</strong><span>Photos de profil reçues</span></div><div><strong>{analytics.portfolio}</strong><span>Portfolios fournis</span></div><div><strong>{analytics.motivationAnswered}</strong><span>Motivations renseignées</span></div></div></section>
         <section className="admin-section analytics-recent"><div className="admin-section-head"><div><h2>Dossiers récents</h2><p>Accès rapide aux dernières candidatures enregistrées.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Toutes les candidatures <Icon name="chevron"/></button></div>
           <CandidateTable rows={rows.slice(0,6)} onOpen={openDetails} startNumber={0}/>
           {!rows.length&&<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucune candidature enregistrée pour le moment."}</p>}
