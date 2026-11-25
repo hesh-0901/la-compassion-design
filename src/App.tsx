@@ -53,6 +53,8 @@ export default function App() {
   const [portfolioFile, setPortfolioFile] = useState<File | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoSourceOpen, setPhotoSourceOpen] = useState(false);
+  const [photoSourcePosition, setPhotoSourcePosition] = useState({top:0,left:0,width:288});
+  const photoPickerRef = useRef<HTMLButtonElement>(null);
   const [photoToCrop, setPhotoToCrop] = useState<File | null>(null);
   const filesPhotoInput = useRef<HTMLInputElement>(null);
   const cameraPhotoInput = useRef<HTMLInputElement>(null);
@@ -256,14 +258,14 @@ export default function App() {
           <label className={errors.includes("commitment") ? "commitment-check invalid" : "commitment-check"}><input type="checkbox" checked={form.commitment} onChange={e => update("commitment", e.target.checked)} /><span>Je m’engage à rejoindre le département Design après la formation.</span></label>
           {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
           <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Choisis une photo, puis ajuste son cadrage avant de la valider.">
-            <button type="button" className={"profile-photo-picker"+(profilePhoto?" has-photo":"")} onClick={()=>setPhotoSourceOpen(true)}>
+            <button type="button" ref={photoPickerRef} className={"profile-photo-picker"+(profilePhoto?" has-photo":"")} onClick={()=>{const rect=photoPickerRef.current?.getBoundingClientRect();if(rect){const width=Math.min(300,window.innerWidth-28);setPhotoSourcePosition({top:Math.max(12,rect.top-112),left:Math.max(14,Math.min(window.innerWidth-width-14,rect.left+rect.width/2-width/2)),width});}setPhotoSourceOpen(true);}}>
               {profilePhoto ? <><span className="profile-photo-selected-mark"><Icon name="check" size={20}/></span><span><b>Photo prête</b><small>Appuie pour modifier ou recadrer</small></span></> : <><span className="profile-photo-picker-icon"><Icon name="info" size={22}/></span><span><b>Ajouter une photo de profil</b><small>Fichiers ou appareil photo · recadrage personnalisable</small></span></>}
               <span className="profile-photo-picker-action">{profilePhoto?"Modifier":"Choisir"}</span>
             </button>
             <input ref={filesPhotoInput} className="visually-hidden-file" type="file" accept=".jpg,.jpeg,.png,.webp" onChange={e=>{const file=e.target.files?.[0];if(file)setPhotoToCrop(file);e.currentTarget.value="";}}/>
             <input ref={cameraPhotoInput} className="visually-hidden-file" type="file" accept="image/*" capture="user" onChange={e=>{const file=e.target.files?.[0];if(file)setPhotoToCrop(file);e.currentTarget.value="";}}/>
             {profilePhoto&&<span className="file-hint">Photo recadrée : {profilePhoto.name}</span>}
-            {photoSourceOpen&&<div className="photo-source-overlay" onClick={()=>setPhotoSourceOpen(false)}><section className="photo-source-dialog" role="dialog" aria-modal="true" aria-label="Choisir une source de photo" onClick={e=>e.stopPropagation()}><button type="button" className="photo-dialog-close" onClick={()=>setPhotoSourceOpen(false)} aria-label="Fermer">×</button><div className="photo-source-content"><span className="photo-dialog-kicker">PHOTO DE PROFIL</span><h3>Ajouter une photo</h3><div className="photo-source-actions"><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);filesPhotoInput.current?.click();}}><Icon name="image" size={20}/><span>Choisir dans les fichiers</span><Icon name="arrow-up-right" size={16}/></button><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);cameraPhotoInput.current?.click();}}><Icon name="camera" size={20}/><span>Prendre une photo</span><Icon name="arrow-up-right" size={16}/></button></div></div></section></div>}
+            {photoSourceOpen&&<div className="photo-source-overlay" onClick={()=>setPhotoSourceOpen(false)}><section className="photo-source-dialog" style={{top:photoSourcePosition.top,left:photoSourcePosition.left,width:photoSourcePosition.width}} role="dialog" aria-modal="true" aria-label="Choisir une source de photo" onClick={e=>e.stopPropagation()}><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);filesPhotoInput.current?.click();}}><Icon name="image" size={19}/><span>Choisir dans les fichiers</span></button><button type="button" className="photo-source-option" onClick={()=>{setPhotoSourceOpen(false);cameraPhotoInput.current?.click();}}><Icon name="camera" size={19}/><span>Prendre une photo</span></button></section></div>}
             {photoToCrop&&<PhotoCropper file={photoToCrop} onCancel={()=>setPhotoToCrop(null)} onConfirm={file=>{setProfilePhoto(file);setPhotoToCrop(null);setErrors(prev=>prev.filter(item=>item!=="profilePhoto"));}}/>}
           </Field>
         </div>}
