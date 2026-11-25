@@ -122,9 +122,9 @@ const promotionSegments = (categories: PromotionCategory[], key: "count" | "acce
         return weights.map(value => minimum + (weightTotal ? remaining * value / weightTotal : remaining / items.length));
       })()
     : raw;
-  let cursor = full ? -Math.PI / 2 : Math.PI;
+  let cursor = full ? Math.PI / 2 : Math.PI;
   return items.map((item, index) => {
-    const next = cursor + (full ? adjusted[index] : -adjusted[index]);
+    const next = cursor - adjusted[index];
     const segment = { item, start: cursor, end: next, percent: Math.round(item[key] / total * 100) };
     cursor = next;
     return segment;
