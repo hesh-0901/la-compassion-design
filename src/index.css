@@ -1483,3 +1483,54 @@
   .admin-toolbar-controls .admin-filters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
   .admin-toolbar-controls .admin-filters>*{width:100%!important;min-width:0!important}
 }
+
+
+/* Profile photo source selection and universal manual cropper */
+.visually-hidden-file{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.profile-photo-picker{width:100%;min-height:76px;display:flex;align-items:center;gap:12px;padding:11px 13px;border:1px dashed rgba(143,227,250,.65);border-radius:13px;background:rgba(255,255,255,.07);color:#fff;text-align:left}
+.profile-photo-picker-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:11px;background:rgba(34,199,242,.14);color:var(--cyan-200)}
+.profile-photo-picker>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.profile-photo-picker b{font-size:13px}.profile-photo-picker small{font-size:11px;line-height:1.4;color:rgba(255,255,255,.65)}
+.profile-photo-picker-action{padding:8px 11px;border-radius:9px;background:#fff;color:#1233A8;font-size:11px;font-weight:700}
+.profile-photo-picker.has-photo{border-style:solid}
+.profile-photo-picker img{width:52px;height:52px;flex:none;border-radius:10px;object-fit:cover}
+.photo-source-overlay,.photo-crop-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,10,35,.76);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.photo-source-dialog,.photo-crop-dialog{position:relative;width:min(100%,460px);max-height:calc(100dvh - 40px);overflow:auto;border:1px solid rgba(255,255,255,.14);border-radius:22px;background:#fff;color:#14213d;box-shadow:0 24px 80px rgba(0,0,0,.32)}
+.photo-source-dialog{padding:28px}
+.photo-dialog-kicker{display:block;color:#1689b2;font-size:10px;font-weight:800;letter-spacing:.16em}
+.photo-source-dialog h3,.photo-crop-header h3{margin:8px 0 7px;font:800 21px "Plus Jakarta Sans",Inter,sans-serif;letter-spacing:-.035em;color:#14213d}
+.photo-source-dialog>p,.photo-crop-header p{margin:0;color:#6b7890;font-size:13px;line-height:1.55}
+.photo-dialog-close,.photo-crop-header>button{position:absolute;top:17px;right:17px;width:36px;height:36px;border:1px solid #e2e8f2;border-radius:10px;background:#fff;color:#33415d;font-size:24px;line-height:1}
+.photo-source-option{width:100%;display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px;border:1px solid #e0e7f1;border-radius:13px;background:#fff;color:#17233f;text-align:left}
+.photo-source-option:hover{border-color:#48b8da;background:#f7fcff}
+.photo-source-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:11px;background:#eaf8fc;color:#1689b2;font-size:23px}
+.photo-source-option>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:4px}
+.photo-source-option b{font-size:13px}.photo-source-option small{font-size:11px;color:#738099;line-height:1.4}
+.photo-source-option>span:last-child{font-size:24px;color:#8b98aa}
+.photo-crop-dialog{width:min(100%,520px);padding:24px}
+.photo-crop-header{position:relative;padding-right:44px}
+.photo-crop-header>button{top:0;right:0}
+.photo-crop-workspace{display:flex;flex-direction:column;align-items:center;padding:20px 0 12px}
+.photo-crop-viewport{position:relative;width:min(280px,70vw);height:min(280px,70vw);overflow:hidden;border-radius:50%;background:#101a31;touch-action:none;cursor:grab;box-shadow:0 0 0 1px rgba(20,33,61,.08)}
+.photo-crop-viewport.is-dragging{cursor:grabbing}
+.photo-crop-viewport img{max-width:none!important;max-height:none!important}
+.photo-crop-guide{position:absolute;inset:0;border:2px solid rgba(255,255,255,.92);border-radius:50%;pointer-events:none;box-shadow:0 0 0 999px rgba(7,15,35,.12)}
+.photo-crop-tip{margin-top:11px;color:#77839a;font-size:11px;text-align:center}
+.photo-crop-zoom{display:flex;align-items:center;gap:10px;padding:10px 0 18px;color:#263653}
+.photo-crop-zoom>span{font-size:12px;font-weight:700}
+.photo-crop-zoom input{flex:1;min-width:40px;accent-color:#1689b2}
+.photo-crop-zoom button{width:32px;height:32px;border:1px solid #dce4ef;border-radius:9px;background:#fff;color:#243552;font-size:20px}
+.photo-crop-zoom button:disabled{opacity:.35}
+.photo-crop-zoom b{width:44px;font-size:11px;text-align:right}
+.photo-crop-actions{display:flex;justify-content:flex-end;gap:9px;border-top:1px solid #edf0f5;padding-top:16px}
+.photo-crop-actions button{min-height:42px;padding:0 15px;border-radius:10px;font-size:12px;font-weight:700}
+.photo-cancel{border:1px solid #dce4ef;background:#fff;color:#40506d}
+.photo-confirm{border:1px solid #1233A8;background:#1233A8;color:#fff}
+.photo-confirm:disabled{opacity:.55}
+@media(max-width:520px){
+ .photo-source-overlay,.photo-crop-overlay{align-items:flex-end;padding:12px}
+ .photo-source-dialog,.photo-crop-dialog{width:100%;max-height:calc(100dvh - 24px);border-radius:20px}
+ .photo-source-dialog{padding:25px 19px calc(22px + env(safe-area-inset-bottom,0px))}
+ .photo-crop-dialog{padding:21px 17px calc(18px + env(safe-area-inset-bottom,0px))}
+ .photo-crop-viewport{width:min(280px,72vw);height:min(280px,72vw)}
+}
