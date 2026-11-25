@@ -516,39 +516,25 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             </section>
           </div>
         </div>
-        <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition informative des candidatures et des acceptations.</p></div></div>
-          {rows.filter(row => statusOf(row.status) !== "refused").length < 5
-            ? <p className="admin-promotion-threshold">{rows.filter(row => statusOf(row.status) !== "refused").length} candidatures. Les graphiques apparaissent à partir de 5 dossiers.</p>
-            : (() => {
-                const active = rows.filter(row => statusOf(row.status) !== "refused");
-                const buildCategories = (field: string, order: string[], palette: string[]) => {
-                  const names = Array.from(new Set(active.map(row => String(row[field] ?? "").trim() || "Non renseigné")));
-                  names.sort((a, b) => {
-                    if (a === "Non renseigné") return 1;
-                    if (b === "Non renseigné") return -1;
-                    const normalize = (value: string) => value.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
-                    const ai = order.findIndex(value => normalize(value) === normalize(a));
-                    const bi = order.findIndex(value => normalize(value) === normalize(b));
-                    if (ai >= 0 || bi >= 0) return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
-                    return a.localeCompare(b, "fr");
-                  });
-                  return names.map((name, index) => ({
-                    name,
-                    count: active.filter(row => (String(row[field] ?? "").trim() || "Non renseigné") === name).length,
-                    accepted: active.filter(row => statusOf(row.status) === "accepted" && (String(row[field] ?? "").trim() || "Non renseigné") === name).length,
-                    color: palette[index % palette.length],
-                  }));
-                };
-                const gender = buildCategories("gender", [], ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"]);
-                const ages = buildCategories("age", ["Moins de 18 ans", "18–24 ans", "18-24 ans", "25–34 ans", "25-34 ans", "35–44 ans", "35-44 ans", "45 ans et plus"], ["#1F5BFF", "#22C7F2", "#1233A8", "#8FE3FA"]);
-                const levels = buildCategories("level", ["Débutant", "Intermédiaire", "Avancé"], ["#8FE3FA", "#22C7F2", "#1F5BFF"]);
-                const total = active.length;
-                return <div className="admin-promotion-grid">
-                  <PromotionSemiDonut total={total} categories={gender}/>
-                  <PromotionBars total={total} categories={ages}/>
-                  <PromotionDonut total={total} categories={levels}/>
-                </div>;
-              })()}
+        <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition de tous les inscrits, quel que soit leur statut.</p></div></div>
+          {rows.length < 5 ? <p className="admin-promotion-threshold">{rows.length} inscrits. Les graphiques apparaissent à partir de 5 dossiers.</p> : (() => {
+            const allRows=rows;
+            const buildCategories=(field:string,order:string[],palette:string[])=>{
+              const names=Array.from(new Set(allRows.map(row=>String(row[field]??"").trim()||"Non renseigné")));
+              names.sort((a,b)=>{
+                if(a==="Non renseigné")return 1;if(b==="Non renseigné")return -1;
+                const norm=(v:string)=>v.toLowerCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim();
+                const ai=order.findIndex(v=>norm(v)===norm(a)),bi=order.findIndex(v=>norm(v)===norm(b));
+                if(ai>=0||bi>=0)return(ai<0?999:ai)-(bi<0?999:bi);return a.localeCompare(b,"fr");
+              });
+              return names.map((name,index)=>({name,count:allRows.filter(row=>(String(row[field]??"").trim()||"Non renseigné")===name).length,color:palette[index%palette.length]}));
+            };
+            const gender=buildCategories("gender",[],["#1F5BFF","#22C7F2","#1233A8","#8FE3FA"]);
+            const ages=buildCategories("age",["Moins de 18 ans","18–24 ans","18-24 ans","25–34 ans","25-34 ans","35–44 ans","35-44 ans","45 ans et plus"],["#1F5BFF","#22C7F2","#1233A8","#8FE3FA"]);
+            const levels=buildCategories("level",["Débutant","Intermédiaire","Avancé"],["#8FE3FA","#22C7F2","#1F5BFF"]);
+            const total=allRows.length;
+            return <div className="admin-promotion-grid"><PromotionSemiDonut total={total} categories={gender}/><PromotionBars total={total} categories={ages}/><PromotionDonut total={total} categories={levels}/></div>;
+          })()}
         </section>
       </>}
       {tab==="candidates"&&<>
