@@ -28,13 +28,18 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
     const accepted = nextStatus === "accepted";
     const name = escapeHtml(candidate.fullName || "Candidat");
+    const configDoc = accepted ? await readDocument(account, token, "configuration", "masterclass") : null;
+    const rawWhatsappLink = typeof configDoc?.data.whatsappGroupLink === "string" ? configDoc.data.whatsappGroupLink.trim() : "";
+    const whatsappLink = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]+\/?$/.test(rawWhatsappLink) ? rawWhatsappLink : "";
     const subject = accepted ? "Candidature acceptée – Masterclass Design" : "Décision concernant votre candidature – Masterclass Design";
     const html = accepted ? `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033">
         <h2>Félicitations, votre candidature est acceptée.</h2>
         <p>Bonjour ${name},</p>
         <p>Nous avons le plaisir de vous informer que votre candidature à la Masterclass Design de l’Église de la Compassion a été acceptée.</p>
-        <p>Les informations pratiques complémentaires vous seront communiquées par l’équipe.</p>
+        <p>Nous vous invitons à rejoindre le groupe WhatsApp officiel pour recevoir les informations pratiques et les communications liées à la formation.</p>
+        ${whatsappLink ? `<p style="margin:28px 0"><a href="${escapeHtml(whatsappLink)}" style="display:inline-block;padding:15px 24px;background:#16834b;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:bold">REJOINDRE LE GROUPE WHATSAPP</a></p>` : `<p style="padding:14px;background:#fff7e6;border-radius:8px">Le lien du groupe WhatsApp vous sera communiqué prochainement par l’équipe.</p>`}
+        <p>15–19 décembre 2026 · 19h00–22h00</p>
         <p>Merci,<br><strong>Équipe LA COMPASSION DESIGN</strong></p>
       </div>` : `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033">
