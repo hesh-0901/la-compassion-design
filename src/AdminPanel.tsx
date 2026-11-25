@@ -168,29 +168,20 @@ function PromotionSemiDonut({ total, categories }: { total: number; categories: 
   </article>;
 }
 function PromotionBars({ total, categories }: { total: number; categories: PromotionCategory[] }) {
-  const max = Math.max(1, ...categories.flatMap(item => [item.count, item.accepted]));
-  const summary = categories.map(item => item.name + ": " + item.count + " candidatures, " + item.accepted + " acceptées").join("; ");
-  return <article className="admin-promotion-card">
-    <h3>Tranche d'âge</h3>
-    <div className="admin-promotion-chart-wrap">
-      <svg className="admin-promotion-chart admin-promotion-bars" viewBox="0 0 420 200" role="img" aria-label={"Comparaison des candidatures et acceptations par tranche d'âge. " + summary}>
-        <g className="admin-promotion-bars-key"><rect x="105" y="8" width="9" height="9" rx="3" fill="#1F5BFF"/><text x="120" y="17">Candidatures</text><rect x="230" y="8" width="9" height="9" rx="3" fill="#22C7F2"/><text x="245" y="17">Acceptées</text></g>
-        {categories.map((item,index) => {
-          const y = 40 + index * 39, w1 = item.count ? Math.max(6,item.count/max*205) : 0, w2 = item.accepted ? Math.max(6,item.accepted/max*205) : 0;
-          const name = item.name.replace("Moins de 18 ans","Moins de 18").replace(" ans et plus","+").replace(" ans","");
-          return <g key={item.name}>
-            <text className="admin-promotion-age-label" x="0" y={y+17}>{name}</text>
-            <rect x="105" y={y} width={w1} height="12" rx="6" fill="#1F5BFF"><title>{item.count} candidatures</title></rect>
-            <text className="admin-promotion-age-value" x={Math.min(405,112+w1)} y={y+10}>{item.count}</text>
-            <rect x="105" y={y+16} width={w2} height="12" rx="6" fill="#22C7F2"><title>{item.accepted} acceptées</title></rect>
-            <text className="admin-promotion-age-value" x={Math.min(405,112+w2)} y={y+26}>{item.accepted}</text>
-            {index<categories.length-1 && <path d={"M0 "+(y+34)+" H420"} className="admin-promotion-age-separator"/>}
-          </g>;
-        })}
-      </svg>
-    </div>
-    <PromotionLegend categories={categories} total={total}/>
-  </article>;
+  const max=Math.max(1,...categories.map(x=>x.count)), maxH=112, base=158, gw=300/Math.max(1,categories.length);
+  const dominant=categories.reduce((a,x)=>x.count>a.count?x:a,categories[0]||{name:"",count:0,color:"#1F5BFF"});
+  const short=(n:string)=>n.replace("Moins de 18 ans","Moins de 18").replace(" ans et plus","+").replace(" ans","");
+  const path=(x:number,y:number,w:number,h:number)=>"M "+x+" "+(y+h)+" L "+x+" "+(y+8)+" Q "+x+" "+y+" "+(x+8)+" "+y+" L "+(x+w-8)+" "+y+" Q "+(x+w)+" "+y+" "+(x+w)+" "+(y+8)+" L "+(x+w)+" "+(y+h)+" Z";
+  const summary=categories.map(x=>x.name+": "+x.count+" inscrits").join("; ");
+  return <article className="admin-promotion-card"><h3>Tranche d'âge</h3><div className="admin-promotion-chart-wrap">
+    <svg className="admin-promotion-chart admin-promotion-bars" viewBox="0 0 300 200" role="img" aria-label={"Répartition des "+total+" inscrits par tranche d'âge. "+summary}>
+      <path d="M8 160 H292" className="admin-promotion-axis"/>
+      {categories.map((x,i)=>{const cx=gw*i+gw/2,w=44,h=x.count?Math.max(8,x.count/max*maxH):0,y=base-h,px=cx-w/2;return <g key={x.name}>
+        {x.count?<path d={path(px,y,w,h)} fill="#1F5BFF" opacity={x.name===dominant.name?1:.55}><title>{x.name}: {x.count} inscrits</title></path>:<path d={"M"+px+" 159 H"+(px+w)} stroke="#D5E0F7" strokeWidth="2"/>}
+        <text className="admin-promotion-bar-value" x={cx} y={Math.max(16,y-8)} textAnchor="middle">{x.count}</text>
+        <text className="admin-promotion-bar-label" x={cx} y="184" textAnchor="middle">{short(x.name)}</text>
+      </g>;})}
+    </svg></div><PromotionLegend categories={categories} total={total}/></article>;
 }
 function PromotionDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
   const segments = promotionSegments(categories, true);
