@@ -1855,3 +1855,11 @@
 .photo-source-dialog .photo-source-option span{display:block!important;flex:1!important;min-width:0!important;color:#17284C!important;font-size:12px!important;font-weight:600!important;line-height:1.2!important;white-space:nowrap!important}
 .photo-source-dialog .photo-source-option svg{display:block!important;width:17px!important;height:17px!important;flex:none!important;color:#2856B4!important}
 .photo-source-dialog .photo-source-option:active{background:rgba(40,86,180,.1)!important}
+
+
+/* Compact menu width: override the earlier full-width modal sizing */
+.photo-source-dialog{
+ width:min(248px,calc(100vw - 32px))!important;
+ min-width:0!important;
+ max-width:calc(100vw - 32px)!important;
+}
