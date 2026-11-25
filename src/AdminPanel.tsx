@@ -170,10 +170,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     waiting:rows.filter(r=>statusOf(r.status)==="waiting").length,
   }),[rows]);
   const filtered = useMemo(() => rows.filter(row => {
-    const normalize=(value:unknown)=>String(value??"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/\\s+/g," ").trim();
-    const rawQuery=normalize(query), phoneQuery=rawQuery.replace(/\\D/g,"").replace(/^243/,"");
+    const normalize=(value:unknown)=>String(value??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+    const rawQuery=normalize(query), phoneQuery=rawQuery.replace(/\D/g,"").replace(/^243/,"");
     const haystack = normalize([personName(row),row.phone,row.email,row.assembly,row.extension].join(" "));
-    const candidatePhone=String(row.phone??"").replace(/\\D/g,"").replace(/^243/,"");
+    const candidatePhone=String(row.phone??"").replace(/\D/g,"").replace(/^243/,"");
     return (!rawQuery || haystack.includes(rawQuery) || (phoneQuery && candidatePhone.includes(phoneQuery)))
       && (filterStatus==="all" || statusOf(row.status)===filterStatus)
       && (filterLevel==="all" || valueOf(row,"level")===filterLevel)
@@ -246,7 +246,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     event.preventDefault();
     if(role!=="superAdmin" || !user) return;
     const firstName=adminForm.firstName.trim(), lastName=adminForm.lastName.trim();
-    const emailPart=(firstName+lastName).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const emailPart=(firstName+lastName).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
     const adminEmail=emailPart+"@design.cmps";
     if(!firstName || !lastName || !emailPart || adminForm.password.length<8){setError("Renseigne le prénom, le nom et un mot de passe de 8 caractères minimum.");return;}
     setAdminSaving(true);setError("");
@@ -481,7 +481,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </div>
         <div className="admin-detail-section admin-contact-actions">
           <h3>Contacter le candidat</h3>
-          <div className="admin-contact-links">{String(selected.phone??"").replace(/\\D/g,"").length>=9&&<><a href={"tel:"+String(selected.phone).replace(/[^+0-9]/g,"")}>Appeler</a><a href={"https://wa.me/243"+String(selected.phone).replace(/\\D/g,"").replace(/^243/,"")} target="_blank" rel="noreferrer">WhatsApp</a></>}</div>
+          <div className="admin-contact-links">{String(selected.phone??"").replace(/\D/g,"").length>=9&&<><a href={"tel:"+String(selected.phone).replace(/[^+0-9]/g,"")}>Appeler</a><a href={"https://wa.me/243"+String(selected.phone).replace(/\D/g,"").replace(/^243/,"")} target="_blank" rel="noreferrer">WhatsApp</a></>}</div>
         </div>
         <div className="admin-detail-section">
           <h3>Suivi administratif</h3>
