@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { createUserWithEmailAndPassword, deleteUser, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { deleteApp, initializeApp } from "firebase/app";
 import { auth, db, firebaseApp } from "./firebase";
 
 type Role = "superAdmin" | "admin";
@@ -247,30 +246,21 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     event.preventDefault();
     if(role!=="superAdmin" || !user) return;
     const firstName=adminForm.firstName.trim(), lastName=adminForm.lastName.trim();
-    const emailPart=(firstName+lastName).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const emailPart=(firstName+lastName).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
     const adminEmail=emailPart+"@design.cmps";
     if(!firstName || !lastName || !emailPart || adminForm.password.length<8){setError("Renseigne le prénom, le nom et un mot de passe de 8 caractères minimum.");return;}
     setAdminSaving(true);setError("");
-    let secondaryUser:User|null=null;
-    let secondaryApp:ReturnType<typeof initializeApp>|null=null;
     try {
-      secondaryApp=initializeApp(firebaseApp.options,"compassion-admin-creator");
-      const secondaryAuth=getAuth(secondaryApp);
-      const credential=await createUserWithEmailAndPassword(secondaryAuth,adminEmail,adminForm.password);
-      secondaryUser=credential.user;
-      await setDoc(doc(db,"admins",credential.user.uid),{firstName,lastName,email:adminEmail,role:"admin",active:true,createdAt:serverTimestamp(),createdBy:user.uid});
+      const token=await user.getIdToken();
+      const response=await fetch("/api/admin/create",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},body:JSON.stringify({firstName,lastName,email:adminEmail,password:adminForm.password})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok) throw new Error(result.error||"Création impossible. Vérifie la configuration serveur.");
       setAdminForm({firstName:"",lastName:"",email:"",password:""});
-      setShowAdminPassword(false);
-      setAdminModalOpen(false);
+      setShowAdminPassword(false);setAdminModalOpen(false);
       await loadAdmins();
-    } catch (err:any) {
-      if(secondaryUser){try{await deleteUser(secondaryUser);}catch{/* Le compte peut nécessiter un nettoyage manuel dans Firebase Auth. */}}
-      const code=err?.code;
-      setError(code==="auth/email-already-in-use"?"Cette adresse e-mail possède déjà un compte.":code==="auth/weak-password"?"Le mot de passe doit contenir au moins 8 caractères.":code==="auth/invalid-email"?"L'adresse e-mail est invalide.":"Création impossible. Vérifie Authentication et les règles Firestore de la collection admins.");
-    } finally {
-      if(secondaryApp){try{await deleteApp(secondaryApp);}catch{/* Nettoyage de l'application secondaire. */}}
-      setAdminSaving(false);
-    }
+    } catch(err:any) {
+      setError(err?.message||"Création impossible. Vérifie la configuration de la fonction Cloudflare.");
+    } finally { setAdminSaving(false); }
   };
   const openDetails = (row:Candidate) => { setSelected(row); setNewStatus(statusOf(row.status)); setInternalNote(String(row.internalNote??"")); setError(""); };
   const openEdit = (row:Candidate) => {
