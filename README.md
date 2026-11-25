@@ -25,8 +25,8 @@ Le dossier de sortie est `dist`, prêt pour Cloudflare Pages.
 Les secrets et variables de production sont configurés dans les paramètres du projet Cloudflare Pages. Les secrets ajoutés ou modifiés sont pris en compte par les nouveaux déploiements.
 
 Variables attendues :
-- `RESEND_API_KEY` (secret serveur, jamais exposé au navigateur)
-- `RESEND_FROM_EMAIL` (expéditeur Resend, par exemple `onboarding@resend.dev` pour les tests)
+- `MAILER_WEB_APP_URL` (URL `/exec` du déploiement Google Apps Script)
+- `MAILER_SECRET` (secret partagé entre Cloudflare et les propriétés du script)
 - `FIREBASE_SERVICE_ACCOUNT` (secret JSON complet du compte de service Firebase Admin SDK)
 - `VITE_CLOUDINARY_CLOUD_NAME`
 - `VITE_CLOUDINARY_UPLOAD_PRESET`
@@ -40,4 +40,4 @@ Les fonctions Cloudflare Pages dans `functions/api` envoient :
 
 Le destinataire administratif est lu depuis Firestore : aucune adresse n'est codée en dur. Les fonctions vérifient le jeton Firebase des administrateurs avant d'envoyer une décision. Les secrets Firebase Admin et Resend restent côté serveur.
 
-Avec l'expéditeur de test `onboarding@resend.dev`, Resend limite les destinataires à l'adresse autorisée sur le compte Resend. Les candidats ne recevront leurs e-mails qu'après configuration d'un domaine d'expédition vérifié.
+L'envoi est effectué par Google Apps Script avec le compte Gmail qui a déployé la Web App. Les quotas d'envoi Gmail et les règles Google s'appliquent.
