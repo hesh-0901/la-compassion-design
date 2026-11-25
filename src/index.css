@@ -2364,3 +2364,34 @@
 .admin-password-management button{justify-self:start}
 .admin-create-modal-actions .admin-danger{margin-right:auto;border:1px solid #f1caca;background:#fff5f5;color:#b42318;border-radius:8px;padding:10px 14px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .admin-create-modal-actions .admin-danger:disabled{opacity:.55;cursor:not-allowed}
+
+
+/* MASTERCLASS DESIGN — graphiques de répartition sans animation ni dasharray */
+.admin-promotion-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.admin-promotion-card{box-sizing:border-box;min-width:0;height:340px;min-height:340px;padding:15px 16px 13px;border:1px solid #e1e8f2;border-radius:12px;background:#fff;display:grid;grid-template-rows:auto 130px minmax(0,1fr);gap:5px;overflow:hidden}
+.admin-promotion-card h3{margin:0;color:#172746;font-size:13px;font-weight:750}
+.admin-promotion-chart-wrap{width:100%;height:130px;min-height:130px;max-width:310px;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.admin-promotion-chart{display:block;width:100%;height:130px;overflow:visible}
+.admin-promotion-semi{height:120px}
+.admin-promotion-full-donut{max-width:220px}
+.admin-promotion-track-outer,.admin-promotion-track-inner{fill:none;stroke:#E8EEFA;stroke-linecap:butt}
+.admin-promotion-segment{fill:none;stroke-linecap:butt;opacity:1;animation:none}
+.admin-promotion-total{fill:#142b5c;font-size:27px;font-weight:800;font-variant-numeric:tabular-nums}
+.admin-promotion-total-label{fill:#75839b;font-size:9px;font-weight:600;letter-spacing:.02em}
+.admin-promotion-legend{align-self:stretch;min-height:0;padding-top:7px;border-top:1px solid #edf1f7;display:flex;flex-direction:column;gap:6px;color:#536481;font-size:10px;font-variant-numeric:tabular-nums}
+.admin-promotion-legend-head,.admin-promotion-legend-row{display:grid;grid-template-columns:minmax(0,1fr) auto 38px;align-items:center;gap:8px;min-width:0}
+.admin-promotion-legend-head{color:#8290a8;font-size:9px;font-weight:700}
+.admin-promotion-legend-head span:nth-child(2),.admin-promotion-legend-head span:nth-child(3){text-align:right}
+.admin-promotion-legend-row{min-height:15px}
+.admin-promotion-category-name{display:flex;align-items:center;gap:7px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-promotion-category-name i{width:8px;height:8px;flex:none;border-radius:50%}
+.admin-promotion-values{white-space:nowrap;color:#344766;text-align:right}
+.admin-promotion-percent{text-align:right;color:#71809a;white-space:nowrap}
+.admin-promotion-legend-total{display:none}
+.admin-promotion-common-legend .admin-promotion-legend-head,.admin-promotion-common-legend .admin-promotion-legend-row{grid-template-columns:minmax(0,1fr) auto}
+.admin-promotion-legend-description{color:#71809a;text-align:right;white-space:nowrap}
+.admin-promotion-axis{fill:none;stroke:#dce5f4;stroke-width:1}
+.admin-promotion-bar-value{fill:#344766;font-size:9px;font-weight:700;font-variant-numeric:tabular-nums}
+.admin-promotion-bar-label{fill:#65748e;font-size:9px;font-weight:600}
+@media(max-width:1100px){.admin-promotion-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-promotion-card{height:340px}}
+@media(max-width:760px){.admin-promotion-grid{grid-template-columns:1fr}.admin-promotion-card{height:340px;min-height:340px}}
