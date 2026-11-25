@@ -104,6 +104,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [error,setError] = useState(""), [busy,setBusy] = useState(false);
   const [tab,setTab] = useState<Tab>("overview");
   const [sidebarCollapsed,setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen,setMobileSidebarOpen] = useState(false);
   const [currentPage,setCurrentPage] = useState(1);
   const pageSize = 15;
   const [rows,setRows] = useState<Candidate[]>([]);
