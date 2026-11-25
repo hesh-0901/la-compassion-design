@@ -2294,3 +2294,58 @@
 .admin-settings-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:8px 2px}
 .admin-settings-footer>span{color:var(--admin-muted,#718078);font-size:12px;line-height:1.5}
 @media(max-width:640px){.admin-settings-card{padding:17px}.admin-settings-footer{align-items:stretch;flex-direction:column}.admin-settings-footer .admin-primary{width:100%}}
+
+
+/* SuperAdmin settings — clear hierarchy, segmented tabs and focused dialogs */
+.admin-masterclass-settings{width:100%;max-width:1080px;margin:0 auto!important;display:grid;gap:22px}
+.admin-settings-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:4px 2px 2px}
+.admin-settings-intro h2{margin:8px 0 6px;color:#17251f;font-size:24px;line-height:1.2;letter-spacing:-.03em}
+.admin-settings-intro p{max-width:620px;margin:0;color:#748078;font-size:13px;line-height:1.65}
+.admin-settings-secure{flex:none;padding:8px 11px;border:1px solid #dcebe2;border-radius:9px;background:#f3f8f5;color:#397653;font-size:11px;font-weight:650}
+.admin-settings-tabs{display:flex;gap:5px;padding:5px;border:1px solid #e6ebe7;border-radius:12px;background:#f5f7f5;width:max-content;max-width:100%}
+.admin-settings-tabs button{display:flex;align-items:center;gap:9px;min-height:42px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#66746b;font:600 12px inherit;cursor:pointer;white-space:nowrap}
+.admin-settings-tabs button svg{width:16px;height:16px}
+.admin-settings-tabs button.active{background:#fff;color:#216a46;box-shadow:0 1px 4px #17251f14}
+.admin-settings-panel{overflow:hidden;border:1px solid #e5ebe7;border-radius:16px;background:#fff;box-shadow:0 5px 22px #17251f08}
+.admin-settings-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:25px 27px 20px;border-bottom:1px solid #edf1ee}
+.admin-settings-eyebrow{color:#43815f;font-size:10px;font-weight:750;letter-spacing:.12em}
+.admin-settings-panel-head h3{margin:7px 0 5px;color:#1b2922;font-size:18px;letter-spacing:-.02em}
+.admin-settings-panel-head p{margin:0;color:#7b877f;font-size:12px;line-height:1.6}
+.admin-settings-symbol{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#f0f6f2;color:#3c7d58;font-size:12px;font-weight:750}
+.admin-capacity-overview{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;padding:24px 27px}
+.admin-capacity-overview>div:not(.admin-capacity-divider){display:grid;gap:8px}
+.admin-capacity-overview small,.admin-whatsapp-status small{color:#859188;font-size:9px;font-weight:750;letter-spacing:.09em}
+.admin-capacity-overview strong{color:#1e3026;font-size:27px;font-weight:750;letter-spacing:-.04em}
+.admin-capacity-divider{width:1px;background:#edf1ee}
+.admin-settings-progress{padding:0 27px 22px}
+.admin-settings-progress>div{display:flex;justify-content:space-between;gap:12px;margin-bottom:9px;color:#748078;font-size:11px}
+.admin-settings-progress b{color:#344b3c}
+.admin-settings-progress>i{display:block;height:7px;overflow:hidden;border-radius:10px;background:#edf2ee}
+.admin-settings-progress>i>span{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#286b49,#62a57b);transition:width .2s ease}
+.admin-settings-panel-footer{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px 27px;border-top:1px solid #edf1ee;background:#fbfcfb}
+.admin-settings-panel-footer p{max-width:620px;margin:0;color:#77847b;font-size:11px;line-height:1.6}
+.admin-settings-panel-footer .admin-primary{flex:none}
+.admin-whatsapp-status{display:flex;align-items:center;gap:16px;margin:23px 27px;padding:19px;border:1px solid #e8eee9;border-radius:12px;background:#fbfcfb}
+.admin-whatsapp-mark{display:grid;place-items:center;width:46px;height:46px;flex:none;border-radius:13px;background:#eaf5ee;color:#287b4b;font-size:18px;font-weight:800}
+.admin-whatsapp-status>div{display:grid;gap:5px;min-width:0}
+.admin-whatsapp-status strong{color:#23352a;font-size:14px}
+.admin-whatsapp-status span:last-child{overflow-wrap:anywhere;color:#7a867e;font-size:11px;line-height:1.5}
+.admin-settings-modal{width:min(520px,calc(100vw - 32px));max-height:min(86vh,760px);overflow:auto}
+.admin-settings-modal-field{display:grid;gap:8px;margin:18px 0 24px;color:#35453b;font-size:12px;font-weight:650}
+.admin-settings-modal-field input{width:100%;min-height:46px;padding:0 13px;border:1px solid #dfe7e1;border-radius:9px;background:#fff;color:#1d2b22;font:inherit;outline:none}
+.admin-settings-modal-field input:focus{border-color:#43815f;box-shadow:0 0 0 3px #43815f1c}
+.admin-settings-modal-field small{color:#7d8981;font-size:11px;font-weight:400;line-height:1.5}
+@media(max-width:680px){
+ .admin-settings-intro{align-items:flex-start;flex-direction:column}
+ .admin-settings-intro h2{font-size:21px}
+ .admin-settings-tabs{width:100%}
+ .admin-settings-tabs button{flex:1;justify-content:center;padding:0 9px;font-size:11px}
+ .admin-settings-panel-head{padding:20px}
+ .admin-capacity-overview{gap:10px;padding:20px}
+ .admin-capacity-overview strong{font-size:22px}
+ .admin-capacity-overview small{font-size:8px}
+ .admin-settings-progress{padding:0 20px 20px}
+ .admin-settings-panel-footer{align-items:stretch;flex-direction:column;padding:17px 20px}
+ .admin-settings-panel-footer .admin-primary{width:100%}
+ .admin-whatsapp-status{margin:20px;padding:15px}
+}
