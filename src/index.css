@@ -2535,3 +2535,9 @@
 .admin-promotion-age-label{fill:#344766;font-size:11px;font-weight:600}
 .admin-promotion-age-value{fill:#344766;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums}
 .admin-promotion-age-separator{fill:none;stroke:#edf1f7;stroke-width:1}
+
+/* Promotion: age columns typography and Inscrits legend */
+.admin-promotion-legend-head,.admin-promotion-legend-row{grid-template-columns:minmax(0,1fr) 64px 42px!important}
+.admin-promotion-bars{width:100%!important;height:200px!important;max-width:300px!important}
+.admin-promotion-bar-value{fill:#0B1533!important;font-family:Inter,sans-serif!important;font-size:14px!important;font-weight:600!important}
+.admin-promotion-bar-label{fill:#4A5B82!important;font-family:Inter,sans-serif!important;font-size:12px!important;font-weight:500!important}
