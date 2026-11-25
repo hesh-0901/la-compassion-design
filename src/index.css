@@ -1468,3 +1468,18 @@
     -webkit-overflow-scrolling:touch!important;
   }
 }
+
+
+/* Mobile: compact three-dot control for candidate search and filters */
+.admin-mobile-filter-toggle{display:none}
+.admin-toolbar-controls{display:contents}
+@media(max-width:760px){
+  .admin-toolbar{display:block!important;margin:0 0 14px!important}
+  .admin-mobile-filter-toggle{display:flex!important;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:0 15px;border:1px solid #dce3ef;border-radius:12px;background:#fff;color:#263653;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(25,42,75,.04)}
+  .admin-mobile-filter-toggle svg{width:22px;height:22px;flex:none}
+  .admin-toolbar-controls{display:none!important;margin-top:10px}
+  .admin-toolbar.mobile-filters-open .admin-toolbar-controls{display:block!important}
+  .admin-toolbar-controls .admin-search{margin:0 0 10px!important}
+  .admin-toolbar-controls .admin-filters{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .admin-toolbar-controls .admin-filters>*{width:100%!important;min-width:0!important}
+}
