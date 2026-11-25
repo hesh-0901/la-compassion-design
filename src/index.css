@@ -1644,3 +1644,27 @@
     border-radius:12px!important;
   }
 }
+
+
+/* Unified custom dropdown controls — same field geometry on iOS, Android and desktop */
+.form-dropdown{position:relative;width:100%;min-width:0}
+.form-dropdown-trigger{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ box-sizing:border-box;width:100%;height:56px;min-height:56px;padding:0 15px;
+ border:1.5px solid var(--border);border-radius:12px;background:#fff;color:var(--ink);
+ font:500 16px/1.4 Inter,system-ui,sans-serif;text-align:left;
+ -webkit-appearance:none;appearance:none;cursor:pointer;
+}
+.form-dropdown-trigger .is-placeholder{color:#8995AE;font-weight:400}
+.form-dropdown-trigger svg{width:18px;height:18px;flex:none;fill:none;stroke:#4A5B82;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .12s ease}
+.form-dropdown.is-open .form-dropdown-trigger{border-color:var(--electric-500);box-shadow:0 0 0 3px rgba(92,141,255,.18)}
+.form-dropdown.is-open .form-dropdown-trigger svg{transform:rotate(180deg)}
+.field.field-answered .form-dropdown-trigger{border-color:#22C7F2;background:#F2FBFF;box-shadow:inset 3px 0 0 #22C7F2}
+.field.field-invalid .form-dropdown-trigger{border-color:#D6314F;background:#FFF6F7;box-shadow:inset 3px 0 0 #D6314F}
+.form-dropdown-menu{position:absolute;z-index:40;top:calc(100% + 6px);left:0;right:0;max-height:240px;overflow-y:auto;padding:5px;border:1px solid #D5E0F7;border-radius:12px;background:#fff;box-shadow:0 10px 28px rgba(10,26,92,.14);overscroll-behavior:contain}
+.form-dropdown-option{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:44px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:#0B1533;font:400 15px/1.4 Inter,system-ui,sans-serif;text-align:left;cursor:pointer}
+.form-dropdown-option.selected{background:#EAF8FF;color:#1233A8;font-weight:600}
+.form-dropdown-option:focus-visible{outline:2px solid #5C8DFF;outline-offset:-2px}
+.field-extra{margin-top:12px}
+.field-extra .field-label{margin-bottom:8px}
+.field-extra input{height:56px;min-height:56px}
