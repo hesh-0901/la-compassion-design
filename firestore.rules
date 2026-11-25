@@ -103,7 +103,8 @@ service cloud.firestore {
     }
 
     match /configuration/{configId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isActiveAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /{document=**} {
