@@ -28,12 +28,19 @@ service cloud.firestore {
     }
 
     function validAuditAppend() {
-      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['statusHistory'])
-        || (request.resource.data.statusHistory is list
-          && request.resource.data.statusHistory.size() == resource.data.get('statusHistory', []).size() + 1
-          && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].adminId == request.auth.uid
-          && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].to == request.resource.data.status
-          && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].changedAt is timestamp);
+      return (
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny(['statusHistory'])
+        && request.resource.data.statusHistory is list
+        && request.resource.data.statusHistory.size() == resource.data.get('statusHistory', []).size() + 1
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].adminId == request.auth.uid
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].from == resource.data.get('status', 'received')
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].to == request.resource.data.status
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].changedAt is timestamp
+      ) || (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['statusHistory'])
+      );
     }
 
     function validInternalNote() {
