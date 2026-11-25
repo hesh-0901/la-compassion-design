@@ -295,40 +295,78 @@ function Info({ icon, label, value }: { icon: string; label: string; value: stri
 
 function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onConfirm:(file:File)=>void}){
   const [source,setSource]=useState("");
-  const [dimensions,setDimensions]=useState({width:0,height:0});
-  const [zoom,setZoom]=useState(1);
-  const [offset,setOffset]=useState({x:0,y:0});
-  const [dragging,setDragging]=useState(false);
+  const [imageSize,setImageSize]=useState({width:0,height:0});
+  const [frame,setFrame]=useState({width:0,height:0});
+  const [crop,setCrop]=useState({x:0,y:0,size:0});
   const [processing,setProcessing]=useState(false);
-  const viewportRef=useRef<HTMLDivElement>(null);
-  const dragRef=useRef({x:0,y:0,offsetX:0,offsetY:0});
-  const size=280;
+  const interaction=useRef<{mode:"move"|"resize";corner:string;startX:number;startY:number;initial:{x:number;y:number;size:number}}|null>(null);
   useEffect(()=>{const url=URL.createObjectURL(file);setSource(url);return()=>URL.revokeObjectURL(url);},[file]);
-  const baseScale=dimensions.width&&dimensions.height?Math.max(size/dimensions.width,size/dimensions.height):1;
-  const renderedWidth=dimensions.width*baseScale*zoom,renderedHeight=dimensions.height*baseScale*zoom;
-  const imageStyle:React.CSSProperties={width:renderedWidth,height:renderedHeight,maxWidth:"none",position:"absolute",left:(size-renderedWidth)/2+offset.x,top:(size-renderedHeight)/2+offset.y,userSelect:"none",pointerEvents:"none"};
-  const pointerDown=(event:React.PointerEvent<HTMLDivElement>)=>{event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);dragRef.current={x:event.clientX,y:event.clientY,offsetX:offset.x,offsetY:offset.y};setDragging(true);};
-  const pointerMove=(event:React.PointerEvent<HTMLDivElement>)=>{if(!dragging)return;const w=renderedWidth,h=renderedHeight;setOffset({x:Math.min(0,Math.max(size-w,dragRef.current.offsetX+event.clientX-dragRef.current.x)),y:Math.min(0,Math.max(size-h,dragRef.current.offsetY+event.clientY-dragRef.current.y))});};
-  const confirm=async()=>{
-    const image=new Image();image.src=source;await image.decode();
-    const scale=baseScale*zoom,sw=size/scale,sh=size/scale;
-    const sx=Math.max(0,Math.min(image.naturalWidth-sw,-offset.x/scale)),sy=Math.max(0,Math.min(image.naturalHeight-sh,-offset.y/scale));
-    const canvas=document.createElement("canvas");canvas.width=512;canvas.height=512;
-    const context=canvas.getContext("2d");if(!context)return;
-    context.imageSmoothingEnabled=true;context.imageSmoothingQuality="high";
-    context.drawImage(image,sx,sy,sw,sh,0,0,512,512);
-    setProcessing(true);
-    canvas.toBlob(blob=>{if(blob){const base=file.name.replace(/\\.[^.]+$/,"")||"photo";onConfirm(new File([blob],base+"-recadree.jpg",{type:"image/jpeg",lastModified:Date.now()}));}setProcessing(false);},"image/jpeg",.92);
+  const loadImage=(event:React.SyntheticEvent<HTMLImageElement>)=>{
+    const image=event.currentTarget;
+    const scale=Math.min(360/image.naturalWidth,360/image.naturalHeight,1);
+    const width=Math.round(image.naturalWidth*scale),height=Math.round(image.naturalHeight*scale);
+    setImageSize({width:image.naturalWidth,height:image.naturalHeight});
+    setFrame({width,height});
+    const size=Math.round(Math.min(width,height)*.78);
+    setCrop({x:Math.round((width-size)/2),y:Math.round((height-size)/2),size});
   };
-  return <div className="photo-crop-overlay" onClick={onCancel}><section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-label="Recadrer la photo" onClick={e=>e.stopPropagation()}>
-    <header className="photo-crop-header"><div><span className="photo-dialog-kicker">PHOTO DE PROFIL</span><h3>Recadre ta photo</h3><p>Déplace l’image et ajuste le zoom pour choisir ton cadrage.</p></div><button type="button" onClick={onCancel} aria-label="Fermer">×</button></header>
-    <div className="photo-crop-workspace"><div ref={viewportRef} className={"photo-crop-viewport"+(dragging?" is-dragging":"")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={()=>setDragging(false)} onPointerCancel={()=>setDragging(false)}>
-      {source&&<img src={source} alt="Image à recadrer" draggable={false} onLoad={e=>setDimensions({width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight})} style={imageStyle}/>}
-      <span className="photo-crop-guide" aria-hidden="true"/>
-    </div><span className="photo-crop-tip">Fais glisser l’image pour ajuster le cadrage</span></div>
-    <div className="photo-crop-zoom"><span>Zoom</span><button type="button" onClick={()=>setZoom(v=>Math.max(1,Number((v-.1).toFixed(2))))} disabled={zoom<=1}>−</button><input aria-label="Zoom de la photo" type="range" min="1" max="3" step=".01" value={zoom} onChange={e=>{setZoom(Number(e.target.value));setOffset({x:0,y:0});}}/><button type="button" onClick={()=>{setZoom(v=>Math.min(3,Number((v+.1).toFixed(2))));setOffset({x:0,y:0});}} disabled={zoom>=3}>+</button><b>{Math.round(zoom*100)}%</b></div>
-    <footer className="photo-crop-actions"><button type="button" className="photo-cancel" onClick={onCancel}>Annuler</button><button type="button" className="photo-confirm" onClick={()=>void confirm()} disabled={!dimensions.width||processing}>{processing?"Préparation…":"Valider le recadrage"}</button></footer>
-  </section></div>;
+  const begin=(event:React.PointerEvent<HTMLElement>,mode:"move"|"resize",corner="")=>{
+    event.preventDefault();event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    interaction.current={mode,corner,startX:event.clientX,startY:event.clientY,initial:{...crop}};
+  };
+  const move=(event:React.PointerEvent<HTMLElement>)=>{
+    const active=interaction.current;if(!active)return;
+    const scale=frame.width/(imageSize.width||frame.width);
+    const dx=(event.clientX-active.startX),dy=(event.clientY-active.startY);
+    if(active.mode==="move"){
+      setCrop(p=>({...p,x:Math.max(0,Math.min(frame.width-p.size,active.initial.x+dx)),y:Math.max(0,Math.min(frame.height-p.size,active.initial.y+dy))}));
+      return;
+    }
+    const {x,y,size}=active.initial,corner=active.corner;
+    const signX=corner.includes("e")?1:-1,signY=corner.includes("s")?1:-1;
+    const delta=(dx*signX+dy*signY)/2;
+    const maxSize=Math.min(corner.includes("w")?x+size:frame.width-x,corner.includes("n")?y+size:frame.height-y);
+    const nextSize=Math.max(56,Math.min(maxSize,size+delta));
+    const nextX=corner.includes("w")?x+size-nextSize:x;
+    const nextY=corner.includes("n")?y+size-nextSize:y;
+    setCrop({x:nextX,y:nextY,size:nextSize});
+  };
+  const finish=()=>{interaction.current=null;};
+  const confirm=async()=>{
+    if(!source||!imageSize.width||!crop.size)return;
+    setProcessing(true);
+    try{
+      const image=new Image();image.src=source;await image.decode();
+      const scale=frame.width/image.naturalWidth;
+      const sx=crop.x/scale,sy=crop.y/scale,sourceSize=crop.size/scale;
+      const canvas=document.createElement("canvas");canvas.width=512;canvas.height=512;
+      const context=canvas.getContext("2d");if(!context)throw new Error("Impossible de préparer cette image.");
+      context.imageSmoothingEnabled=true;context.imageSmoothingQuality="high";
+      context.drawImage(image,sx,sy,sourceSize,sourceSize,0,0,512,512);
+      canvas.toBlob(blob=>{
+        if(blob){const base=file.name.replace(/\.[^.]+$/,"")||"photo";onConfirm(new File([blob],base+"-recadree.jpg",{type:"image/jpeg",lastModified:Date.now()}));}
+        else setProcessing(false);
+      },"image/jpeg",.94);
+    }catch{setProcessing(false);}
+  };
+  return <div className="photo-crop-overlay" onClick={onCancel}>
+    <section className="photo-crop-dialog" role="dialog" aria-modal="true" aria-label="Recadrer la photo" onClick={e=>e.stopPropagation()}>
+      <header className="photo-crop-header"><div><span className="photo-dialog-kicker">PHOTO DE PROFIL</span><h3>Recadrer la photo</h3><p>Déplace le carré et ajuste ses poignées pour sélectionner la partie à conserver.</p></div><button type="button" onClick={onCancel} aria-label="Fermer">×</button></header>
+      <div className="photo-crop-workspace">
+        <div className="photo-crop-image-stage" style={{width:frame.width||"auto",height:frame.height||"auto"}}>
+          {source&&<img className="photo-crop-source-image" src={source} alt="Photo originale à recadrer" draggable={false} onLoad={loadImage} style={{width:frame.width||"auto",height:frame.height||"auto"}}/>}
+          {frame.width>0&&<div className="photo-selection-square" style={{left:crop.x,top:crop.y,width:crop.size,height:crop.size}} onPointerDown={e=>begin(e,"move")} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish}>
+            <span className="photo-crop-shade photo-crop-shade-top"/><span className="photo-crop-shade photo-crop-shade-bottom"/><span className="photo-crop-shade photo-crop-shade-left"/><span className="photo-crop-shade photo-crop-shade-right"/>
+            <span className="photo-crop-gridline horizontal one"/><span className="photo-crop-gridline horizontal two"/><span className="photo-crop-gridline vertical one"/><span className="photo-crop-gridline vertical two"/>
+            {["nw","ne","sw","se"].map(corner=><button key={corner} type="button" className={"photo-crop-handle "+corner} aria-label={"Redimensionner le cadre "+corner} onPointerDown={e=>begin(e,"resize",corner)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish}/>)}
+          </div>}
+        </div>
+        <span className="photo-crop-tip">Fais glisser le carré pour le déplacer. Tire ses coins pour le redimensionner.</span>
+      </div>
+      <footer className="photo-crop-actions"><button type="button" className="photo-cancel" onClick={onCancel}>Annuler</button><button type="button" className="photo-confirm" onClick={()=>void confirm()} disabled={!imageSize.width||processing}>{processing?"Préparation…":"Valider le recadrage"}</button></footer>
+    </section>
+  </div>;
 }
 
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
