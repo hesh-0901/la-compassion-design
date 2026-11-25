@@ -369,8 +369,20 @@ function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onC
   </div>;
 }
 
+function fieldHasAnswer(node: React.ReactNode): boolean {
+  return React.Children.toArray(node).some(child => {
+    if (!React.isValidElement(child)) return false;
+    const props = child.props as { value?: unknown; checked?: boolean; children?: React.ReactNode };
+    if (typeof props.value === "string" && props.value.trim() !== "") return true;
+    if (typeof props.value === "boolean" && props.value) return true;
+    if (props.checked === true) return true;
+    return props.children ? fieldHasAnswer(props.children) : false;
+  });
+}
 function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
-  return <div className="field"><label className="field-label">{label}</label>{children}<div className="field-meta">{error ? <span className="field-error">{error}</span> : <span>{hint || " "}</span>}</div></div>;
+  const answered = fieldHasAnswer(children);
+  const stateClass = error ? " field-invalid" : answered ? " field-answered" : "";
+  return <div className={"field"+stateClass}><label className="field-label">{label}</label>{children}<div className="field-meta">{error ? <span className="field-error">{error}</span> : <span>{hint || " "}</span>}</div></div>;
 }
 function Choice({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: string[] }) {
   return <div className="choice-group">{options.map(option => <button type="button" key={option} className={value === option ? "choice selected" : "choice"} onClick={() => onChange(option)}>{option}</button>)}</div>;
