@@ -70,11 +70,16 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       }
       if (sent.length) {
         await updateFields(account, token, "candidatures/" + candidateId, { adminNotificationSentAt: new Date().toISOString() });
-        results.admin = "sent";
+        results.admin = "sent:" + sent.length;
       } else results.admin = failures[0] || "failed";
+      if (failures.length) console.error("Échec notification administrateur", { candidateId, sent: sent.length, failures });
     } else results.admin = "already-sent";
 
-    return jsonResponse({ ok: true, notifications: results });
+    const candidateOk = results.candidate === "sent" || results.candidate === "already-sent" || results.candidate === "no-email";
+    const adminOk = results.admin === "already-sent" || results.admin.startsWith("sent:");
+    const ok = candidateOk && adminOk;
+    if (!ok) console.error("Notifications d'inscription incomplètes", { candidateId, notifications: results });
+    return jsonResponse({ ok, notifications: results }, ok ? 200 : 502);
   } catch (error) {
     return jsonResponse({ error: error instanceof Error ? error.message : "Erreur interne." }, 500);
   }
