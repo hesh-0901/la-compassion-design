@@ -1185,3 +1185,139 @@
  .admin-app .admin-mobile-head>button:last-child{flex:0 0 40px!important}
  .admin-app .admin-mobile-menu{display:none!important}
 }
+
+
+/* RESPONSIVE STABILITY PASS — calm layout, no unnecessary motion or zoom */
+.admin-app,
+.admin-app *{
+  scroll-behavior:auto!important;
+}
+.admin-app *,
+.admin-app *::before,
+.admin-app *::after{
+  animation:none!important;
+  transition:none!important;
+  scroll-behavior:auto!important;
+}
+.admin-app button:hover,
+.admin-app a:hover,
+.admin-app .admin-section:hover,
+.admin-app .admin-summary article:hover,
+.admin-app .admin-download-candidate:hover{
+  transform:none!important;
+  filter:none!important;
+}
+.admin-app{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+  box-sizing:border-box!important;
+}
+.admin-app *,
+.admin-app *::before,
+.admin-app *::after{box-sizing:border-box}
+.admin-main{
+  min-width:0!important;
+  width:100%!important;
+  overflow-x:hidden!important;
+}
+.admin-main img,
+.admin-main iframe,
+.admin-main table{max-width:100%}
+.admin-main table{display:block;overflow-x:auto}
+.admin-page-head,
+.admin-section-head,
+.admin-export-header,
+.admin-export-main,
+.admin-export-footer{min-width:0}
+.admin-page-head h1{overflow-wrap:anywhere}
+.admin-section,
+.admin-card,
+.admin-drawer,
+.admin-edit-card{min-width:0;max-width:100%}
+.admin-summary{grid-template-columns:repeat(4,minmax(0,1fr))}
+.admin-detail-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.admin-download-candidate{min-width:0}
+.admin-download-files-grid{min-width:0}
+.admin-download-file-cell{min-width:0}
+.admin-download-file-bubble{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.admin-status-action-row{min-width:0}
+.admin-status-action-row>*{min-width:0}
+@media(max-width:1100px){
+ .admin-app{grid-template-columns:176px minmax(0,1fr)!important;gap:16px!important;padding-right:16px!important}
+ .admin-main{padding-left:12px!important;padding-right:12px!important}
+ .admin-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+ .admin-app,.admin-app.sidebar-collapsed{
+   display:block!important;width:100%!important;max-width:100%!important;
+   min-width:0!important;height:100dvh!important;min-height:100dvh!important;
+   padding:0!important;margin:0!important;overflow-x:hidden!important;
+ }
+ .admin-main{
+   width:100%!important;height:100dvh!important;max-height:100dvh!important;
+   min-width:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+   padding:0 12px 24px!important;
+ }
+ .admin-mobile-head{
+   position:sticky!important;top:0!important;z-index:60!important;
+   min-height:60px!important;padding:8px 10px!important;
+   background:#f4f6fb!important;border-bottom:1px solid #e1e7f1!important;
+ }
+ .admin-mobile-brand-group{min-width:0!important;gap:8px!important}
+ .admin-mobile-brand-group .admin-brand{min-width:0!important}
+ .admin-mobile-brand-group .admin-brand>span:last-child{
+   overflow:hidden!important;text-overflow:ellipsis!important;font-size:9px!important;
+ }
+ .admin-page-head{
+   display:flex!important;align-items:flex-start!important;gap:10px!important;
+   margin:20px 0 18px!important;
+ }
+ .admin-page-head>div{min-width:0!important;flex:1!important}
+ .admin-page-head h1{font-size:clamp(24px,7vw,30px)!important;line-height:1.15!important}
+ .admin-page-head p{font-size:13px!important;line-height:1.45!important;max-width:100%!important}
+ .admin-refresh{width:40px!important;height:40px!important;min-width:40px!important}
+ .admin-summary{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ .admin-summary article{min-width:0!important;padding:14px!important}
+ .admin-summary article strong{font-size:30px!important}
+ .admin-section{min-width:0!important;padding:14px!important}
+ .admin-section-head{align-items:flex-start!important;gap:10px!important;flex-wrap:wrap!important}
+ .admin-section-head>div{min-width:0!important;flex:1!important}
+ .admin-section-head h2{font-size:17px!important}
+ .admin-section-head p{font-size:11px!important;line-height:1.4!important}
+ .admin-text-action{max-width:46%;font-size:11px!important}
+ .admin-filters{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .admin-filters>*{width:100%!important;min-width:0!important}
+ .admin-detail-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .admin-status-action-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(112px,.8fr)!important;gap:8px!important}
+ .admin-status-action-row .admin-full{width:100%!important;min-width:0!important;flex:none!important;font-size:11px!important;padding:0 8px!important}
+ .admin-downloads{padding:12px!important}
+ .admin-download-candidate{grid-template-columns:minmax(0,1fr)!important}
+ .admin-download-files-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .admin-download-file-cell{align-items:flex-start!important;flex-direction:column!important}
+ .admin-download-file-cell .admin-download-link{margin-left:0!important}
+ .admin-export-header{flex-wrap:wrap!important}
+ .admin-export-main{flex-wrap:wrap!important}
+ .admin-export-copy{min-width:0!important}
+ .admin-xlsx-button{width:100%!important}
+ .admin-drawer{width:100%!important;max-width:100vw!important;max-height:100dvh!important;overflow-y:auto!important;padding:18px 14px!important}
+ .admin-edit-card{width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;padding:16px!important}
+ .admin-form-grid{grid-template-columns:1fr!important}
+ .admin-download-file-cell,.admin-download-candidate-head,.admin-download-candidate-info{overflow-wrap:anywhere}
+}
+@media(max-width:380px){
+ .admin-app .admin-mobile-brand-group .admin-brand>span:last-child{font-size:8px!important;letter-spacing:.025em!important}
+ .admin-summary article{padding:11px!important}
+ .admin-summary article span{font-size:11px!important}
+ .admin-summary article small{font-size:10px!important}
+ .admin-detail-list{grid-template-columns:1fr!important}
+ .admin-download-files-grid{grid-template-columns:1fr!important}
+ .admin-status-action-row{grid-template-columns:minmax(0,1fr)!important}
+ .admin-status-action-row .admin-full{height:42px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .admin-app *,
+ .admin-app *::before,
+ .admin-app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
