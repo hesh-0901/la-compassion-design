@@ -91,7 +91,7 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
-type PromotionCategory = { name: string; count: number; accepted: number; color: string };
+type PromotionCategory = { name: string; count: number; color: string };
 type PromotionSegment = { item: PromotionCategory; start: number; end: number; percent: number };
 const promotionPoint = (angle: number, radius: number, cx: number, cy: number) => ({
   x: cx + radius * Math.cos(angle),
@@ -107,12 +107,12 @@ const promotionArcPath = (start: number, end: number, radius: number, cx: number
   }
   return "M " + first.x + " " + first.y + " A " + radius + " " + radius + " 0 " + (span > Math.PI ? 1 : 0) + " 1 " + last.x + " " + last.y;
 };
-const promotionSegments = (categories: PromotionCategory[], key: "count" | "accepted", full = false): PromotionSegment[] => {
-  const items = categories.filter(item => item[key] > 0);
-  const total = items.reduce((sum, item) => sum + item[key], 0);
+const promotionSegments = (categories: PromotionCategory[], full = false): PromotionSegment[] => {
+  const items = categories.filter(item => item.count > 0);
+  const total = items.reduce((sum, item) => sum + item.count, 0);
   if (!total) return [];
   const extent = full ? Math.PI * 2 : Math.PI;
-  const raw = items.map(item => item[key] / total * extent);
+  const raw = items.map(item => item.count / total * extent);
   const minimum = Math.PI / 60;
   const adjusted = raw.some(value => value < minimum)
     ? (() => {
@@ -125,29 +125,29 @@ const promotionSegments = (categories: PromotionCategory[], key: "count" | "acce
   let cursor = full ? Math.PI / 2 : Math.PI;
   return items.map((item, index) => {
     const next = cursor - adjusted[index];
-    const segment = { item, start: cursor, end: next, percent: Math.round(item[key] / total * 100) };
+    const segment = { item, start: cursor, end: next, percent: Math.round(item.count / total * 100) };
     cursor = next;
     return segment;
   });
 };
 function PromotionLegend({ categories, total }: { categories: PromotionCategory[]; total: number }) {
-  return <div className="admin-promotion-legend" role="table" aria-label="Détail des candidatures et acceptations">
+  return <div className="admin-promotion-legend" role="table" aria-label="Répartition des inscrits">
     <div className="admin-promotion-legend-head" role="row">
-      <span role="columnheader">Catégorie</span><span role="columnheader">Cand. · Acc.</span><span role="columnheader">%</span>
+      <span role="columnheader">Catégorie</span><span role="columnheader">Inscrits</span><span role="columnheader">%</span>
     </div>
     {categories.map(item => <div className="admin-promotion-legend-row" role="row" key={item.name}>
       <span className="admin-promotion-category-name" role="cell"><i style={{ background: item.color }}/>{item.name}</span>
-      <span className="admin-promotion-values" role="cell">{item.count} · {item.accepted}</span>
+      <span className="admin-promotion-values" role="cell">{item.count}</span>
       <span className="admin-promotion-percent" role="cell">{total ? Math.round(item.count / total * 100) : 0} %</span>
     </div>)}
   </div>;
 }
 function PromotionSemiDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
-  const segments = promotionSegments(categories, "count");
+  const segments = promotionSegments(categories);
   const radius = 110;
   const gapAngle = segments.length > 1 ? 2 / radius : 0;
   let cursor = Math.PI;
-  const summary = categories.map(item => item.name + ": " + item.count + " candidatures").join("; ");
+  const summary = categories.map(item => item.name + ": " + item.count + " inscrits").join("; ");
   return <article className="admin-promotion-card">
     <h3>Genre</h3>
     <div className="admin-promotion-chart-wrap">
@@ -193,7 +193,7 @@ function PromotionBars({ total, categories }: { total: number; categories: Promo
   </article>;
 }
 function PromotionDonut({ total, categories }: { total: number; categories: PromotionCategory[] }) {
-  const segments = promotionSegments(categories, "count", true);
+  const segments = promotionSegments(categories, true);
   const summary = categories.map(item => item.name + ": " + item.count + " candidatures").join("; ");
   return <article className="admin-promotion-card">
     <h3>Niveau en design</h3>
