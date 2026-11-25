@@ -119,11 +119,6 @@ function AnalyticsCompact({items,total}:{items:{label:string;value:number}[];tot
  const max=Math.max(...items.map(x=>x.value),1);
  return <div className="analytics-compact">{items.slice(0,6).map((item,index)=><div key={item.label}><div><span><i style={{background:chartPalette[index%chartPalette.length]}}/>{item.label}</span><b>{item.value}</b></div><div className="analytics-compact-track"><i style={{width:item.value/max*100+"%",background:chartPalette[index%chartPalette.length]}}/></div><small>{pctSafe(item.value,total)}% du total</small></div>)}</div>;
 }
-function AnalyticsBars({items,total}:{items:{label:string;value:number}[];total:number}){
-  if(!items.length)return <div className="analytics-empty">Aucune réponse disponible pour le moment.</div>;
-  const max=Math.max(...items.map(item=>item.value),1);
-  return <div className="analytics-bar-list">{items.slice(0,7).map(item=><div className="analytics-bar-item" key={item.label}><div><span title={item.label}>{item.label}</span><b>{item.value}</b></div><i><em style={{width:(item.value/max*100)+"%"}}/></i><small>{pctSafe(item.value,total)}% des dossiers</small></div>)}</div>;
-}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
   return <span className={"admin-status status-" + status}>{label}</span>;
