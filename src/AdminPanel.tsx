@@ -105,6 +105,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [tab,setTab] = useState<Tab>("overview");
   const [sidebarCollapsed,setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen,setMobileSidebarOpen] = useState(false);
+  const [mobileFiltersOpen,setMobileFiltersOpen] = useState(false);
   const [currentPage,setCurrentPage] = useState(1);
   const pageSize = 15;
   const [rows,setRows] = useState<Candidate[]>([]);
@@ -298,12 +299,17 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </section>
       </>}
       {tab==="candidates"&&<>
-        <section className="admin-toolbar">
-          <div className="admin-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher un nom ou un téléphone…" aria-label="Rechercher un candidat"/></div>
-          <div className="admin-filters"><label><Icon name="filter"/><select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="all">Tous les statuts</option>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
-            <select value={filterLevel} onChange={e=>setFilterLevel(e.target.value)}><option value="all">Tous les niveaux</option>{["Débutant","Intermédiaire","Avancé"].map(x=><option key={x}>{x}</option>)}</select>
-            <select value={filterAssembly} onChange={e=>setFilterAssembly(e.target.value)}><option value="all">Toutes les assemblées</option>{Array.from(new Set(rows.map(r=>String(valueOf(r,"assembly","extension"))).filter(v=>v!=="—"))).map(x=><option key={x}>{x}</option>)}</select>
-            <select value={filterRam} onChange={e=>setFilterRam(e.target.value)}><option value="all">Compatibilité PC</option>{["Oui","Non","Je ne sais pas"].map(x=><option key={x}>{x}</option>)}</select>
+        <section className={"admin-toolbar" + (mobileFiltersOpen ? " mobile-filters-open" : "")}>
+          <button type="button" className="admin-mobile-filter-toggle" onClick={()=>setMobileFiltersOpen(value=>!value)} aria-expanded={mobileFiltersOpen} aria-label={mobileFiltersOpen?"Masquer la recherche et les filtres":"Afficher la recherche et les filtres"} title="Recherche et filtres">
+            <span>Recherche et filtres</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+          </button>
+          <div className="admin-toolbar-controls">
+            <div className="admin-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher un nom ou un téléphone…" aria-label="Rechercher un candidat"/></div>
+            <div className="admin-filters"><label><Icon name="filter"/><select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}><option value="all">Tous les statuts</option>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
+              <select value={filterLevel} onChange={e=>setFilterLevel(e.target.value)}><option value="all">Tous les niveaux</option>{["Débutant","Intermédiaire","Avancé"].map(x=><option key={x}>{x}</option>)}</select>
+              <select value={filterAssembly} onChange={e=>setFilterAssembly(e.target.value)}><option value="all">Toutes les assemblées</option>{Array.from(new Set(rows.map(r=>String(valueOf(r,"assembly","extension"))).filter(v=>v!=="—"))).map(x=><option key={x}>{x}</option>)}</select>
+              <select value={filterRam} onChange={e=>setFilterRam(e.target.value)}><option value="all">Compatibilité PC</option>{["Oui","Non","Je ne sais pas"].map(x=><option key={x}>{x}</option>)}</select>
+            </div>
           </div>
         </section>
         <section className="admin-section"><div className="admin-section-head"><div><h2>Liste des inscrits</h2><p>{filtered.length} dossier(s) correspondant aux filtres.</p></div></div>
