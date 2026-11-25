@@ -21,6 +21,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     }
 
     const { account, token } = await createAdminServiceContext(env);
+    const projectId = account.project_id;
 
     const uid = await authenticateFirebaseUser(request, projectId);
     const adminDoc = await readDocument(account, token, "admins", uid);
