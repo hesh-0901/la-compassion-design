@@ -109,6 +109,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [currentPage,setCurrentPage] = useState(1);
   const pageSize = 15;
   const [rows,setRows] = useState<Candidate[]>([]);
+  const [attentionFilter,setAttentionFilter] = useState<"all"|"partial"|"ram"|"photo"|"portfolio">("all");
+  const [capacity,setCapacity] = useState<number|null>(null);
   const [query,setQuery] = useState(""), [filterStatus,setFilterStatus] = useState("all"), [filterLevel,setFilterLevel] = useState("all"), [filterAssembly,setFilterAssembly] = useState("all"), [filterRam,setFilterRam] = useState("all");
   const [selected,setSelected] = useState<Candidate|null>(null);
   const [edit,setEdit] = useState({ fullName:"", phone:"", email:"", area:"", assembly:"", level:"", ram:"" });
@@ -137,7 +139,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Vérification des droits impossible. Contrôle les règles Firestore."); await signOut(auth); }
   }),[]);
   const loadAdmins = async () => {
-    if (role !== "superAdmin") return;
+    if (!role) return;
     try {
       const snapshot = await getDocs(collection(db, "admins"));
       setAdmins(snapshot.docs.map(item => ({ id: item.id, ...item.data() })) as AdminRecord[]);
@@ -145,6 +147,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setError("Impossible de charger les administrateurs. Vérifie les règles Firestore.");
     }
   };
+  const loadCapacity = async () => { try { const snap=await getDoc(doc(db,"configuration","masterclass"));const value=snap.exists()?snap.data().capacity:null;setCapacity(typeof value==="number"&&value>0?value:null); } catch { setCapacity(null); } };
   const loadCandidates = async () => {
     setBusy(true); setError("");
     try {
@@ -158,9 +161,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Impossible de lire les candidatures. Vérifie la collection « candidatures » et ses règles d’accès."); }
     finally { setBusy(false); }
   };
-  useEffect(() => { if(user && role){void loadCandidates();} if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
+  useEffect(() => { if(user && role){void loadCandidates();void loadCapacity();void loadAdmins();} },[user,role]);
+  useEffect(() => { const updateSidebar=()=>setSidebarCollapsed(window.innerWidth<=1100);updateSidebar();window.addEventListener("resize",updateSidebar);return ()=>window.removeEventListener("resize",updateSidebar); },[]);
   const counts = useMemo(() => ({
-    total:rows.length, received:rows.filter(r=>statusOf(r.status)==="received").length,
+    total:rows.length, received:rows.length,
     accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
     waiting:rows.filter(r=>statusOf(r.status)==="waiting").length,
@@ -174,9 +178,10 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       && (filterStatus==="all" || statusOf(row.status)===filterStatus)
       && (filterLevel==="all" || valueOf(row,"level")===filterLevel)
       && (filterAssembly==="all" || valueOf(row,"assembly","extension")===filterAssembly)
-      && (filterRam==="all" || valueOf(row,"ram")===filterRam);
-  }),[rows,query,filterStatus,filterLevel,filterAssembly,filterRam]);
-  useEffect(() => { setCurrentPage(1); }, [query,filterStatus,filterLevel,filterAssembly,filterRam]);
+      && (filterRam==="all" || valueOf(row,"ram")===filterRam)
+      && (attentionFilter==="all" || (attentionFilter==="partial" && String(row.availability??"").toLowerCase().includes("partiellement")) || (attentionFilter==="ram" && !["oui","yes","8 go","8gb","8 go ram"].includes(String(row.ram??"").trim().toLowerCase())) || (attentionFilter==="photo" && !String(row.profilePhotoUrl||row.photoUrl||"").trim()) || (attentionFilter==="portfolio" && !String(row.portfolioFileUrl||row.portfolioUrl||row.portfolio||"").trim()));
+  }),[rows,query,filterStatus,filterLevel,filterAssembly,filterRam,attentionFilter]);
+  useEffect(() => { setCurrentPage(1); }, [query,filterStatus,filterLevel,filterAssembly,filterRam,attentionFilter]);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   const login = async (event:React.FormEvent) => {
@@ -297,35 +302,36 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     </aside>
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-mobile-brand-group"><button className="admin-menu-toggle-visible" type="button" onClick={()=>setMobileSidebarOpen(value=>!value)} aria-label={mobileSidebarOpen?"Fermer le menu":"Ouvrir le menu"} aria-expanded={mobileSidebarOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
-      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><button className="admin-refresh" onClick={()=>void loadCandidates()} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div>
+      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":"Gestion des administrateurs"}</h1><p>{tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><div className="admin-page-actions">{tab==="overview"&&<button className="admin-refresh admin-export-head" onClick={()=>downloadXlsx(rows)}>Exporter Excel</button>}<button className="admin-refresh" onClick={()=>{void loadCandidates();void loadCapacity()}} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary admin-kpi-summary">
-          <article><span>Reçues</span><strong>{counts.received}</strong><small>Statut Reçue</small></article>
+          <article><span>Reçues</span><strong>{counts.received}</strong><small>Total de tous les dossiers</small></article>
           <article><span>À traiter</span><strong>{counts.pending}</strong><small>Reçues + En étude</small></article>
           <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>Décisions positives</small></article>
           <article><span>En attente</span><strong>{counts.waiting}</strong><small>Liste d’attente</small></article>
         </div>
-        <section className="admin-section admin-review-queue">
-          <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les 5 plus anciens dossiers Reçue ou En étude.</p></div><button className="admin-text-action" onClick={()=>setTab("candidates")}>Voir toutes les candidatures <Icon name="chevron"/></button></div>
-          {rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).length>0?
-            <div className="admin-review-list">{rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const time=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return time(a.createdAt)-time(b.createdAt)}).slice(0,5).map((row,index)=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}>
-              <span className="admin-review-number">{index+1}</span>
-              <span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")}</small></span>
-              <span className="admin-review-level">{valueOf(row,"level")}</span>
-              <span className="admin-review-ram">{valueOf(row,"ram")}</span>
-              <span className={"admin-review-availability"+(row.availability==="Partiellement"?" partial":"")}>{valueOf(row,"availability")}{row.availability==="Partiellement"&&<small className="admin-partial-signal">Disponibilité à confirmer</small>}</span>
-              <StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time><Icon name="chevron"/>
-            </button>)}</div>
-            :<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier ne nécessite actuellement de décision."}</p>}
-        </section>
-        {rows.length>=5&&<section className="admin-section admin-status-distribution">
-          <div className="admin-section-head"><div><h2>Répartition des statuts</h2></div></div>
-          <div className="admin-status-segments" role="img" aria-label={statusOptions.map(item=>item.label+" : "+rows.filter(row=>statusOf(row.status)===item.value).length).join(", ")}>
-            {statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return amount>0?<span key={item.value} className={"segment-"+item.value} style={{width:(amount/rows.length*100)+"%"}} title={item.label+" : "+amount}></span>:null})}
+        <div className="admin-overview-meta">{capacity!==null&&<div className="admin-capacity-inline"><span>{counts.accepted} acceptés sur {capacity} places</span><div><i style={{width:Math.min(100,counts.accepted/capacity*100)+"%"}}/></div></div>}<span className="admin-countdown">{(()=>{const days=Math.max(0,Math.ceil((new Date(2026,11,15).getTime()-new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()).getTime())/86400000));return days===0?"Masterclass aujourd’hui":"J-"+days+" avant la Masterclass"})()}</span></div>
+        <div className="admin-overview-columns">
+          <section className="admin-section admin-review-queue">
+            <div className="admin-section-head"><div><h2>Dossiers à examiner</h2><p>Les 5 plus anciens dossiers Reçue ou En étude.</p></div><button className="admin-text-action" onClick={()=>{setAttentionFilter("all");setTab("candidates")}}>Voir toutes les candidatures <Icon name="chevron"/></button></div>
+            <div className="admin-review-table-head"><span>Candidat</span><span>Niveau</span><span>PC</span><span>Disponibilité</span><span>Statut</span><span>Date</span></div>
+            {rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(a.createdAt)-t(b.createdAt)}).slice(0,5).length>0?<div className="admin-review-list">{rows.filter(row=>["received","review"].includes(statusOf(row.status))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(a.createdAt)-t(b.createdAt)}).slice(0,5).map(row=><button type="button" className="admin-review-row" key={row.id} onClick={()=>openDetails(row)}><span className="admin-review-person"><b>{personName(row)}</b><small>{valueOf(row,"assembly","extension")}</small></span><span className="admin-review-level">{valueOf(row,"level")}</span><span className="admin-review-ram">{valueOf(row,"ram")}</span><span className={"admin-review-availability"+(String(row.availability??"").toLowerCase().includes("partiellement")?" partial":"")}>{valueOf(row,"availability")}{String(row.availability??"").toLowerCase().includes("partiellement")&&<small className="admin-partial-signal">À confirmer</small>}</span><StatusPill value={row.status}/><time>{dateLabel(row.createdAt)}</time></button>)}</div>:<p className="admin-empty">{busy?"Chargement des dossiers…":"Aucun dossier à examiner."}</p>}
+          </section>
+          <div className="admin-overview-side">
+            <section className="admin-section admin-verify-card"><div className="admin-section-head"><div><h2>À vérifier</h2><p>Points nécessitant une vérification.</p></div></div>
+              {[{key:"partial" as const,label:"Disponibilité partielle",count:rows.filter(r=>String(r.availability??"").toLowerCase().includes("partiellement")).length},{key:"ram" as const,label:"RAM non ou inconnue",count:rows.filter(r=>!["oui","yes","8 go","8gb","8 go ram"].includes(String(r.ram??"").trim().toLowerCase())).length},{key:"photo" as const,label:"Photo manquante",count:rows.filter(r=>!String(r.profilePhotoUrl||r.photoUrl||"").trim()).length},{key:"portfolio" as const,label:"Portfolio manquant",count:rows.filter(r=>!String(r.portfolioFileUrl||r.portfolioUrl||r.portfolio||"").trim()).length}].map(item=><button type="button" key={item.key} className={"admin-verify-item"+(item.count===0?" is-zero":"")} onClick={()=>{setAttentionFilter(item.key);setFilterStatus("all");setQuery("");setTab("candidates")}}><span>{item.label}</span><b>{item.count}</b><Icon name="chevron"/></button>)}
+            </section>
+            <section className="admin-section admin-decisions-card"><div className="admin-section-head"><div><h2>Dernières décisions</h2><p>Les 5 derniers changements de statut.</p></div></div>
+              {rows.flatMap(row=>(Array.isArray(row.statusHistory)?row.statusHistory:[]).map((entry:any,index:number)=>({row,entry,index}))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(b.entry.changedAt)-t(a.entry.changedAt)}).slice(0,5).length?<div className="admin-decision-list">{rows.flatMap(row=>(Array.isArray(row.statusHistory)?row.statusHistory:[]).map((entry:any,index:number)=>({row,entry,index}))).sort((a,b)=>{const t=(v:any)=>v?.toMillis?.()??(v?new Date(v).getTime():0);return t(b.entry.changedAt)-t(a.entry.changedAt)}).slice(0,5).map(({row,entry,index})=><div className="admin-decision-row" key={row.id+"-"+index}><b>{personName(row)}</b><StatusPill value={entry.to}/><small>{admins.find(admin=>admin.id===entry.adminId)?.firstName||admins.find(admin=>admin.id===entry.adminId)?.email||("Admin "+String(entry.adminId??"").slice(0,6))}</small><time>{dateLabel(entry.changedAt)}</time></div>)}</div>:<p className="admin-empty">Aucune décision enregistrée.</p>}
+            </section>
           </div>
-          <div className="admin-status-legend">{statusOptions.map(item=>{const amount=rows.filter(row=>statusOf(row.status)===item.value).length;return <span key={item.value}><i className={"status-dot-"+item.value}></i>{item.label} <b>{amount}</b></span>})}</div>
-        </section>}
+        </div>
+        <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition informative des candidatures et des acceptations.</p></div></div>
+          {rows.length<5?<p className="admin-promotion-threshold">{rows.length} candidatures. Les graphiques apparaissent à partir de 5 dossiers.</p>:<div className="admin-promotion-grid">
+            {[{title:"Genre",field:"gender",order:[] as string[]},{title:"Tranche d’âge",field:"age",order:["Moins de 18 ans","18–24 ans","18-24 ans","25–34 ans","25-34 ans","35–44 ans","35-44 ans","45 ans et plus"]},{title:"Niveau en design",field:"level",order:["Débutant","Intermédiaire","Avancé"]}].map(chart=>{const active=rows.filter(r=>statusOf(r.status)!=="refused");const cats=Array.from(new Set(active.map(r=>String(r[chart.field]??"").trim()||"Non renseigné"))).sort((a,b)=>{if(a==="Non renseigné")return 1;if(b==="Non renseigné")return -1;const ai=chart.order.findIndex(v=>v.toLowerCase()===a.toLowerCase()),bi=chart.order.findIndex(v=>v.toLowerCase()===b.toLowerCase());if(ai>=0||bi>=0)return (ai<0?999:ai)-(bi<0?999:bi);return a.localeCompare(b,"fr")});return <article className="admin-promotion-card" key={chart.field}><h3>{chart.title}</h3><div className="admin-promotion-bars">{cats.map(category=>{const n=active.filter(r=>(String(r[chart.field]??"").trim()||"Non renseigné")===category).length,accepted=active.filter(r=>statusOf(r.status)==="accepted"&&(String(r[chart.field]??"").trim()||"Non renseigné")===category).length;return <div className="admin-promotion-category" key={category}><b>{category}</b><div className="admin-promotion-track"><i className="applicants" style={{width:(n/active.length*100)+"%"}}/><span>{n} · {Math.round(n/active.length*100)}%</span></div><div className="admin-promotion-track"><i className="accepted" style={{width:(accepted/active.length*100)+"%"}}/><span>{accepted} · {Math.round(accepted/active.length*100)}%</span></div></div>})}</div><div className="admin-promotion-legend"><span><i className="applicants"/>Candidatures</span><span><i className="accepted"/>Acceptées</span></div></article>})}
+          </div>}
+        </section>
       </>}
       {tab==="candidates"&&<>
         <section className={"admin-toolbar" + (mobileFiltersOpen ? " mobile-filters-open" : "")}>
