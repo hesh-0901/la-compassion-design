@@ -254,7 +254,7 @@ export default function App() {
           {errors.includes("commitment") && <p className="field-error">Confirme ton engagement pour continuer.</p>}
           <Field label="Ajoute une photo de profil" error={errors.includes("profilePhoto") ? "Ta photo de profil est requise." : ""} hint="Choisis une photo, puis ajuste son cadrage avant de la valider.">
             <button type="button" className={"profile-photo-picker"+(profilePhoto?" has-photo":"")} onClick={()=>setPhotoSourceOpen(true)}>
-              {profilePhoto ? <><img src={URL.createObjectURL(profilePhoto)} alt="Aperçu de la photo sélectionnée"/><span><b>Photo prête</b><small>Appuie pour modifier ou recadrer</small></span></> : <><span className="profile-photo-picker-icon"><Icon name="info" size={22}/></span><span><b>Ajouter une photo de profil</b><small>Fichiers ou appareil photo · recadrage personnalisable</small></span></>}
+              {profilePhoto ? <><span className="profile-photo-selected-mark"><Icon name="check" size={20}/></span><span><b>Photo prête</b><small>Appuie pour modifier ou recadrer</small></span></> : <><span className="profile-photo-picker-icon"><Icon name="info" size={22}/></span><span><b>Ajouter une photo de profil</b><small>Fichiers ou appareil photo · recadrage personnalisable</small></span></>}
               <span className="profile-photo-picker-action">{profilePhoto?"Modifier":"Choisir"}</span>
             </button>
             <input ref={filesPhotoInput} className="visually-hidden-file" type="file" accept="image/*" onChange={e=>{const file=e.target.files?.[0];if(file)setPhotoToCrop(file);e.currentTarget.value="";}}/>
