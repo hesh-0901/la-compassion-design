@@ -207,7 +207,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             headers: { "content-type": "application/json", ...(idToken ? { authorization: "Bearer " + idToken } : {}) },
             body: JSON.stringify({ candidateId: candidate.id, status }),
           });
-          if (!notificationResponse.ok) console.error("Notification de décision non envoyée :", await notificationResponse.text());
+          const notificationResult = await notificationResponse.json().catch(() => null);
+          if (!notificationResponse.ok || !notificationResult?.ok) console.error("Notification de décision non envoyée :", notificationResult);
         } catch (notificationError) {
           console.error("Service de notification indisponible :", notificationError);
         }
