@@ -1534,3 +1534,5 @@
  .photo-crop-dialog{padding:21px 17px calc(18px + env(safe-area-inset-bottom,0px))}
  .photo-crop-viewport{width:min(280px,72vw);height:min(280px,72vw)}
 }
+
+.profile-photo-selected-mark{width:52px;height:52px;display:grid;place-items:center;flex:none;border-radius:10px;background:rgba(34,199,242,.16);color:#8FE3FA}
