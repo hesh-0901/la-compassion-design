@@ -157,9 +157,9 @@ function PromotionSemiDonut({ total, categories }: { total: number; categories: 
     <h3>Genre</h3>
     <div className="admin-promotion-chart-wrap">
       <svg className="admin-promotion-chart admin-promotion-semi" viewBox="0 0 220 120" role="img" aria-label={"Répartition par genre, " + total + " candidatures. " + summary}>
-        <path className="admin-promotion-track-outer" d="M32 110 A78 78 0 0 1 188 110"/>
+        <path className="admin-promotion-track-outer" strokeWidth="26" d="M32 110 A78 78 0 0 1 188 110"/>
         {outer.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 78, 110, 110, true)} stroke={segment.item.color} strokeWidth="26"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>)}
-        <path className="admin-promotion-track-inner" d="M60 110 A50 50 0 0 1 160 110"/>
+        <path className="admin-promotion-track-inner" strokeWidth="14" d="M60 110 A50 50 0 0 1 160 110"/>
         {inner.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 50, 110, 110, true)} stroke={segment.item.color} strokeWidth="14"><title>{segment.item.name} — {segment.item.accepted} acceptées — {segment.percent} %</title></path>)}
         <text className="admin-promotion-total" x="110" y="91" textAnchor="middle">{total}</text>
         <text className="admin-promotion-total-label" x="110" y="106" textAnchor="middle">candidatures</text>
@@ -209,9 +209,9 @@ function PromotionDonut({ total, categories }: { total: number; categories: Prom
     <h3>Niveau en design</h3>
     <div className="admin-promotion-chart-wrap">
       <svg className="admin-promotion-chart admin-promotion-full-donut" viewBox="0 0 220 130" role="img" aria-label={"Répartition par niveau en design, " + total + " candidatures. " + summary}>
-        <circle className="admin-promotion-track-outer" cx="110" cy="65" r="48"/>
+        <circle className="admin-promotion-track-outer" strokeWidth="22" cx="110" cy="65" r="48"/>
         {outer.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 48, 110, 65)} stroke={segment.item.color} strokeWidth="22"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>)}
-        <circle className="admin-promotion-track-inner" cx="110" cy="65" r="31"/>
+        <circle className="admin-promotion-track-inner" strokeWidth="10" cx="110" cy="65" r="31"/>
         {inner.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 31, 110, 65)} stroke={segment.item.color} strokeWidth="10"><title>{segment.item.name} — {segment.item.accepted} acceptées — {segment.percent} %</title></path>)}
         <text className="admin-promotion-total" x="110" y="62" textAnchor="middle">{total}</text>
         <text className="admin-promotion-total-label" x="110" y="76" textAnchor="middle">candidatures</text>
