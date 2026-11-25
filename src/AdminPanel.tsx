@@ -194,7 +194,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     if(previous===status) return;
     if(status==="refused" && !window.confirm("Confirmer le refus définitif de cette candidature ?")) return;
     try {
-      const historyEntry={from:previous,to:status,adminId:user?.uid??"",changedAt:new Date()};
+      const historyEntry={from:String(candidate.status??"received"),to:status,adminId:user?.uid??"",changedAt:new Date()};
       await updateDoc(doc(db,"candidatures",candidate.id),{status,reviewedAt:serverTimestamp(),reviewedBy:user?.uid??null,statusHistory:arrayUnion(historyEntry)});
       const patch={status,reviewedAt:new Date(),reviewedBy:user?.uid??null,statusHistory:[...(candidate.statusHistory??[]),historyEntry]};
       setRows(prev=>prev.map(row=>row.id===candidate.id?{...row,...patch}:row));
