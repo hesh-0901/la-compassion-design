@@ -162,8 +162,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Impossible de lire les candidatures. Vérifie la collection « candidatures » et ses règles d’accès."); }
     finally { setBusy(false); }
   };
-  const loadSettings = async () => { if(role!=="superAdmin") return; try { const snap=await getDoc(doc(db,"configuration","masterclass")); if(snap.exists()){const data=snap.data();setCapacity(data.capacity==null?"":String(data.capacity));setDeadline(data.deadline??"");} } catch { setError("Impossible de charger les réglages de la formation."); } };
-  useEffect(() => { if(user && role) void loadCandidates(); if(user && role==="superAdmin"){void loadAdmins();void loadSettings();} },[user,role]);
+  const loadSettings = async () => { if(!role) return; try { const snap=await getDoc(doc(db,"configuration","masterclass")); if(snap.exists()){const data=snap.data();setCapacity(data.capacity==null?"":String(data.capacity));setDeadline(data.deadline??"");} } catch { setError("Impossible de charger les réglages de la formation."); } };
+  useEffect(() => { if(user && role){void loadCandidates();void loadSettings();} if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
   const counts = useMemo(() => ({
     total:rows.length, accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
     pending:rows.filter(r=>["received","review"].includes(statusOf(r.status))).length,
@@ -319,7 +319,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           <article><span>Acceptées</span><strong>{counts.accepted}</strong><small>{counts.total?pctSafe(counts.accepted,counts.total):0}% du total</small></article>
           <article><span>En attente</span><strong>{counts.waiting}</strong><small>Liste d’attente</small></article>
         </div>
-        {role==="superAdmin"&&(capacity.trim()!==""||deadline)&&<p className="admin-capacity-summary">{capacity.trim()!==""?counts.accepted+" acceptés sur "+capacity+" places":""}{capacity.trim()!==""&&deadline?" · ":""}{deadline?"Date limite : "+new Date(deadline+"T00:00:00").toLocaleDateString("fr-FR"):""}</p>}
+        {(capacity.trim()!==""||deadline)&&<p className="admin-capacity-summary">{capacity.trim()!==""?counts.accepted+" acceptés sur "+capacity+" places":""}{capacity.trim()!==""&&deadline?" · ":""}{deadline?"Date limite : "+new Date(deadline+"T00:00:00").toLocaleDateString("fr-FR"):""}</p>}
         {rows.length>=5&&<section className="admin-section admin-status-distribution">
           <div className="admin-section-head"><div><h2>Répartition des statuts</h2><p>Vue globale du traitement des candidatures.</p></div></div>
           <div className="admin-status-segments" role="img" aria-label={statusOptions.map(item=>item.label+" : "+rows.filter(row=>statusOf(row.status)===item.value).length).join(", ")}>
