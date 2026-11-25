@@ -45,6 +45,8 @@ export default function App() {
     return "home";
   });
   const [form, setForm] = useState<FormData>(initialForm);
+  const [publicConfig,setPublicConfig] = useState<{capacity:number|null;currentCandidates:number;whatsappGroupLink:string}>({capacity:null,currentCandidates:0,whatsappGroupLink:""});
+  const [publicConfigLoaded,setPublicConfigLoaded] = useState(false);
   const [part, setPart] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [showMemberNotice, setShowMemberNotice] = useState(false);
@@ -66,6 +68,12 @@ export default function App() {
     window.history.pushState({ step: next }, "", path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  useEffect(() => {
+    if(step!=="presentation"&&step!=="registration")return;
+    let active=true;
+    fetch("/api/public-config").then(response=>response.ok?response.json():Promise.reject(new Error("Configuration indisponible"))).then(data=>{if(active){setPublicConfig({capacity:Number.isFinite(Number(data.capacity))&&Number(data.capacity)>0?Number(data.capacity):null,currentCandidates:Number(data.currentCandidates)||0,whatsappGroupLink:String(data.whatsappGroupLink||"")});setPublicConfigLoaded(true);}}).catch(()=>{if(active)setPublicConfigLoaded(true);});
+    return()=>{active=false;};
+  },[step]);
   useEffect(() => {
     const onPop = () => {
       const path = window.location.pathname;
@@ -114,6 +122,10 @@ export default function App() {
     setSubmitting(true);
     setSubmitError("");
     try {
+      const capacityResponse=await fetch("/api/public-config");
+      if(!capacityResponse.ok)throw new Error("Impossible de vérifier la disponibilité des places. Réessaie dans un instant.");
+      const latestConfig=await capacityResponse.json() as {capacity?:number|null;currentCandidates?:number};
+      if(typeof latestConfig.capacity==="number"&&Number(latestConfig.capacity)>0&&Number(latestConfig.currentCandidates)>=Number(latestConfig.capacity))throw new Error("Les candidatures sont clôturées : le nombre maximal de candidats a été atteint.");
       if (!profilePhoto || !profilePhoto.type.startsWith("image/")) throw new Error("Ajoute une photo de profil au format image.");
       const photo = await uploadToCloudinary(profilePhoto, "image");
       let portfolioUpload: { url: string; publicId: string } | null = null;
@@ -204,7 +216,8 @@ export default function App() {
           <Info icon="gift" label="Participation" value="Entièrement gratuite" />
           <Info icon="people" label="Disponibilité" value="Places limitées" />
         </section>
-        <div className="places-strip"><span className="place-dot" /> Les places sont limitées. Les candidatures seront étudiées par l’équipe.</div>
+        <div className="places-strip"><span className="place-dot" /> {publicConfig.capacity!==null?`${Math.max(0,publicConfig.capacity-publicConfig.currentCandidates)} place(s) disponible(s) sur ${publicConfig.capacity}.`:"Les places sont limitées. Les candidatures seront étudiées par l’équipe."}</div>
+        {publicConfigLoaded&&publicConfig.capacity!==null&&publicConfig.currentCandidates>=publicConfig.capacity&&<div className="submit-notice" role="status"><Icon name="info"/><div><b>Inscriptions clôturées</b><p>Le nombre maximal de candidatures a été atteint. Le formulaire n’est plus disponible pour cette session.</p></div></div>}
         <section className="content-section">
           <h2>Ce que tu vas apprendre</h2>
           <ul className="clean-list">
@@ -223,7 +236,7 @@ export default function App() {
           </ol>
         </section>
         <div className="commitment-note"><Icon name="info" size={22} /><p>Cette formation vise aussi à renforcer l’équipe du département Design. Ta candidature implique donc une volonté de servir dans ce département après la formation.</p></div>
-        <div className="action-bar"><button className="button button-primary" onClick={() => { setPart(0); go("registration"); }}>Je veux candidater <Icon name="arrow" /></button></div>
+        <div className="action-bar"><button className="button button-primary" disabled={publicConfigLoaded&&publicConfig.capacity!==null&&publicConfig.currentCandidates>=publicConfig.capacity} onClick={() => { setPart(0); go("registration"); }}> {publicConfigLoaded&&publicConfig.capacity!==null&&publicConfig.currentCandidates>=publicConfig.capacity?"Inscriptions clôturées":"Je veux candidater"} <Icon name="arrow" /></button></div>
       </div>}
 
       {step === "registration" && <div className="flow-screen form-screen">
