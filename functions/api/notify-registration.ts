@@ -2,6 +2,11 @@ import { createContext, escapeHtml, listActiveSuperAdmins, readDocument, sendEma
 
 type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string };
 
+const firstNameOf = (fullName: unknown) => {
+  const name = String(fullName || "").trim();
+  return name ? name.split(/\\s+/)[0] : "Candidat";
+};
+
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
     const body = await request.json() as { candidateId?: string };
@@ -17,10 +22,13 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const admins = await listActiveSuperAdmins(account, token);
     if (!admins.length) return jsonResponse({ error: "Aucun super administrateur actif avec une adresse e-mail dans Firestore." }, 500);
 
-    const name = escapeHtml(candidate.fullName || "Candidat");
+    const firstName = escapeHtml(firstNameOf(candidate.fullName));
+    const fullName = escapeHtml(candidate.fullName || "Candidat");
     const email = typeof candidate.email === "string" ? candidate.email.trim() : "";
     const phone = escapeHtml(candidate.phone || "Non renseigné");
     const level = escapeHtml(candidate.level || "Non renseigné");
+    const extension = escapeHtml(candidate.extension || "Non renseignée");
+    const department = escapeHtml(candidate.department || "Non renseigné");
     const createdAt = escapeHtml(candidate.createdAt || new Date().toISOString());
     const alreadyAdminNotified = Boolean(candidate.adminNotificationSentAt);
     const alreadyCandidateNotified = Boolean(candidate.candidateConfirmationSentAt);
@@ -28,13 +36,24 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
     if (email && !alreadyCandidateNotified) {
       try {
-        await sendEmail(env, email, "Candidature reçue – Masterclass Design", `
-          <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033">
-            <h2>Nous avons bien reçu votre candidature.</h2>
-            <p>Bonjour ${name},</p>
-            <p>Votre inscription à la Masterclass Design de l’Église de la Compassion a été enregistrée.</p>
-            <p>Votre dossier sera examiné par l’équipe. Vous recevrez un autre message lorsque la décision sera prise.</p>
-            <p>Merci,<br><strong>Équipe LA COMPASSION DESIGN</strong></p>
+        await sendEmail(env, email, `${firstName}, votre candidature à la Masterclass Design est bien reçue`, `
+          <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;line-height:1.65">
+            <div style="padding:26px 30px;background:#103d2b;border-radius:14px 14px 0 0;color:#fff">
+              <p style="margin:0 0 8px;font-size:12px;letter-spacing:2px;font-weight:bold">LA COMPASSION DESIGN</p>
+              <h2 style="margin:0;font-size:24px">Candidature enregistrée</h2>
+            </div>
+            <div style="padding:28px 30px;border:1px solid #e6e9ed;border-top:0;border-radius:0 0 14px 14px">
+              <p>Bonjour <strong>${firstName}</strong>,</p>
+              <p>Nous confirmons la bonne réception de votre candidature à la <strong>Masterclass Design de l’Église de la Compassion</strong>.</p>
+              <div style="margin:22px 0;padding:18px;background:#f3f7f4;border-radius:10px">
+                <strong>Votre dossier est maintenant enregistré.</strong><br>
+                Statut : <strong>En attente d’examen</strong>
+              </div>
+              <p>L’équipe va examiner les candidatures. Vous recevrez un message personnalisé dès qu’une décision sera prise. La réception de ce courriel ne constitue pas encore une confirmation de participation.</p>
+              <p>En attendant, gardez votre téléphone accessible et préparez-vous à respecter les conditions pratiques de la formation, notamment la disponibilité du 15 au 19 décembre 2026, de 19h00 à 22h00.</p>
+              <p>Merci pour votre intérêt et votre confiance.</p>
+              <p><strong>L’équipe LA COMPASSION DESIGN</strong></p>
+            </div>
           </div>`, "candidate-receipt-" + candidateId);
         await updateFields(account, token, "candidatures/" + candidateId, { candidateConfirmationSentAt: new Date().toISOString() });
         results.candidate = "sent";
@@ -46,17 +65,25 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     if (!alreadyAdminNotified) {
       const subject = "Nouvelle candidature – " + String(candidate.fullName || "Masterclass Design");
       const html = `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033">
-          <h2>Nouvelle candidature reçue</h2>
-          <p>Une nouvelle inscription vient d’être enregistrée dans LA COMPASSION DESIGN.</p>
-          <table cellpadding="7" style="border-collapse:collapse">
-            <tr><td><strong>Nom</strong></td><td>${name}</td></tr>
-            <tr><td><strong>Téléphone</strong></td><td>${phone}</td></tr>
-            <tr><td><strong>E-mail</strong></td><td>${escapeHtml(email || "Non renseigné")}</td></tr>
-            <tr><td><strong>Niveau design</strong></td><td>${level}</td></tr>
-            <tr><td><strong>Date</strong></td><td>${createdAt}</td></tr>
-          </table>
-          <p>Connecte-toi à l’espace d’administration pour consulter le dossier complet.</p>
+        <div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;line-height:1.6">
+          <div style="padding:24px 28px;background:#263449;border-radius:12px 12px 0 0;color:#fff">
+            <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;font-weight:bold">ESPACE SUPERVISION</p>
+            <h2 style="margin:0">Nouvelle candidature à examiner</h2>
+          </div>
+          <div style="padding:24px 28px;border:1px solid #e6e9ed;border-top:0;border-radius:0 0 12px 12px">
+            <p>Une nouvelle candidature vient d’être enregistrée. Merci de consulter le dossier et de statuer depuis l’espace d’administration.</p>
+            <table cellpadding="8" style="width:100%;border-collapse:collapse;background:#f7f8fa">
+              <tr><td><strong>Nom complet</strong></td><td>${fullName}</td></tr>
+              <tr><td><strong>Téléphone</strong></td><td>${phone}</td></tr>
+              <tr><td><strong>E-mail</strong></td><td>${escapeHtml(email || "Non renseigné")}</td></tr>
+              <tr><td><strong>Extension</strong></td><td>${extension}</td></tr>
+              <tr><td><strong>Département</strong></td><td>${department}</td></tr>
+              <tr><td><strong>Niveau en design</strong></td><td>${level}</td></tr>
+              <tr><td><strong>Reçue le</strong></td><td>${createdAt}</td></tr>
+            </table>
+            <p style="margin-top:20px">Connectez-vous à l’espace SuperAdmin pour examiner les informations complètes, puis accepter ou refuser la candidature.</p>
+            <p><strong>LA COMPASSION DESIGN</strong></p>
+          </div>
         </div>`;
       const sent: string[] = [];
       const failures: string[] = [];
