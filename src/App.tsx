@@ -306,8 +306,9 @@ function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onC
   useEffect(()=>{const url=URL.createObjectURL(file);setSource(url);return()=>URL.revokeObjectURL(url);},[file]);
   const loadImage=(event:React.SyntheticEvent<HTMLImageElement>)=>{
     const image=event.currentTarget;
-    const availableWidth=image.parentElement?.parentElement?.clientWidth||360;
-    const scale=Math.min(availableWidth/image.naturalWidth,360/image.naturalHeight,1);
+    const availableWidth=Math.max(240,(image.closest(".photo-crop-workspace") as HTMLElement | null)?.clientWidth||360);
+    const availableHeight=Math.max(260,Math.min(window.innerHeight*.48,420));
+    const scale=Math.min(availableWidth/image.naturalWidth,availableHeight/image.naturalHeight,1);
     const width=Math.round(image.naturalWidth*scale),height=Math.round(image.naturalHeight*scale);
     setImageSize({width:image.naturalWidth,height:image.naturalHeight});
     setFrame({width,height});
