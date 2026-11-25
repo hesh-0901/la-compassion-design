@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 type Role = "superAdmin" | "admin";
@@ -91,7 +91,6 @@ function Icon({ name }: { name: "grid" | "people" | "download" | "search" | "fil
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]} /></svg>;
 }
-function pctSafe(n:number,d:number){return d?Math.round(n/d*100):0}
 function StatusPill({ value }: { value?: string }) {
   const status = statusOf(value), label = statusOptions.find(item => item.value === status)!.label;
   const icons:Record<Status,string>={received:"M12 3v18M3 12h18",review:"M12 3v18m-9-9h18",accepted:"m5 12 4 4L19 6",waiting:"M12 8v4l3 2",refused:"M18 6 6 18M6 6l12 12"};
@@ -125,9 +124,6 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [adminEditForm,setAdminEditForm] = useState({firstName:"",lastName:"",active:true});
   const [adminEditSaving,setAdminEditSaving] = useState(false);
   const [showAdminPassword,setShowAdminPassword] = useState(false);
-  const [capacity,setCapacity] = useState("");
-  const [deadline,setDeadline] = useState("");
-  const [capacitySaving,setCapacitySaving] = useState(false);
   const [internalNote,setInternalNote] = useState("");
   const [noteSaving,setNoteSaving] = useState(false);
 
@@ -162,8 +158,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     } catch { setError("Impossible de lire les candidatures. Vérifie la collection « candidatures » et ses règles d’accès."); }
     finally { setBusy(false); }
   };
-  const loadSettings = async () => { if(!role) return; try { const snap=await getDoc(doc(db,"configuration","masterclass")); if(snap.exists()){const data=snap.data();setCapacity(data.capacity==null?"":String(data.capacity));setDeadline(data.deadline??"");} } catch { setError("Impossible de charger les réglages de la formation."); } };
-  useEffect(() => { if(user && role){void loadCandidates();void loadSettings();} if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
+  useEffect(() => { if(user && role){void loadCandidates();} if(user && role==="superAdmin") void loadAdmins(); },[user,role]);
   const counts = useMemo(() => ({
     total:rows.length, received:rows.filter(r=>statusOf(r.status)==="received").length,
     accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
@@ -212,15 +207,6 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       setSelected(prev=>prev?.id===selected.id?{...prev,internalNote}:prev);
     } catch { setError("Impossible d’enregistrer la note interne. Vérifie les règles Firestore."); }
     finally { setNoteSaving(false); }
-  };
-  const saveCapacitySettings = async (event:React.FormEvent) => {
-    event.preventDefault(); if(role!=="superAdmin") return;
-    const parsed=capacity.trim()===""?null:Number(capacity);
-    if(parsed!==null && (!Number.isInteger(parsed)||parsed<1)){setError("Le nombre de places doit être un entier positif.");return;}
-    setCapacitySaving(true);setError("");
-    try { await setDoc(doc(db,"configuration","masterclass"),{capacity:parsed,deadline:deadline||null,updatedAt:serverTimestamp(),updatedBy:user?.uid??null},{merge:true}); }
-    catch { setError("Impossible d’enregistrer les réglages. Vérifie les règles Firestore."); }
-    finally { setCapacitySaving(false); }
   };
   const openAdminDetails = (item:AdminRecord) => {
     setSelectedAdmin(item);
