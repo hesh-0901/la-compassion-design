@@ -36,7 +36,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const fullName = escapeHtml(candidate.fullName || "Candidat");
     const configDoc = accepted ? await readDocument(account, token, "configuration", "masterclass") : null;
     const rawWhatsappLink = typeof configDoc?.data.whatsappGroupLink === "string" ? configDoc.data.whatsappGroupLink.trim() : "";
-    const whatsappLink = /^https:\/\/chat\\.whatsapp\\.com\\/[A-Za-z0-9_-]+\\/?$/.test(rawWhatsappLink) ? rawWhatsappLink : "";
+    const whatsappLink = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]+\/?$/.test(rawWhatsappLink) ? rawWhatsappLink : "";
     const subject = accepted
       ? `Félicitations ${firstName} : votre place est confirmée !`
       : `Suite à votre candidature, ${firstName}`;
