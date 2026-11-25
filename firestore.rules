@@ -27,6 +27,30 @@ service cloud.firestore {
           || value.matches('https://res\\.cloudinary\\.com/ocgef9bk/(image|raw)/upload/.*'));
     }
 
+    function validAuditAppend() {
+      return (
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny(['statusHistory'])
+        && request.resource.data.statusHistory is list
+        && request.resource.data.statusHistory.size() == resource.data.get('statusHistory', []).size() + 1
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].adminId == request.auth.uid
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].from == resource.data.get('status', 'received')
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].to == request.resource.data.status
+        && request.resource.data.statusHistory[request.resource.data.statusHistory.size() - 1].changedAt is timestamp
+        && request.resource.data.reviewedBy == request.auth.uid
+        && request.resource.data.reviewedAt is timestamp
+      ) || (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['statusHistory'])
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['reviewedAt', 'reviewedBy'])
+      );
+    }
+
+    function validInternalNote() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['internalNote'])
+        || (request.resource.data.internalNote is string && request.resource.data.internalNote.size() <= 2000);
+    }
+
     function validPublicApplication() {
       return request.resource.data.keys().hasOnly([
         'fullName', 'gender', 'phone', 'email', 'area', 'age',
@@ -89,17 +113,24 @@ service cloud.firestore {
 
       allow update: if isActiveAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'reviewedAt', 'reviewedBy']);
+          .hasOnly(['status', 'reviewedAt', 'reviewedBy', 'statusHistory', 'internalNote'])
+        && validAuditAppend() && validInternalNote();
 
       allow update: if isSuperAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly([
-            'status', 'reviewedAt', 'reviewedBy',
+            'status', 'reviewedAt', 'reviewedBy', 'statusHistory', 'internalNote',
             'fullName', 'name', 'phone', 'email', 'area', 'commune',
             'assembly', 'extension', 'level', 'ram'
-          ]);
+          ])
+        && validAuditAppend() && validInternalNote();
 
       allow delete: if isSuperAdmin();
+    }
+
+    match /configuration/{configId} {
+      allow read: if isActiveAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /{document=**} {

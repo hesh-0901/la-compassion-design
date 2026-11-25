@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -18,6 +18,12 @@ export const firebaseApp = getApps().length ? getApp() : initializeApp(firebaseC
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
 export const storage = getStorage(firebaseApp);
+
+// Explicit opt-in only: never connect an application build to production data during emulator tests.
+if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true") {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+}
 
 // Analytics is optional and only initialized in supported browser environments.
 export const analyticsReady = isSupported()
