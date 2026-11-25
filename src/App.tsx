@@ -5,12 +5,12 @@ import { db } from "./firebase";
 
 type Step = "home" | "presentation" | "registration" | "confirmation" | "admin";
 type FormData = {
-  fullName: string; gender: string; phone: string; email: string; area: string; age: string;
+  fullName: string; gender: string; phone: string; email: string; area: string; areaOther: string; age: string;
   member: string; extension: string; attendance: string; department: string; maturity: string; level: string; tools: string[];
   portfolio: string; ram: string; availability: string; motivation: string; commitment: boolean;
 };
 const initialForm: FormData = {
-  fullName: "", gender: "", phone: "", email: "", area: "", age: "", member: "", attendance: "",
+  fullName: "", gender: "", phone: "", email: "", area: "", areaOther: "", age: "", member: "", attendance: "",
   extension: "", department: "", maturity: "", level: "", tools: [], portfolio: "", ram: "", availability: "",
   motivation: "", commitment: false,
 };
@@ -84,7 +84,7 @@ export default function App() {
       : ["ram", "availability", "motivation", "commitment"];
     const missing = required.filter(key => {
       const value = form[key];
-      return typeof value === "string" ? !value.trim() : typeof value === "boolean" ? !value : false;
+      return key === "area" ? (form.area === "Autre" ? !form.areaOther.trim() : !form.area.trim()) : typeof value === "string" ? !value.trim() : typeof value === "boolean" ? !value : false;
     }).map(String);
     if (part === 0 && phoneDigits.length !== 9) missing.push("phone");
     if (part === 1 && form.member !== "Oui") missing.push("member");
@@ -125,7 +125,7 @@ export default function App() {
         gender: form.gender,
         phone: "+243" + phoneDigits,
         email: form.email.trim(),
-        area: form.area.trim(),
+        area: (form.area === "Autre" ? form.areaOther : form.area).trim(),
         age: form.age,
         member: form.member,
         extension: form.extension,
@@ -229,7 +229,10 @@ export default function App() {
           <Field label="Genre" error={errors.includes("gender") ? "Choisis ton genre." : ""}><Choice value={form.gender} onChange={v => update("gender", v)} options={["Homme", "Femme"]} /></Field>
           <Field label="Numéro WhatsApp" error={errors.includes("phone") ? "Le numéro doit contenir 9 chiffres après +243." : ""}><div className="phone-input"><span>+243</span><input inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={e => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="81 234 56 78" /></div></Field>
           <Field label="Adresse e-mail" hint="Facultatif"><input type="email" autoComplete="email" value={form.email} onChange={e => update("email", e.target.value)} placeholder="nom@exemple.com" /></Field>
-          <Field label="Commune ou quartier" error={errors.includes("area") ? "Précise ta commune ou ton quartier." : ""}><input autoComplete="address-level2" value={form.area} onChange={e => update("area", e.target.value)} placeholder="Ex. Lubumbashi, Golf" /></Field>
+          <Field label="Commune de résidence" error={errors.includes("area") ? "Choisis ta commune de résidence." : ""}>
+            <Dropdown value={form.area} onChange={v=>{update("area",v);if(v!=="Autre")update("areaOther","");}} placeholder="Sélectionner une commune" options={["Annexe","Kamalondo","Kampemba","Katuba","Kenya","Lubumbashi","Ruashi","Autre"]}/>
+            {form.area==="Autre"&&<div className="field-extra"><label className="field-label" htmlFor="area-other">Précise ta commune ou ton quartier</label><input id="area-other" autoComplete="address-level2" value={form.areaOther} onChange={e=>update("areaOther",e.target.value)} placeholder="Indique ta commune ou ton quartier"/></div>}
+          </Field>
           <Field label="Tranche d’âge" error={errors.includes("age") ? "Choisis une tranche d’âge." : ""}><Choice value={form.age} onChange={v => update("age", v)} options={["Moins de 18 ans", "18–24 ans", "25–34 ans", "35 ans et plus"]} /></Field>
         </div>}
 
@@ -384,6 +387,24 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
   const stateClass = error ? " field-invalid" : answered ? " field-answered" : "";
   return <div className={"field"+stateClass}><label className="field-label">{label}</label>{children}<div className="field-meta">{error ? <span className="field-error">{error}</span> : <span>{hint || " "}</span>}</div></div>;
 }
+function Dropdown({value,onChange,options,placeholder}:{value:string;onChange:(value:string)=>void;options:string[];placeholder:string}){
+  const [open,setOpen]=useState(false);
+  const root=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    if(!open)return;
+    const close=(event:PointerEvent)=>{if(root.current&&!root.current.contains(event.target as Node))setOpen(false);};
+    const key=(event:KeyboardEvent)=>{if(event.key==="Escape")setOpen(false);};
+    document.addEventListener("pointerdown",close);document.addEventListener("keydown",key);
+    return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",key);};
+  },[open]);
+  return <div className={"form-dropdown"+(open?" is-open":"")} ref={root}>
+    <button type="button" className="form-dropdown-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={()=>setOpen(v=>!v)}>
+      <span className={value?"":"is-placeholder"}>{value||placeholder}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+    </button>
+    {open&&<div className="form-dropdown-menu" role="listbox">{options.map(option=><button type="button" role="option" aria-selected={value===option} key={option} className={"form-dropdown-option"+(value===option?" selected":"")} onClick={()=>{onChange(option);setOpen(false);}}>{option}{value===option&&<span aria-hidden="true">✓</span>}</button>)}</div>}
+  </div>;
+}
+
 function Choice({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: string[] }) {
   return <div className="choice-group">{options.map(option => <button type="button" key={option} className={value === option ? "choice selected" : "choice"} onClick={() => onChange(option)}>{option}</button>)}</div>;
 }
