@@ -1395,3 +1395,76 @@
     scroll-margin-top:82px;
   }
 }
+
+
+/* MODAL LAYERING — dialogs and drawers must sit above the sticky page header */
+.admin-drawer-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  z-index:500!important;
+  isolation:isolate!important;
+}
+.admin-drawer{
+  position:relative!important;
+  z-index:501!important;
+  max-height:100dvh!important;
+  overscroll-behavior:contain!important;
+  scroll-padding-block:20px!important;
+}
+.admin-edit-overlay{
+  position:fixed!important;
+  inset:0!important;
+  z-index:600!important;
+  isolation:isolate!important;
+}
+.admin-create-admin-modal{
+  position:relative!important;
+  z-index:601!important;
+}
+.admin-preview-overlay{
+  z-index:700!important;
+}
+@media(max-width:680px){
+  .admin-drawer-backdrop{
+    align-items:stretch!important;
+    justify-content:stretch!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+  .admin-drawer{
+    width:100%!important;
+    max-width:100vw!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    min-height:0!important;
+    padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(22px + env(safe-area-inset-bottom,0px))!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-y:contain!important;
+    scroll-padding-top:calc(18px + env(safe-area-inset-top,0px))!important;
+  }
+  .admin-drawer-head{
+    position:relative!important;
+    z-index:1!important;
+    align-items:flex-start!important;
+    gap:10px!important;
+    margin-top:0!important;
+  }
+  .admin-profile-heading{min-width:0!important;gap:10px!important}
+  .admin-profile-photo,.admin-profile-placeholder{width:64px!important;height:64px!important;border-radius:13px!important}
+  .admin-drawer-head h2{font-size:19px!important;overflow-wrap:anywhere}
+  .admin-drawer .admin-status{margin-top:6px!important}
+  .admin-edit-overlay{
+    align-items:center!important;
+    justify-content:center!important;
+    padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px))!important;
+    overflow-y:auto!important;
+  }
+  .admin-create-admin-modal{
+    max-height:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+}
