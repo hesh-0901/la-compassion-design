@@ -112,7 +112,7 @@ function AnalyticsLine({items}:{items:{label:string;value:number}[]}){
 }
 function AnalyticsGauge({value,label,detail}:{value:number;label:string;detail:string}){
  const r=34,c=2*Math.PI*r,progress=Math.max(0,Math.min(100,value))/100*c;
- return <div className="analytics-gauge"><div className="analytics-gauge-visual"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r={r} fill="none" stroke="#edf1f7" strokeWidth="7" strokeDasharray={c*.72+" "+c} transform="rotate(144 44 44)" strokeLinecap="round"/><circle cx="44" cy="44" r={r} fill="none" stroke="#1f5bff" strokeWidth="7" strokeDasharray={progress*.72+" "+c} transform="rotate(144 44 44)" strokeLinecap="round"/></svg><strong>{value}%</strong></div><b>{label}</b><small>{detail}</small></div>;
+ return <div className="analytics-gauge"><div className="analytics-gauge-visual"><svg viewBox="0 0 88 88"><circle cx="44" cy="44" r={r} fill="none" stroke="#edf1f7" strokeWidth="7" strokeDasharray={c*.5+" "+c*.5} transform="rotate(180 44 44)" strokeLinecap="round"/><circle cx="44" cy="44" r={r} fill="none" stroke="#1f5bff" strokeWidth="7" strokeDasharray={progress*.5+" "+c} transform="rotate(180 44 44)" strokeLinecap="round"/></svg><strong>{value}%</strong></div><b>{label}</b><small>{detail}</small></div>;
 }
 function AnalyticsCompact({items,total}:{items:{label:string;value:number}[];total:number}){
  if(!items.length)return <div className="analytics-empty">Aucune réponse disponible</div>;
@@ -215,7 +215,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         byMonth.set(key,(byMonth.get(key)??0)+1);
       }
     });
-    const trend=[...byMonth.entries()].slice(-8).map(([label,value])=>({label,value}));
+    const trend=[...byMonth.entries()].slice(0,8).reverse().map(([label,value])=>({label,value}));
     const answered=(key:string)=>rows.filter(row=>row[key]!==undefined&&row[key]!==null&&row[key]!==""&&row[key]!=="—").length;
     const pct=(n:number,d:number)=>d?Math.round(n/d*100):0;
     const yesRam=rows.filter(row=>String(row.ram??"").toLowerCase()==="oui").length;
