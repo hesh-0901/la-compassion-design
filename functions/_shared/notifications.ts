@@ -1,7 +1,7 @@
 type Env = {
   FIREBASE_SERVICE_ACCOUNT: string;
-  RESEND_API_KEY: string;
-  RESEND_FROM_EMAIL: string;
+  MAILER_WEB_APP_URL: string;
+  MAILER_SECRET: string;
 };
 
 type ServiceAccount = {
@@ -111,18 +111,21 @@ export async function updateFields(account: ServiceAccount, token: string, docum
 }
 
 export async function sendEmail(env: Env, to: string, subject: string, html: string, idempotencyKey: string) {
-  const result = await fetch("https://api.resend.com/emails", {
+  if (!env.MAILER_WEB_APP_URL || !env.MAILER_SECRET) {
+    throw new Error("MAILER_WEB_APP_URL ou MAILER_SECRET manquant dans Cloudflare.");
+  }
+  const result = await fetch(env.MAILER_WEB_APP_URL, {
     method: "POST",
-    headers: {
-      authorization: "Bearer " + env.RESEND_API_KEY,
-      "content-type": "application/json",
-      "Idempotency-Key": idempotencyKey,
-    },
-    body: JSON.stringify({ from: env.RESEND_FROM_EMAIL || "onboarding@resend.dev", to: [to], subject, html }),
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ secret: env.MAILER_SECRET, to, subject, html, idempotencyKey }),
+    redirect: "follow",
   });
-  const data = await result.json() as { id?: string; message?: string; name?: string };
-  if (!result.ok) throw new Error("Resend: " + (data.message || data.name || result.status));
-  return data.id || "sent";
+  const raw = await result.text();
+  let data: { success?: boolean; error?: string };
+  try { data = JSON.parse(raw) as { success?: boolean; error?: string }; }
+  catch { throw new Error("Réponse Apps Script invalide : " + raw.slice(0, 250)); }
+  if (!result.ok || !data.success) throw new Error(data.error || "Échec de l'envoi Gmail.");
+  return idempotencyKey;
 }
 
 export async function authenticateFirebaseUser(request: Request, projectId: string): Promise<string> {
@@ -154,7 +157,7 @@ export function escapeHtml(value: unknown) {
 }
 
 export async function createContext(env: Env) {
-  if (!env.RESEND_API_KEY) throw new Error("RESEND_API_KEY manquant.");
+  if (!env.MAILER_WEB_APP_URL || !env.MAILER_SECRET) throw new Error("Configuration Gmail manquante dans Cloudflare.");
   const account = accountFrom(env);
   const token = await serviceAccessToken(account);
   return { account, token };
