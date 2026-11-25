@@ -126,6 +126,14 @@ export default function App() {
       if(!capacityResponse.ok)throw new Error("Impossible de vérifier la disponibilité des places. Réessaie dans un instant.");
       const latestConfig=await capacityResponse.json() as {capacity?:number|null;currentCandidates?:number};
       if(typeof latestConfig.capacity==="number"&&Number(latestConfig.capacity)>0&&Number(latestConfig.currentCandidates)>=Number(latestConfig.capacity))throw new Error("Les candidatures sont clôturées : le nombre maximal de candidats a été atteint.");
+      const duplicateResponse = await fetch("/api/check-duplicate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fullName: form.fullName.trim(), email: form.email.trim(), phone: "+243" + phoneDigits }),
+      });
+      const duplicateResult = await duplicateResponse.json().catch(() => ({})) as { duplicate?: boolean; message?: string; error?: string };
+      if (!duplicateResponse.ok) throw new Error(duplicateResult.message || duplicateResult.error || "La vérification des doublons a échoué. Réessaie.");
+      if (duplicateResult.duplicate) throw new Error(duplicateResult.message || "Une candidature existe déjà avec ces informations.");
       if (!profilePhoto || !profilePhoto.type.startsWith("image/")) throw new Error("Ajoute une photo de profil au format image.");
       const photo = await uploadToCloudinary(profilePhoto, "image");
       let portfolioUpload: { url: string; publicId: string } | null = null;
