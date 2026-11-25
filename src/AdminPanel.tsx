@@ -485,13 +485,13 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
       <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
       <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
-      {role==="superAdmin"&&<button className={tab==="settings"?"selected":""} onClick={()=>setTab("settings")} title="Paramètres de la Masterclass"><Icon name="edit"/><span>Paramètres</span></button>}
-      {role==="superAdmin"&&<button className={tab==="admins"?"selected":""} onClick={()=>setTab("admins")} title="Gestion des administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>}
+      <button className={tab==="settings"?"selected":""} onClick={()=>setTab("settings")} title="Paramètres de la Masterclass"><Icon name="edit"/><span>Paramètres</span></button>}
+      <button className={tab==="admins"?"selected":""} onClick={()=>setTab("admins")} title="Administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>}
       <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
       <header className="admin-mobile-head"><div className="admin-mobile-brand-group"><button className="admin-menu-toggle-visible" type="button" onClick={()=>setMobileSidebarOpen(value=>!value)} aria-label={mobileSidebarOpen?"Fermer le menu":"Ouvrir le menu"} aria-expanded={mobileSidebarOpen}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div></div><button onClick={()=>signOut(auth)} aria-label="Déconnexion"><Icon name="logout"/></button></header>
-      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":tab==="settings"?"Paramètres de la Masterclass":"Gestion des administrateurs"}</h1><p>{tab==="settings"?"Configure la capacité d’accueil et les communications de la formation.":tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><div className="admin-page-actions">{tab==="overview"&&<button className="admin-refresh admin-export-head" onClick={()=>downloadXlsx(rows)}>Exporter Excel</button>}<button className="admin-refresh" onClick={()=>{void loadCandidates();void loadCapacity()}} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div></div>
+      <div className="admin-page-head"><div><span className="admin-kicker">MASTERCLASS DESIGN · 15—19 DÉCEMBRE 2026</span><h1>{tab==="overview"?"Vue générale":tab==="candidates"?"Candidatures":tab==="downloads"?"Téléchargements":tab==="settings"?"Paramètres de la Masterclass":"Gestion des administrateurs"}</h1><p>{tab==="settings"?"Configure la capacité d’accueil et les communications de la formation.":tab==="admins"?"Création et suivi des accès administrateurs.":"Suivi et gestion des dossiers de candidature."}</p></div><div className="admin-page-actions">{tab==="overview"&&role==="superAdmin"&&<button className="admin-refresh admin-export-head" onClick={()=>downloadXlsx(rows)}>Exporter Excel</button>}<button className="admin-refresh" onClick={()=>{void loadCandidates();void loadCapacity()}} disabled={busy}><Icon name="refresh"/>{busy?"Actualisation…":"Actualiser"}</button></div></div>
       {error&&<p className="admin-error" role="alert">{error}</p>}
       {tab==="overview"&&<>
         <div className="admin-summary admin-kpi-summary">
@@ -565,9 +565,9 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         <div className="admin-export-main">
           <div className="admin-export-file-icon"><Icon name="file"/></div>
           <div className="admin-export-copy"><b>Classeur Excel (.xlsx)</b><p>Un candidat par ligne, toutes les réponses, les coordonnées et les liens vers les pièces jointes.</p><small>{filtered.length} dossier(s) · {Object.keys(filtered[0]??{}).length||0} champs enregistrés au maximum</small></div>
-          <button className="admin-primary admin-xlsx-button" disabled={!filtered.length} onClick={()=>downloadXlsx(filtered)}><Icon name="download"/> Télécharger Excel</button>
+          {role==="superAdmin"&&<button className="admin-primary admin-xlsx-button" disabled={!filtered.length} onClick={()=>downloadXlsx(filtered)}><Icon name="download"/> Télécharger Excel</button>}
         </div>
-        <div className="admin-export-footer"><span>Les filtres appliqués aux candidatures sont pris en compte dans l’export.</span><button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer la liste / PDF</button></div>
+        <div className="admin-export-footer"><span>Les filtres appliqués aux candidatures sont pris en compte dans l’export.</span>{role==="superAdmin"&&<button className="admin-secondary" disabled={!filtered.length} onClick={()=>window.print()}>Imprimer la liste / PDF</button>}</div>
         <div className="admin-section-head admin-assets-head"><div><h2>Documents des candidats</h2><p>Chaque dossier regroupe les pièces jointes sous le nom du candidat.</p></div><span className="admin-assets-count">{assetsByCandidate.length} dossier(s)</span></div>
         <div className="admin-download-groups">
           {assetsByCandidate.map(({candidate,files})=>{
@@ -575,7 +575,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             const portfolio=files.find(file=>file.name==="Création / portfolio");
             const renderFile=(file: {name:string;url:string}|undefined,kind:"photo"|"portfolio")=><div className={`admin-download-file-cell ${kind}`}>
               <span className="admin-download-file-bubble">{kind==="photo"?"PHOTO DE PROFIL":"PORTFOLIO"}</span>
-              {file?<><button type="button" className="admin-download-preview" onClick={()=>setPreviewAsset({name:personName(candidate),label:file.name,url:file.url})}>Aperçu</button><a className="admin-download-link" href={file.url} target="_blank" rel="noreferrer" download>Télécharger <Icon name="download"/></a></>:<span className="admin-download-missing">Non fourni</span>}
+              {file?<><button type="button" className="admin-download-preview" onClick={()=>setPreviewAsset({name:personName(candidate),label:file.name,url:file.url})}>Aperçu</button>{role==="superAdmin"&&<a className="admin-download-link" href={file.url} target="_blank" rel="noreferrer" download>Télécharger <Icon name="download"/></a>}</>:<span className="admin-download-missing">Non fourni</span>}
             </div>;
             return <article className="admin-download-candidate" key={candidate.id}>
               <div className="admin-download-candidate-head">
@@ -592,8 +592,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
         </div>
         {!assetsByCandidate.length&&<p className="admin-empty">Aucun fichier n’est encore associé aux candidatures.</p>}
       </section>}
-      {tab==="settings"&&role==="superAdmin"&&<section className="admin-masterclass-settings">
-        <div className="admin-settings-intro"><div><span className="admin-kicker">SUPERADMIN · CONFIGURATION</span><h2>Contrôle de la Masterclass</h2><p>Gère les paramètres qui influencent les inscriptions et les communications avec les candidats.</p></div><span className="admin-settings-secure">Accès SuperAdmin uniquement</span></div>
+      {tab==="settings"&&<section className="admin-masterclass-settings">
+        <div className="admin-settings-intro"><div><span className="admin-kicker">SUPERADMIN · CONFIGURATION</span><h2>Contrôle de la Masterclass</h2><p>Gère les paramètres qui influencent les inscriptions et les communications avec les candidats.</p></div><span className="admin-settings-secure">{role==="superAdmin"?"Accès SuperAdmin":"Consultation seule"}</span></div>
         <div className="admin-settings-tabs" role="tablist" aria-label="Paramètres de la Masterclass">
           <button type="button" role="tab" aria-selected={settingsTab==="capacity"} className={settingsTab==="capacity"?"active":""} onClick={()=>setSettingsTab("capacity")}><Icon name="grid"/> Capacité des inscriptions</button>
           <button type="button" role="tab" aria-selected={settingsTab==="whatsapp"} className={settingsTab==="whatsapp"?"active":""} onClick={()=>setSettingsTab("whatsapp")}><Icon name="people"/> Groupe WhatsApp</button>
@@ -602,17 +602,17 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
           <div className="admin-settings-panel-head"><div><span className="admin-settings-eyebrow">GESTION DES PLACES</span><h3>Limite de candidatures</h3><p>Définis la capacité maximale autorisée pour cette session.</p></div><span className="admin-settings-symbol">01</span></div>
           <div className="admin-capacity-overview"><div><small>CANDIDATURES REÇUES</small><strong>{rows.length}</strong></div><div className="admin-capacity-divider"/><div><small>CAPACITÉ CONFIGURÉE</small><strong>{capacity===null?"Illimitée":capacity}</strong></div><div className="admin-capacity-divider"/><div><small>PLACES RESTANTES</small><strong>{capacity===null?"—":Math.max(0,capacity-rows.length)}</strong></div></div>
           <div className="admin-settings-progress"><div><span>Progression des inscriptions</span><b>{capacity===null?"Sans limite":Math.min(100,Math.round(rows.length/capacity*100))+"%"}</b></div><i><span style={{width:capacity===null?"0%":Math.min(100,rows.length/capacity*100)+"%"}}/></i></div>
-          <div className="admin-settings-panel-footer"><p>{capacity===null?"Aucune limite n’est actuellement appliquée.":rows.length>=capacity?"La capacité configurée est atteinte. Les nouvelles inscriptions sont bloquées.":"Les inscriptions restent ouvertes jusqu’à ce que la capacité soit atteinte."}</p><button type="button" className="admin-primary" onClick={()=>setSettingsModal("capacity")}>Modifier la capacité</button></div>
+          <div className="admin-settings-panel-footer"><p>{capacity===null?"Aucune limite n’est actuellement appliquée.":rows.length>=capacity?"La capacité configurée est atteinte. Les nouvelles inscriptions sont bloquées.":"Les inscriptions restent ouvertes jusqu’à ce que la capacité soit atteinte."}</p>{role==="superAdmin"&&<button type="button" className="admin-primary" onClick={()=>setSettingsModal("capacity")}>Modifier la capacité</button>}</div>
         </div>}
         {settingsTab==="whatsapp"&&<div className="admin-settings-panel" role="tabpanel">
           <div className="admin-settings-panel-head"><div><span className="admin-settings-eyebrow">COMMUNICATION DES CANDIDATS</span><h3>Groupe WhatsApp officiel</h3><p>Le lien est transmis aux candidats dans leur e-mail d’acceptation.</p></div><span className="admin-settings-symbol">02</span></div>
           <div className="admin-whatsapp-status"><span className="admin-whatsapp-mark">W</span><div><small>LIEN D’INVITATION ACTUEL</small><strong>{whatsappGroupLink?"Groupe WhatsApp configuré":"Aucun groupe configuré"}</strong><span>{whatsappGroupLink?whatsappGroupLink:"Le lien sera absent des e-mails tant qu’il n’est pas renseigné."}</span></div></div>
-          <div className="admin-settings-panel-footer"><p>Utilise un lien d’invitation généré depuis les paramètres du groupe WhatsApp. Tu peux le remplacer à tout moment.</p><button type="button" className="admin-primary" onClick={()=>setSettingsModal("whatsapp")}>{whatsappGroupLink?"Modifier le lien":"Ajouter un lien"}</button></div>
+          <div className="admin-settings-panel-footer"><p>Utilise un lien d’invitation généré depuis les paramètres du groupe WhatsApp. Tu peux le remplacer à tout moment.</p>{role==="superAdmin"&&<button type="button" className="admin-primary" onClick={()=>setSettingsModal("whatsapp")}>{whatsappGroupLink?"Modifier le lien":"Ajouter un lien"}</button>}</div>
         </div>}
       </section>}
-      {tab==="admins"&&role==="superAdmin"&&<section className="admin-section admin-manage-admins">
-        <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>Crée et gère les accès à l’espace d’administration.</p></div><button className="admin-primary" type="button" onClick={()=>{setError("");setAdminForm({firstName:"",lastName:"",email:"",password:""});setAdminModalOpen(true);}}>+ Créer un administrateur</button></div>
-        <div className="admin-admin-list">{admins.map(item=><article className="admin-admin-row" key={item.id}><span className="admin-admin-avatar">{(item.firstName||item.email||"A").slice(0,1).toUpperCase()}</span><div className="admin-admin-info"><b>{[item.firstName,item.lastName].filter(Boolean).join(" ")||"Administrateur"}</b><small>{item.email||"—"}</small></div><span className={"admin-role-pill "+(item.role==="superAdmin"?"super":"")}>{item.role==="superAdmin"?"Super administrateur":"Administrateur"}</span><span className={"admin-active-pill "+(item.active?"active":"")}>{item.active?"Actif":"Désactivé"}</span><button type="button" className="admin-admin-open" onClick={()=>openAdminDetails(item)}>Voir / Modifier</button></article>)}</div>
+      {tab==="admins"&&<section className="admin-section admin-manage-admins">
+        <div className="admin-section-head"><div><h2>Équipe d’administration</h2><p>Crée et gère les accès à l’espace d’administration.</p></div>{role==="superAdmin"&&<button className="admin-primary" type="button" onClick={()=>{setError("");setAdminForm({firstName:"",lastName:"",email:"",password:""});setAdminModalOpen(true);}}>+ Créer un administrateur</button>}</div>
+        <div className="admin-admin-list">{admins.map(item=><article className="admin-admin-row" key={item.id}><span className="admin-admin-avatar">{(item.firstName||item.email||"A").slice(0,1).toUpperCase()}</span><div className="admin-admin-info"><b>{[item.firstName,item.lastName].filter(Boolean).join(" ")||"Administrateur"}</b><small>{item.email||"—"}</small></div><span className={"admin-role-pill "+(item.role==="superAdmin"?"super":"")}>{item.role==="superAdmin"?"Super administrateur":"Administrateur"}</span><span className={"admin-active-pill "+(item.active?"active":"")}>{item.active?"Actif":"Désactivé"}</span>{role==="superAdmin"&&<button type="button" className="admin-admin-open" onClick={()=>openAdminDetails(item)}>Voir / Modifier</button>}</article>)}</div>
         {!admins.length&&<p className="admin-empty">Aucun administrateur trouvé.</p>}
       </section>}
     </main>
@@ -703,22 +703,19 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             <div><small>Date de candidature</small><b>{dateLabel(selected.createdAt)}</b></div>
           </div>
         </div>
-        <div className="admin-detail-section admin-contact-actions">
-          <h3>Contacter le candidat</h3>
-          <div className="admin-contact-links">{String(selected.phone??"").replace(/\D/g,"").length>=9&&<><a href={"tel:"+String(selected.phone).replace(/[^+0-9]/g,"")}>Appeler</a><a href={"https://wa.me/243"+String(selected.phone).replace(/\D/g,"").replace(/^243/,"")} target="_blank" rel="noreferrer">WhatsApp</a></>}</div>
-        </div>
-        <div className="admin-detail-section">
-          <h3>Suivi administratif</h3>
-          <div className="admin-detail-list"><div><small>Dernière modification</small><b>{selected.reviewedBy?("Administrateur "+String(selected.reviewedBy).slice(0,8)+" · "+dateLabel(selected.reviewedAt)):"Aucune décision enregistrée"}</b></div></div>
-          <label className="admin-internal-note">Note interne<textarea rows={4} value={internalNote} onChange={e=>setInternalNote(e.target.value)} placeholder="Ajouter une observation réservée à l’équipe administrative…"/></label>
-          <button type="button" className="admin-secondary admin-full" onClick={()=>void saveInternalNote()} disabled={noteSaving}>{noteSaving?"Enregistrement…":"Enregistrer la note"}</button>
-        </div>
-        <div className="admin-status-action-row">
-          <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
-          <button className="admin-primary admin-full" onClick={()=>void changeStatus(selected,newStatus)}>Enregistrer le statut</button>
-        </div>
-        {role==="superAdmin"&&<button className="admin-secondary admin-full" onClick={()=>openEdit(selected)}><Icon name="edit"/> Modifier les informations</button>}
-        {role!=="superAdmin"&&<p className="admin-permission-note">La modification des informations personnelles est réservée au super administrateur.</p>}
+        {role==="superAdmin"?<>
+          <div className="admin-detail-section">
+            <h3>Suivi administratif</h3>
+            <div className="admin-detail-list"><div><small>Dernière modification</small><b>{selected.reviewedBy?("Administrateur "+String(selected.reviewedBy).slice(0,8)+" · "+dateLabel(selected.reviewedAt)):"Aucune décision enregistrée"}</b></div></div>
+            <label className="admin-internal-note">Note interne<textarea rows={4} value={internalNote} onChange={e=>setInternalNote(e.target.value)} placeholder="Ajouter une observation réservée à l’équipe administrative…"/></label>
+            <button type="button" className="admin-secondary admin-full" onClick={()=>void saveInternalNote()} disabled={noteSaving}>{noteSaving?"Enregistrement…":"Enregistrer la note"}</button>
+          </div>
+          <div className="admin-status-action-row">
+            <label className="admin-status-select">Décision sur le dossier<select value={newStatus} onChange={e=>setNewStatus(e.target.value as Status)}>{statusOptions.map(s=><option value={s.value} key={s.value}>{s.label}</option>)}</select></label>
+            <button className="admin-primary admin-full" onClick={()=>void changeStatus(selected,newStatus)}>Enregistrer le statut</button>
+          </div>
+          <button className="admin-secondary admin-full" onClick={()=>openEdit(selected)}><Icon name="edit"/> Modifier les informations</button>
+        </>:<div className="admin-detail-section"><h3>Suivi administratif</h3><div className="admin-detail-list"><div><small>Dernière modification</small><b>{selected.reviewedBy?("Administrateur "+String(selected.reviewedBy).slice(0,8)+" · "+dateLabel(selected.reviewedAt)):"Aucune décision enregistrée"}</b></div></div><p className="admin-permission-note">Consultation seule : les modifications sont réservées au SuperAdmin.</p></div>}
       </aside>
     </div>}
     {selected&&role==="superAdmin"&&editOpen&&<div className="admin-edit-overlay"><form className="admin-edit-card" onSubmit={e=>{e.preventDefault();void saveEdit();}}><div className="admin-drawer-head"><h2>Modifier le dossier</h2><button type="button" onClick={()=>setEditOpen(false)} aria-label="Fermer"><Icon name="close"/></button></div>
