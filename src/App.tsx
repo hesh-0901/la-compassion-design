@@ -303,7 +303,8 @@ function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onC
   useEffect(()=>{const url=URL.createObjectURL(file);setSource(url);return()=>URL.revokeObjectURL(url);},[file]);
   const loadImage=(event:React.SyntheticEvent<HTMLImageElement>)=>{
     const image=event.currentTarget;
-    const scale=Math.min(360/image.naturalWidth,360/image.naturalHeight,1);
+    const availableWidth=image.parentElement?.parentElement?.clientWidth||360;
+    const scale=Math.min(availableWidth/image.naturalWidth,360/image.naturalHeight,1);
     const width=Math.round(image.naturalWidth*scale),height=Math.round(image.naturalHeight*scale);
     setImageSize({width:image.naturalWidth,height:image.naturalHeight});
     setFrame({width,height});
@@ -317,7 +318,6 @@ function PhotoCropper({file,onCancel,onConfirm}:{file:File;onCancel:()=>void;onC
   };
   const move=(event:React.PointerEvent<HTMLElement>)=>{
     const active=interaction.current;if(!active)return;
-    const scale=frame.width/(imageSize.width||frame.width);
     const dx=(event.clientX-active.startX),dy=(event.clientY-active.startY);
     if(active.mode==="move"){
       setCrop(p=>({...p,x:Math.max(0,Math.min(frame.width-p.size,active.initial.x+dx)),y:Math.max(0,Math.min(frame.height-p.size,active.initial.y+dy))}));
