@@ -151,17 +151,17 @@ function PromotionSemiDonut({ total, categories }: { total: number; categories: 
   return <article className="admin-promotion-card">
     <h3>Genre</h3>
     <div className="admin-promotion-chart-wrap">
-      <svg className="admin-promotion-chart admin-promotion-semi" viewBox="0 0 300 170" role="img" aria-label={"Répartition des candidatures par genre. " + total + " candidatures. " + summary}>
+      <svg className="admin-promotion-chart admin-promotion-semi" viewBox="0 0 300 170" role="img" aria-label={"Répartition des inscrits par genre. " + total + " inscrits. " + summary}>
         <path className="admin-promotion-track-outer" strokeWidth="36" d="M40 150 A110 110 0 0 1 260 150"/>
         {segments.map(segment => {
           const portion = (segment.item.count / Math.max(1, categories.reduce((sum, item) => sum + item.count, 0))) * Math.PI;
           const startAngle = cursor - gapAngle / 2;
           const endAngle = cursor - portion + gapAngle / 2;
           cursor -= portion;
-          return <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(startAngle, endAngle, radius, 150, 150)} stroke={segment.item.color} strokeWidth="36"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>;
+          return <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(startAngle, endAngle, radius, 150, 150)} stroke={segment.item.color} strokeWidth="36"><title>{segment.item.name} — {segment.item.count} inscrits — {segment.percent} %</title></path>;
         })}
         <text className="admin-promotion-total" x="150" y="127" textAnchor="middle">{total}</text>
-        <text className="admin-promotion-total-label" x="150" y="146" textAnchor="middle">candidatures</text>
+        <text className="admin-promotion-total-label" x="150" y="146" textAnchor="middle">inscrits</text>
       </svg>
     </div>
     <PromotionLegend categories={categories} total={total}/>
@@ -189,11 +189,11 @@ function PromotionDonut({ total, categories }: { total: number; categories: Prom
   return <article className="admin-promotion-card">
     <h3>Niveau en design</h3>
     <div className="admin-promotion-chart-wrap">
-      <svg className="admin-promotion-chart admin-promotion-full-donut" viewBox="0 0 200 200" role="img" aria-label={"Répartition des candidatures par niveau en design. " + total + " candidatures. " + summary}>
+      <svg className="admin-promotion-chart admin-promotion-full-donut" viewBox="0 0 200 200" role="img" aria-label={"Répartition des inscrits par niveau en design. " + total + " inscrits. " + summary}>
         <circle className="admin-promotion-track-outer" strokeWidth="32" cx="100" cy="100" r="79"/>
-        {segments.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 79, 100, 100)} stroke={segment.item.color} strokeWidth="32"><title>{segment.item.name} — {segment.item.count} candidatures — {segment.percent} %</title></path>)}
+        {segments.map(segment => <path key={segment.item.name} className="admin-promotion-segment" d={promotionArcPath(segment.start, segment.end, 79, 100, 100)} stroke={segment.item.color} strokeWidth="32"><title>{segment.item.name} — {segment.item.count} inscrits — {segment.percent} %</title></path>)}
         <text className="admin-promotion-total" x="100" y="96" textAnchor="middle">{total}</text>
-        <text className="admin-promotion-total-label" x="100" y="116" textAnchor="middle">candidatures</text>
+        <text className="admin-promotion-total-label" x="100" y="116" textAnchor="middle">inscrits</text>
       </svg>
     </div>
     <PromotionLegend categories={categories} total={total}/>
