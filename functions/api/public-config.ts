@@ -20,8 +20,11 @@ export const onRequestGet = async ({ env }: { env: Env }) => {
       }),
     });
     if (aggregationResponse.ok) {
-      const aggregationData = await aggregationResponse.json() as Array<{ result?: { aggregateFields?: { total?: { integerValue?: string } } } }>;
-      currentCandidates = Number(aggregationData[0]?.result?.aggregateFields?.total?.integerValue || 0);
+      const aggregationData = await aggregationResponse.json() as
+        | { result?: { aggregateFields?: { total?: { integerValue?: string } } } }
+        | Array<{ result?: { aggregateFields?: { total?: { integerValue?: string } } } }>;
+      const aggregationResult = Array.isArray(aggregationData) ? aggregationData[0]?.result : aggregationData.result;
+      currentCandidates = Number(aggregationResult?.aggregateFields?.total?.integerValue || 0);
       if (!Number.isFinite(currentCandidates)) throw new Error("Réponse de comptage Firestore invalide.");
     } else {
       // Compatibility fallback: keep the previous read path if aggregation is unavailable
