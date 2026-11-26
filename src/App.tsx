@@ -8,12 +8,12 @@ type Step = "home" | "presentation" | "registration" | "confirmation" | "admin";
 type FormData = {
   fullName: string; gender: string; phone: string; email: string; area: string; areaOther: string; age: string;
   member: string; extension: string; attendance: string; department: string; maturity: string; level: string; tools: string[];
-  portfolio: string; ram: string; availability: string; motivation: string; commitment: boolean; whatsappConsent: boolean;
+  portfolio: string; ram: string; availability: string; motivation: string; commitment: boolean;
 };
 const initialForm: FormData = {
   fullName: "", gender: "", phone: "", email: "", area: "", areaOther: "", age: "", member: "", attendance: "",
   extension: "", department: "", maturity: "", level: "", tools: [], portfolio: "", ram: "", availability: "",
-  motivation: "", commitment: false, whatsappConsent: false,
+  motivation: "", commitment: false,
 };
 const steps = ["Toi", "Ton parcours", "Ton engagement"];
 
@@ -160,8 +160,8 @@ export default function App() {
         fullName: form.fullName.trim(),
         gender: form.gender,
         phone: "+243" + phoneDigits,
-        whatsappConsent: form.whatsappConsent === true,
-        whatsappConsentAt: form.whatsappConsent ? new Date().toISOString() : null,
+        whatsappConsent: true,
+        whatsappConsentAt: new Date().toISOString(),
         email: form.email.trim(),
         area: (form.area === "Autre" ? form.areaOther : form.area).trim(),
         age: form.age,
@@ -278,8 +278,7 @@ export default function App() {
         {part === 0 && <div className="fields">
           <Field label="Nom complet" error={errors.includes("fullName") ? "Indique ton nom complet." : ""}><input autoComplete="name" value={form.fullName} onChange={e => update("fullName", e.target.value)} placeholder="Ex. Jean Kabeya" /></Field>
           <Field label="Genre" error={errors.includes("gender") ? "Choisis ton genre." : ""}><Choice value={form.gender} onChange={v => update("gender", v)} options={["Homme", "Femme"]} /></Field>
-          <Field label="Numéro WhatsApp" error={errors.includes("phone") ? "Le numéro doit contenir 9 chiffres après +243." : ""}><div className="phone-input"><span>+243</span><input inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={e => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="81 234 56 78" /></div></Field>
-          <label className="commitment-check whatsapp-consent"><input type="checkbox" checked={form.whatsappConsent} onChange={e => update("whatsappConsent", e.target.checked)} /><span>J’accepte de recevoir sur WhatsApp les notifications concernant ma candidature à LA COMPASSION DESIGN (réception et décision). Ce consentement est facultatif et peut être retiré à tout moment.</span></label>
+          <Field label="Numéro WhatsApp" hint="En renseignant ce numéro et en soumettant ta candidature, tu acceptes de recevoir de LA COMPASSION DESIGN les notifications WhatsApp concernant la réception et la décision de ton dossier. Tu peux demander l’arrêt de ces messages à tout moment." error={errors.includes("phone") ? "Le numéro doit contenir 9 chiffres après +243." : ""}><div className="phone-input"><span>+243</span><input inputMode="numeric" autoComplete="tel-national" value={form.phone} onChange={e => update("phone", e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="81 234 56 78" /></div></Field>
           <Field label="Adresse e-mail" hint="Facultatif"><input type="email" autoComplete="email" value={form.email} onChange={e => update("email", e.target.value)} placeholder="nom@exemple.com" /></Field>
           <Field label="Commune de résidence" error={errors.includes("area") ? "Choisis ta commune de résidence." : ""}>
             <Dropdown value={form.area} onChange={v=>{update("area",v);if(v!=="Autre")update("areaOther","");}} placeholder="Sélectionner une commune" options={["Annexe","Kamalondo","Kampemba","Katuba","Kenya","Lubumbashi","Ruashi","Autre"]}/>
