@@ -554,9 +554,9 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
             </section>
           </div>
         </div>
-        <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition de tous les inscrits, quel que soit leur statut.</p></div></div>
-          {rows.length < 5 ? <p className="admin-promotion-threshold">{rows.length} inscrits. Les graphiques apparaissent à partir de 5 dossiers.</p> : (() => {
-            const allRows=rows;
+        <section className="admin-section admin-promotion-section"><div className="admin-section-head"><div><h2>Répartition de la promotion</h2><p>Répartition des candidats retenus (statut : Acceptée).</p></div></div>
+          {rows.filter(row=>statusOf(row.status)==="accepted").length < 5 ? <p className="admin-promotion-threshold">{rows.filter(row=>statusOf(row.status)==="accepted").length} candidat(s) retenu(s). Les graphiques apparaissent à partir de 5 candidats acceptés.</p> : (() => {
+            const allRows=rows.filter(row=>statusOf(row.status)==="accepted");
             const buildCategories=(field:string,order:string[],palette:string[])=>{
               const names=Array.from(new Set(allRows.map(row=>String(row[field]??"").trim()||"Non renseigné")));
               names.sort((a,b)=>{
