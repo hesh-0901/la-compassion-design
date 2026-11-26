@@ -57,14 +57,14 @@ service cloud.firestore {
         'member', 'extension', 'attendance', 'department', 'maturity',
         'level', 'tools', 'portfolio', 'portfolioFileUrl', 'portfolioPublicId',
         'profilePhotoUrl', 'profilePhotoPublicId', 'ram', 'availability',
-        'motivation', 'commitment', 'status', 'createdAt'
+        'motivation', 'commitment', 'whatsappConsent', 'whatsappConsentAt', 'status', 'createdAt'
       ])
       && request.resource.data.keys().hasAll([
         'fullName', 'gender', 'phone', 'email', 'area', 'age',
         'member', 'extension', 'attendance', 'department', 'maturity',
         'level', 'tools', 'portfolio', 'portfolioFileUrl', 'portfolioPublicId',
         'profilePhotoUrl', 'profilePhotoPublicId', 'ram', 'availability',
-        'motivation', 'commitment', 'status', 'createdAt'
+        'motivation', 'commitment', 'whatsappConsent', 'whatsappConsentAt', 'status', 'createdAt'
       ])
       && request.resource.data.fullName is string
       && request.resource.data.fullName.size() >= 2
@@ -97,6 +97,8 @@ service cloud.firestore {
       && request.resource.data.motivation is string
       && request.resource.data.motivation.size() <= 160
       && request.resource.data.commitment == true
+      && request.resource.data.whatsappConsent == true
+      && request.resource.data.whatsappConsentAt is string
       && request.resource.data.status == 'received'
       && request.resource.data.createdAt == request.time;
     }
