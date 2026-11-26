@@ -1,6 +1,7 @@
 import { authenticateFirebaseUser, createContext, escapeHtml, readDocument, sendEmail, updateFields, jsonResponse } from "../_shared/notifications";
+import { sendWhatsAppNotification } from "../_shared/whatsapp";
 
-type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string };
+type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string; WHATSAPP_ACCESS_TOKEN?: string; WHATSAPP_PHONE_NUMBER_ID?: string; WHATSAPP_GRAPH_VERSION?: string };
 
 const firstNameOf = (fullName: unknown) => {
   const name = String(fullName || "").trim();
@@ -27,15 +28,22 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     if (!candidateDoc) return jsonResponse({ error: "Candidature introuvable." }, 404);
     const candidate = candidateDoc.data;
     if (candidate.status !== nextStatus) return jsonResponse({ error: "Le statut Firestore ne correspond pas à la décision demandée." }, 409);
-    if (candidate.statusNotificationSentFor === nextStatus) return jsonResponse({ ok: true, notification: "already-sent" });
     const email = typeof candidate.email === "string" ? candidate.email.trim() : "";
-    if (!email) return jsonResponse({ ok: true, notification: "no-email" });
-
     const accepted = nextStatus === "accepted";
+
     const firstName = escapeHtml(firstNameOf(candidate.fullName));
     const configDoc = accepted ? await readDocument(account, token, "configuration", "masterclass") : null;
     const rawWhatsappLink = typeof configDoc?.data.whatsappGroupLink === "string" ? configDoc.data.whatsappGroupLink.trim() : "";
     const whatsappLink = /^https:\/\/chat\.whatsapp\.com\/[A-Za-z0-9_-]+\/?$/.test(rawWhatsappLink) ? rawWhatsappLink : "";
+    let whatsappResult: Record<string, unknown> = { status: "not-attempted" };
+    try {
+      whatsappResult = await sendWhatsAppNotification(env, { ...candidate, id: candidateId }, accepted ? "application_accepted" : "application_rejected", whatsappLink);
+    } catch (error) {
+      console.error("Notification WhatsApp de décision indisponible", { candidateId, status: nextStatus, error: error instanceof Error ? error.message : "unknown" });
+      whatsappResult = { status: "failed", reason: "internal_error" };
+    }
+    if (!email) return jsonResponse({ ok: true, notification: "no-email", whatsapp: whatsappResult });
+    if (candidate.statusNotificationSentFor === nextStatus) return jsonResponse({ ok: true, notification: "already-sent", whatsapp: whatsappResult });
     const subject = accepted
       ? `Félicitations ${firstName} : votre place est confirmée !`
       : `Suite à votre candidature, ${firstName}`;
@@ -81,7 +89,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const messageId = await sendEmail(env, email, subject, html, "candidate-status-" + candidateId + "-" + nextStatus);
     await updateFields(account, token, "candidatures/" + candidateId, { statusNotificationSentFor: nextStatus, statusNotificationSentAt: new Date().toISOString() });
     console.log("Notification de décision envoyée", { candidateId, status: nextStatus, messageId });
-    return jsonResponse({ ok: true, notification: "sent", messageId });
+    return jsonResponse({ ok: true, notification: "sent", messageId, whatsapp: whatsappResult });
   } catch (error) {
     console.error("Échec notification de décision", error);
     return jsonResponse({ ok: false, error: error instanceof Error ? error.message : "Erreur interne." }, 500);
