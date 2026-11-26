@@ -2541,3 +2541,56 @@
 .admin-promotion-bars{width:100%!important;height:200px!important;max-width:300px!important}
 .admin-promotion-bar-value{fill:#0B1533!important;font-family:Inter,sans-serif!important;font-size:14px!important;font-weight:600!important}
 .admin-promotion-bar-label{fill:#4A5B82!important;font-family:Inter,sans-serif!important;font-size:12px!important;font-weight:500!important}
+
+
+/* Mobile admin drawer: full labels and clean alignment, never inherit desktop collapsed mode */
+@media(max-width:680px){
+  .admin-app.sidebar-collapsed .admin-sidebar{
+    align-items:stretch!important;
+    padding:26px 16px 20px!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar-top{
+    width:100%!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:10px!important;
+    margin-bottom:28px!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar-top .admin-brand{
+    width:auto!important;
+    justify-content:flex-start!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar .admin-brand-name,
+  .admin-app.sidebar-collapsed .admin-sidebar .admin-sidebar-label,
+  .admin-app.sidebar-collapsed .admin-sidebar>button>span,
+  .admin-app.sidebar-collapsed .admin-sidebar .admin-user-meta{
+    display:initial!important;
+    visibility:visible!important;
+    opacity:1!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar>button{
+    width:100%!important;
+    height:46px!important;
+    position:static!important;
+    justify-content:flex-start!important;
+    padding:0 12px!important;
+    gap:12px!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar>button .admin-nav-count{
+    position:static!important;
+    margin-left:auto!important;
+    font-size:11px!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar-bottom{
+    width:100%!important;
+    justify-content:flex-start!important;
+    flex-wrap:nowrap!important;
+    gap:10px!important;
+  }
+  .admin-app.sidebar-collapsed .admin-sidebar-bottom>button{
+    width:34px!important;
+    height:34px!important;
+    flex:none!important;
+  }
+}
