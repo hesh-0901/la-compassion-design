@@ -2594,3 +2594,52 @@
     flex:none!important;
   }
 }
+
+
+/* Mobile dashboard actions: icon-only controls and stable 2x2 KPI grid */
+@media(max-width:680px){
+  .admin-page-actions{
+    display:flex!important;
+    flex:0 0 auto!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:8px!important;
+    width:auto!important;
+    margin-left:auto!important;
+  }
+  .admin-page-actions .admin-icon-action{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 42px!important;
+    width:42px!important;
+    min-width:42px!important;
+    max-width:42px!important;
+    height:42px!important;
+    min-height:42px!important;
+    padding:0!important;
+    border-radius:11px!important;
+    font-size:0!important;
+    line-height:0!important;
+    white-space:nowrap!important;
+  }
+  .admin-page-actions .admin-icon-action svg{
+    display:block!important;
+    width:18px!important;
+    height:18px!important;
+    flex:none!important;
+  }
+  .admin-summary.admin-kpi-summary{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;
+    gap:12px!important;
+    width:100%!important;
+  }
+  .admin-summary.admin-kpi-summary>article{
+    display:flex!important;
+    flex-direction:column!important;
+    min-width:0!important;
+    width:auto!important;
+  }
+}
