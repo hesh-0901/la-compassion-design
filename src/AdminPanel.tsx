@@ -301,7 +301,7 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     finally { setBusy(false); }
   };
   useEffect(() => { if(user && role){void loadCandidates();void loadCapacity();void loadAdmins();} },[user,role]);
-  useEffect(() => { const updateSidebar=()=>setSidebarCollapsed(window.innerWidth<=1100);updateSidebar();window.addEventListener("resize",updateSidebar);return ()=>window.removeEventListener("resize",updateSidebar); },[]);
+  useEffect(() => { const updateSidebar=()=>setSidebarCollapsed(window.innerWidth>680&&window.innerWidth<=1100);updateSidebar();window.addEventListener("resize",updateSidebar);return ()=>window.removeEventListener("resize",updateSidebar); },[]);
   const counts = useMemo(() => ({
     total:rows.length, received:rows.length,
     accepted:rows.filter(r=>statusOf(r.status)==="accepted").length,
@@ -520,11 +520,11 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     <aside className="admin-sidebar">
       <div className="admin-sidebar-top"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span className="admin-brand-name">LA COMPASSION <b>DESIGN</b></span></div><button className="admin-collapse" type="button" onClick={()=>setSidebarCollapsed(value=>!value)} aria-label={sidebarCollapsed?"Déplier le menu":"Replier le menu"} title={sidebarCollapsed?"Déplier le menu":"Replier le menu"}><Icon name="chevron"/></button></div>
       <div className="admin-sidebar-label">ESPACE DE TRAVAIL</div>
-      <button className={tab==="overview"?"selected":""} onClick={()=>setTab("overview")} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
-      <button className={tab==="candidates"?"selected":""} onClick={()=>setTab("candidates")} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
-      <button className={tab==="downloads"?"selected":""} onClick={()=>setTab("downloads")} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
-      <button className={tab==="settings"?"selected":""} onClick={()=>setTab("settings")} title="Paramètres de la Masterclass"><Icon name="edit"/><span>Paramètres</span></button>
-      <button className={tab==="admins"?"selected":""} onClick={()=>setTab("admins")} title="Administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>
+      <button className={tab==="overview"?"selected":""} onClick={()=>{setTab("overview");setMobileSidebarOpen(false)}} title="Vue générale"><Icon name="grid"/><span>Vue générale</span></button>
+      <button className={tab==="candidates"?"selected":""} onClick={()=>{setTab("candidates");setMobileSidebarOpen(false)}} title="Candidatures"><Icon name="people"/><span>Candidatures</span><span className="admin-nav-count">{rows.length}</span></button>
+      <button className={tab==="downloads"?"selected":""} onClick={()=>{setTab("downloads");setMobileSidebarOpen(false)}} title="Téléchargements"><Icon name="download"/><span>Téléchargements</span></button>
+      <button className={tab==="settings"?"selected":""} onClick={()=>{setTab("settings");setMobileSidebarOpen(false)}} title="Paramètres de la Masterclass"><Icon name="edit"/><span>Paramètres</span></button>
+      <button className={tab==="admins"?"selected":""} onClick={()=>{setTab("admins");setMobileSidebarOpen(false)}} title="Administrateurs"><Icon name="people"/><span>Administrateurs</span><span className="admin-nav-count">{admins.length}</span></button>
       <div className="admin-sidebar-bottom"><span className="admin-role-mark">{role==="superAdmin"?"SA":"A"}</span><div className="admin-user-meta"><b>{user.email}</b><small>{role==="superAdmin"?"Super administrateur":"Administrateur"}</small></div><button aria-label="Déconnexion" title="Déconnexion" onClick={()=>signOut(auth)}><Icon name="logout"/></button></div>
     </aside>
     <main className="admin-main">
