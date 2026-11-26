@@ -315,6 +315,7 @@ export default function App() {
         <span className="eyebrow">MASTERCLASS DESIGN</span>
         <h1>Ta candidature est bien reçue.</h1>
         <p>Merci {form.fullName.split(" ")[0] || ""}. Nous avons bien enregistré ta candidature à la Masterclass Design.</p>
+        <p className="confirmation-followup">Pense à consulter régulièrement ta boîte e-mail, y compris tes courriers indésirables. Nous t’y communiquerons les informations concernant le suivi de ton dossier ainsi que la décision finale.</p>
         <div className="confirmation-card"><span>RÉCAPITULATIF</span><b>{form.fullName}</b><p>+243 {form.phone}</p></div>
         <button className="button button-secondary" onClick={() => go("home")}>Revenir à l’accueil</button>
       </section>}
