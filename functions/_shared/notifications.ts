@@ -237,7 +237,8 @@ export async function createAdminServiceContext(env: { FIREBASE_SERVICE_ACCOUNT:
 }
 
 export async function createContext(env: Env) {
-  if (!env.MAILER_WEB_APP_URL || !env.MAILER_SECRET) throw new Error("Configuration Gmail manquante dans Cloudflare.");
+  // Firestore-only endpoints must not depend on the optional email delivery configuration.
+  // sendEmail() validates MAILER_WEB_APP_URL and MAILER_SECRET at the point where email is sent.
   const account = accountFrom(env);
   const token = await serviceAccessToken(account);
   return { account, token };
