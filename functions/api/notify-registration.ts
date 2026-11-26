@@ -1,6 +1,7 @@
 import { createContext, escapeHtml, listActiveSuperAdmins, readDocument, sendEmail, updateFields, jsonResponse } from "../_shared/notifications";
+import { sendWhatsAppNotification } from "../_shared/whatsapp";
 
-type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string };
+type Env = { FIREBASE_SERVICE_ACCOUNT: string; MAILER_WEB_APP_URL: string; MAILER_SECRET: string; WHATSAPP_ACCESS_TOKEN?: string; WHATSAPP_PHONE_NUMBER_ID?: string; WHATSAPP_GRAPH_VERSION?: string };
 
 const firstNameOf = (fullName: unknown) => {
   const name = String(fullName || "").trim();
@@ -19,6 +20,14 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const candidate = candidateDoc.data;
     if (candidate.status !== "received") return jsonResponse({ error: "Statut de candidature inattendu." }, 409);
 
+    let whatsappResult: Record<string, unknown> = { status: "not-attempted" };
+    try {
+      whatsappResult = await sendWhatsAppNotification(env, { ...candidate, id: candidateId }, "application_received");
+    } catch (error) {
+      console.error("Notification WhatsApp de réception indisponible", { candidateId, error: error instanceof Error ? error.message : "unknown" });
+      whatsappResult = { status: "failed", reason: "internal_error" };
+    }
+
     const admins = await listActiveSuperAdmins(account, token);
     if (!admins.length) return jsonResponse({ error: "Aucun super administrateur actif avec une adresse e-mail dans Firestore." }, 500);
 
@@ -32,7 +41,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const createdAt = escapeHtml(candidate.createdAt || new Date().toISOString());
     const alreadyAdminNotified = Boolean(candidate.adminNotificationSentAt);
     const alreadyCandidateNotified = Boolean(candidate.candidateConfirmationSentAt);
-    const results: Record<string, string> = {};
+    const results: Record<string, string> = { whatsapp: String(whatsappResult.status || "unknown") };
 
     if (email && !alreadyCandidateNotified) {
       try {
