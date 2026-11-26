@@ -1,7 +1,10 @@
 type Env = {
   WHATSAPP_VERIFY_TOKEN?: string;
   WHATSAPP_APP_SECRET?: string;
+  FIREBASE_SERVICE_ACCOUNT?: string;
 };
+
+import { createContext, readDocument, updateFields } from "../../_shared/notifications";
 
 const json = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -100,7 +103,7 @@ export const onRequestPost = async ({
           field?: string;
           value?: {
             messages?: unknown[];
-            statuses?: unknown[];
+            statuses?: Array<{ id?: string; status?: string; timestamp?: string; errors?: Array<{ code?: number; title?: string; message?: string; error_data?: { details?: string } }> }>;
           };
         }>;
       }>;
@@ -112,17 +115,67 @@ export const onRequestPost = async ({
 
     const changes = (payload.entry || []).flatMap(entry => entry.changes || []);
     const messageEvents = changes.reduce((count, change) => count + (change.value?.messages?.length || 0), 0);
-    const statusEvents = changes.reduce((count, change) => count + (change.value?.statuses?.length || 0), 0);
+    const statuses = changes.flatMap(change => change.value?.statuses || []);
+    let persisted = 0;
+    if (statuses.length) {
+      if (!env.FIREBASE_SERVICE_ACCOUNT) return json({ error: "Firestore webhook non configuré." }, 503);
+      const { account, token } = await createContext({
+        FIREBASE_SERVICE_ACCOUNT: env.FIREBASE_SERVICE_ACCOUNT,
+        MAILER_WEB_APP_URL: "",
+        MAILER_SECRET: "",
+      });
+      for (const event of statuses) {
+        const wamid = String(event.id || "");
+        const nextStatus = String(event.status || "").toLowerCase();
+        if (!wamid || !["sent", "delivered", "read", "failed"].includes(nextStatus)) continue;
+        const index = await readDocument(account, token, "whatsapp_message_index", wamid);
+        if (!index) {
+          console.warn("Statut WhatsApp reçu sans index correspondant", { status: nextStatus });
+          continue;
+        }
+        const notificationId = String(index.data.notificationId || "");
+        const applicationId = String(index.data.applicationId || "");
+        if (!notificationId || !applicationId) continue;
+        const notification = await readDocument(account, token, "whatsapp_notifications", notificationId);
+        if (!notification) continue;
+        const current = String(notification.data.status || "sent");
+        const rank: Record<string, number> = { processing: 0, sent: 1, delivered: 2, read: 3, failed: 4 };
+        const currentRank = rank[current] ?? 0;
+        const nextRank = rank[nextStatus] ?? 0;
+        if (current === "read" || (current !== "failed" && nextStatus !== "failed" && nextRank < currentRank)) continue;
+        if (current === "failed" && nextStatus !== "failed") continue;
+        const timestamp = event.timestamp && /^\\d+$/.test(event.timestamp)
+          ? new Date(Number(event.timestamp) * 1000).toISOString()
+          : new Date().toISOString();
+        const patch: Record<string, unknown> = { status: nextStatus, updatedAt: new Date().toISOString() };
+        if (nextStatus === "delivered") patch.deliveredAt = timestamp;
+        if (nextStatus === "read") patch.readAt = timestamp;
+        if (nextStatus === "failed") {
+          patch.failedAt = timestamp;
+          patch.errorDetails = (event.errors || []).map(error => ({
+            code: Number(error.code || 0),
+            title: String(error.title || ""),
+            message: String(error.message || ""),
+            details: String(error.error_data?.details || ""),
+          }));
+        }
+        await updateFields(account, token, "whatsapp_notifications/" + notificationId, patch);
+        await updateFields(account, token, "candidatures/" + applicationId, {
+          lastWhatsappStatus: nextStatus,
+          lastWhatsappStatusAt: timestamp,
+          lastWhatsappNotificationId: notificationId,
+        });
+        persisted += 1;
+      }
+    }
 
-    // Do not log phone numbers or message contents. Persistence and business
-    // actions will be added when outbound WhatsApp notifications are connected.
     console.log("Événement WhatsApp reçu", {
       fields: [...new Set(changes.map(change => change.field).filter(Boolean))],
       messageEvents,
-      statusEvents,
+      statusEvents: statuses.length,
+      persistedStatuses: persisted,
     });
-
-    return json({ ok: true });
+    return json({ ok: true, persistedStatuses: persisted });
   } catch (error) {
     console.error("Erreur de traitement du webhook WhatsApp", error);
     return json({ error: "Événement WhatsApp invalide." }, 400);
