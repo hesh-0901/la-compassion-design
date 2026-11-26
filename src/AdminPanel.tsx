@@ -467,7 +467,40 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
     ].filter(Boolean) as {name:string;url:string}[]
   })).filter(item => item.files.length);
 
-  if(!authReady) return <section className="admin-login-page" aria-live="polite"><div className="admin-login"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><span className="admin-kicker">ACCÈS SÉCURISÉ</span><h1>Vérification de la session</h1><p>Restauration de votre accès à l’espace administration…</p></div></section>;
+  if(!authReady) return <section className="admin-app admin-skeleton" aria-label="Chargement de l’espace administration" aria-busy="true">
+    <style>{`
+      .admin-skeleton{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;background:#f6f7f8;color:#e2e5e9;overflow:hidden}
+      .admin-skeleton *{box-sizing:border-box}
+      .admin-skeleton .sk-side{background:#fff;border-right:1px solid #eceef0;padding:28px 18px;display:flex;flex-direction:column;gap:24px}
+      .admin-skeleton .sk-brand{height:42px;width:175px;border-radius:9px}
+      .admin-skeleton .sk-nav{height:42px;border-radius:9px;width:100%}
+      .admin-skeleton .sk-nav.short{width:72%}
+      .admin-skeleton .sk-main{padding:34px 38px;min-width:0}
+      .admin-skeleton .sk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
+      .admin-skeleton .sk-title{height:30px;width:220px;border-radius:8px}
+      .admin-skeleton .sk-avatar{width:42px;height:42px;border-radius:50%}
+      .admin-skeleton .sk-subtitle{height:14px;width:290px;border-radius:6px;margin:12px 0 28px}
+      .admin-skeleton .sk-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
+      .admin-skeleton .sk-card{height:112px;border-radius:14px;background:#fff;border:1px solid #eceef0;padding:18px}
+      .admin-skeleton .sk-line{height:12px;border-radius:6px;margin-bottom:14px;width:55%}
+      .admin-skeleton .sk-value{height:27px;border-radius:7px;width:38%}
+      .admin-skeleton .sk-panel{background:#fff;border:1px solid #eceef0;border-radius:14px;padding:22px;margin-bottom:20px}
+      .admin-skeleton .sk-panel-head{height:18px;width:190px;border-radius:6px;margin-bottom:24px}
+      .admin-skeleton .sk-chart{height:170px;border-radius:10px;width:100%}
+      .admin-skeleton .sk-table-row{height:43px;border-bottom:1px solid #f0f1f2;display:grid;grid-template-columns:1.2fr 1fr 1fr .7fr;gap:18px;align-items:center}
+      .admin-skeleton .sk-cell{height:11px;border-radius:5px;width:75%}
+      .admin-skeleton .sk-shimmer{background:linear-gradient(90deg,#eceff1 25%,#f6f7f8 38%,#eceff1 62%);background-size:400% 100%;animation:adminSkeletonPulse 1.35s ease infinite}
+      @keyframes adminSkeletonPulse{0%{background-position:100% 50%}100%{background-position:0 50%}}
+      @media(max-width:900px){.admin-skeleton{grid-template-columns:76px minmax(0,1fr)}.admin-skeleton .sk-side{padding:24px 14px}.admin-skeleton .sk-brand{width:44px}.admin-skeleton .sk-nav{width:44px}.admin-skeleton .sk-main{padding:26px 22px}.admin-skeleton .sk-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      @media(max-width:560px){.admin-skeleton{grid-template-columns:1fr}.admin-skeleton .sk-side{display:none}.admin-skeleton .sk-main{padding:22px 16px}.admin-skeleton .sk-cards{gap:10px}.admin-skeleton .sk-card{height:94px;padding:14px}.admin-skeleton .sk-subtitle{width:75%}.admin-skeleton .sk-table-row{grid-template-columns:1fr 1fr}.admin-skeleton .sk-table-row .sk-cell:nth-child(n+3){display:none}}
+    `}</style>
+    <aside className="sk-side"><div className="sk-brand sk-shimmer"/><div className="sk-nav sk-shimmer"/><div className="sk-nav sk-shimmer"/><div className="sk-nav sk-shimmer"/><div className="sk-nav short sk-shimmer"/><div className="sk-nav sk-shimmer"/></aside>
+    <main className="sk-main"><div className="sk-top"><div className="sk-title sk-shimmer"/><div className="sk-avatar sk-shimmer"/></div><div className="sk-title sk-shimmer" style={{width:180}}/><div className="sk-subtitle sk-shimmer"/>
+      <div className="sk-cards">{[0,1,2,3].map(item=><div className="sk-card" key={item}><div className="sk-line sk-shimmer"/><div className="sk-value sk-shimmer"/></div>)}</div>
+      <div className="sk-panel"><div className="sk-panel-head sk-shimmer"/><div className="sk-chart sk-shimmer"/></div>
+      <div className="sk-panel"><div className="sk-panel-head sk-shimmer"/>{[0,1,2,3].map(item=><div className="sk-table-row" key={item}><div className="sk-cell sk-shimmer"/><div className="sk-cell sk-shimmer"/><div className="sk-cell sk-shimmer"/><div className="sk-cell sk-shimmer"/></div>)}</div>
+    </main>
+  </section>;
 
   if(!user || !role) return <section className="admin-login-page">
     <button className="admin-back-home" onClick={onHome}>← Retour à l’accueil</button>
