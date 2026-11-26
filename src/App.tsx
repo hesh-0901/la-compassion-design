@@ -112,20 +112,30 @@ export default function App() {
     payload.append("file", file);
     payload.append("upload_preset", uploadPreset);
     const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${kind}/upload`, { method: "POST", body: payload });
-    const result = await response.json();
-    if (!response.ok || !result.secure_url) throw new Error(result.error?.message || "Le téléversement Cloudinary a échoué.");
-    return { url: result.secure_url as string, publicId: result.public_id as string };
+    const rawResponse = await response.text();
+    let result: { secure_url?: string; public_id?: string; error?: { message?: string } };
+    try {
+      result = JSON.parse(rawResponse) as typeof result;
+    } catch {
+      throw new Error(`Cloudinary a renvoyé une réponse illisible (HTTP ${response.status}).`);
+    }
+    if (!response.ok || !result.secure_url || !result.public_id) {
+      throw new Error(result.error?.message || `Le téléversement Cloudinary a échoué (HTTP ${response.status}).`);
+    }
+    return { url: result.secure_url, publicId: result.public_id };
   };
 
   const submitApplication = async () => {
     if (!validate() || submitting) return;
     setSubmitting(true);
     setSubmitError("");
+    let currentStage = "Vérification de la disponibilité des places";
     try {
       const capacityResponse=await fetch("/api/public-config");
       if(!capacityResponse.ok)throw new Error("Impossible de vérifier la disponibilité des places. Réessaie dans un instant.");
       const latestConfig=await capacityResponse.json() as {capacity?:number|null;currentCandidates?:number};
       if(typeof latestConfig.capacity==="number"&&Number(latestConfig.capacity)>0&&Number(latestConfig.currentCandidates)>=Number(latestConfig.capacity))throw new Error("Les candidatures sont clôturées : le nombre maximal de candidats a été atteint.");
+      currentStage = "Vérification des candidatures en double";
       const duplicateResponse = await fetch("/api/check-duplicate", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -135,14 +145,17 @@ export default function App() {
       if (!duplicateResponse.ok) throw new Error(duplicateResult.message || duplicateResult.error || "La vérification des doublons a échoué. Réessaie.");
       if (duplicateResult.duplicate) throw new Error(duplicateResult.message || "Une candidature existe déjà avec ces informations.");
       if (!profilePhoto || !profilePhoto.type.startsWith("image/")) throw new Error("Ajoute une photo de profil au format image.");
+      currentStage = "Téléversement de la photo de profil";
       const photo = await uploadToCloudinary(profilePhoto, "image");
       let portfolioUpload: { url: string; publicId: string } | null = null;
       if (portfolioFile) {
         const imageFile = portfolioFile.type.startsWith("image/");
         const pdfFile = portfolioFile.type === "application/pdf" || portfolioFile.name.toLowerCase().endsWith(".pdf");
         if (!imageFile && !pdfFile) throw new Error("La création jointe doit être une image ou un PDF.");
+        currentStage = "Téléversement du portfolio";
         portfolioUpload = await uploadToCloudinary(portfolioFile, imageFile ? "image" : "raw");
       }
+      currentStage = "Enregistrement de la candidature dans Firestore";
       const candidateRef = await addDoc(collection(db, "candidatures"), {
         fullName: form.fullName.trim(),
         gender: form.gender,
@@ -181,7 +194,9 @@ export default function App() {
       }).catch(error => console.error("Service de notification indisponible :", error));
       go("confirmation");
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Une erreur est survenue pendant l’envoi.");
+      console.error("[registration] Échec de soumission", { stage: currentStage, error });
+      const message = error instanceof Error ? error.message : "Une erreur est survenue pendant l’envoi.";
+      setSubmitError(`${currentStage} : ${message}`);
     } finally {
       setSubmitting(false);
     }
