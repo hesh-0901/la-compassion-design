@@ -208,6 +208,7 @@ function StatusPill({ value }: { value?: string }) {
 export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [user,setUser] = useState<User|null>(null);
   const [role,setRole] = useState<Role|null>(null);
+  const [authReady,setAuthReady] = useState(false);
   const [email,setEmail] = useState(""), [password,setPassword] = useState("");
   const [error,setError] = useState(""), [busy,setBusy] = useState(false);
   const [tab,setTab] = useState<Tab>("overview");
@@ -249,13 +250,15 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
   const [noteSaving,setNoteSaving] = useState(false);
 
   useEffect(() => onAuthStateChanged(auth, async current => {
+    setAuthReady(false);
     setUser(current); setRole(null);
-    if (!current) return;
+    if (!current) { setAuthReady(true); return; }
     try {
       const adminDoc = await getDoc(doc(db,"admins",current.uid)), data = adminDoc.data();
       if (adminDoc.exists() && data?.active === true && (data?.role === "admin" || data?.role === "superAdmin")) setRole(data.role);
       else { setError("Ce compte n’est pas autorisé à accéder à cet espace."); await signOut(auth); }
     } catch { setError("Vérification des droits impossible. Contrôle les règles Firestore."); await signOut(auth); }
+    finally { setAuthReady(true); }
   }),[]);
   const loadAdmins = async () => {
     if (!role) return;
@@ -463,6 +466,8 @@ export default function AdminPanel({ onHome }: { onHome: () => void }) {
       row.portfolioFileUrl||row.portfolioUrl ? {name:"Création / portfolio",url:row.portfolioFileUrl||row.portfolioUrl}:null
     ].filter(Boolean) as {name:string;url:string}[]
   })).filter(item => item.files.length);
+
+  if(!authReady) return <section className="admin-login-page" aria-live="polite"><div className="admin-login"><div className="admin-brand"><span className="admin-brand-symbol">C</span><span>LA COMPASSION <b>DESIGN</b></span></div><span className="admin-kicker">ACCÈS SÉCURISÉ</span><h1>Vérification de la session</h1><p>Restauration de votre accès à l’espace administration…</p></div></section>;
 
   if(!user || !role) return <section className="admin-login-page">
     <button className="admin-back-home" onClick={onHome}>← Retour à l’accueil</button>
