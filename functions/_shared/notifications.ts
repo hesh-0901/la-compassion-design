@@ -98,7 +98,7 @@ function firestoreValue(value: unknown): Record<string, unknown> {
 export async function readDocument(account: ServiceAccount, token: string, collection: string, id: string) {
   try {
     const doc = await firestoreRequest(account, token, "/" + collection + "/" + encodeURIComponent(id));
-    return { name: doc.name as string, data: documentData(doc) };
+    return { name: doc.name as string, updateTime: doc.updateTime as string | undefined, data: documentData(doc) };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Firestore REST: 404")) return null;
     throw error;
@@ -119,6 +119,40 @@ export async function updateFields(account: ServiceAccount, token: string, docum
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ fields: encodedFields }),
   });
+}
+
+/**
+ * Conditional PATCH: succeeds only if the document has not changed since it was read.
+ * Used to claim a failed WhatsApp notification without allowing two concurrent retries.
+ */
+export async function updateFieldsIfUnchanged(
+  account: ServiceAccount,
+  token: string,
+  documentPath: string,
+  fields: Record<string, any>,
+  updateTime: string,
+): Promise<boolean> {
+  const params = [
+    ...Object.keys(fields).map(key => "updateMask.fieldPaths=" + encodeURIComponent(key)),
+    "currentDocument.updateTime=" + encodeURIComponent(updateTime),
+  ].join("&");
+  const encodedFields = Object.fromEntries(Object.entries(fields).map(([key, value]) => [
+    key,
+    typeof value === "string" && /At$/.test(key) && !Number.isNaN(Date.parse(value))
+      ? firestoreTimestamp(value)
+      : firestoreValue(value),
+  ]));
+  try {
+    await firestoreRequest(account, token, "/" + documentPath + "?" + params, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fields: encodedFields }),
+    });
+    return true;
+  } catch (error) {
+    if (error instanceof Error && /Firestore REST: (409|412)/.test(error.message)) return false;
+    throw error;
+  }
 }
 
 export async function createDocument(account: ServiceAccount, token: string, collection: string, id: string, fields: Record<string, unknown>) {
