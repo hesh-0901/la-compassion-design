@@ -28,6 +28,17 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       whatsappResult = { status: "failed", reason: "internal_error" };
     }
 
+    if (whatsappResult.status !== "sent") {
+      console.error("Résultat notification WhatsApp de réception", {
+        candidateId,
+        status: whatsappResult.status,
+        reason: whatsappResult.reason,
+        errorCode: whatsappResult.errorCode,
+        errorMessage: whatsappResult.errorMessage,
+        retryable: whatsappResult.retryable,
+      });
+    }
+
     const admins = await listActiveSuperAdmins(account, token);
     if (!admins.length) return jsonResponse({ error: "Aucun super administrateur actif avec une adresse e-mail dans Firestore." }, 500);
 
@@ -115,7 +126,17 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const adminOk = results.admin === "already-sent" || results.admin.startsWith("sent:");
     const ok = candidateOk && adminOk;
     if (!ok) console.error("Notifications d'inscription incomplètes", { candidateId, notifications: results });
-    return jsonResponse({ ok, notifications: results }, ok ? 200 : 502);
+    return jsonResponse({
+      ok,
+      notifications: results,
+      whatsapp: {
+        status: whatsappResult.status,
+        reason: whatsappResult.reason,
+        errorCode: whatsappResult.errorCode,
+        errorMessage: whatsappResult.errorMessage,
+        retryable: whatsappResult.retryable,
+      },
+    }, ok ? 200 : 502);
   } catch (error) {
     return jsonResponse({ error: error instanceof Error ? error.message : "Erreur interne." }, 500);
   }
