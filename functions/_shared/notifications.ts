@@ -83,6 +83,17 @@ function documentData(document: any): Record<string, any> {
 }
 function firestoreString(value: string) { return { stringValue: value }; }
 function firestoreTimestamp(value: string) { return { timestampValue: value }; }
+function firestoreValue(value: unknown): Record<string, unknown> {
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (typeof value === "number" && Number.isFinite(value)) return { doubleValue: value };
+  if (typeof value === "string") return firestoreString(value);
+  if (value === null) return { nullValue: null };
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return { mapValue: { fields: Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, firestoreValue(item)])) } };
+  }
+  if (Array.isArray(value)) return { arrayValue: { values: value.map(firestoreValue) } };
+  throw new Error("Type Firestore non pris en charge.");
+}
 
 export async function readDocument(account: ServiceAccount, token: string, collection: string, id: string) {
   try {
@@ -102,9 +113,18 @@ export async function listActiveSuperAdmins(account: ServiceAccount, token: stri
 
 export async function updateFields(account: ServiceAccount, token: string, documentPath: string, fields: Record<string, any>) {
   const params = Object.keys(fields).map(key => "updateMask.fieldPaths=" + encodeURIComponent(key)).join("&");
-  const encodedFields = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, typeof value === "string" ? firestoreString(value) : firestoreTimestamp(value)]));
+  const encodedFields = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, typeof value === "string" && /At$/.test(key) && !Number.isNaN(Date.parse(value)) ? firestoreTimestamp(value) : firestoreValue(value)]));
   return firestoreRequest(account, token, "/" + documentPath + "?" + params, {
     method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ fields: encodedFields }),
+  });
+}
+
+export async function createDocument(account: ServiceAccount, token: string, collection: string, id: string, fields: Record<string, unknown>) {
+  const encodedFields = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, firestoreValue(value)]));
+  return firestoreRequest(account, token, "/" + collection + "?documentId=" + encodeURIComponent(id), {
+    method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ fields: encodedFields }),
   });
