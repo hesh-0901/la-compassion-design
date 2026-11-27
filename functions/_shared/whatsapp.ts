@@ -49,7 +49,7 @@ const TEMPLATE_BY_TYPE: Record<WhatsAppNotificationType, string> = {
 };
 
 const firstNameOf = (value: unknown) =>
-  String(value || "").trim().split(/\\s+/)[0] || "Candidat";
+  String(value || "").trim().split(/\s+/)[0] || "Candidat";
 
 const notificationId = (candidateId: string, type: WhatsAppNotificationType) =>
   candidateId + "_" + type;
@@ -57,8 +57,8 @@ const notificationId = (candidateId: string, type: WhatsAppNotificationType) =>
 const PROCESSING_LEASE_MS = 5 * 60 * 1000;
 
 export function normalizeWhatsAppPhone(value: unknown): string | null {
-  const digits = String(value ?? "").replace(/[\\s()+.-]/g, "").replace(/\\D/g, "");
-  return /^\\d{8,15}$/.test(digits) ? digits : null;
+  const digits = String(value ?? "").replace(/[\s()+.-]/g, "").replace(/\D/g, "");
+  return /^\d{8,15}$/.test(digits) ? digits : null;
 }
 
 async function logSkipped(
